@@ -1,11 +1,44 @@
 <!DOCTYPE html>
+
 <html lang="en">
     <head>
-        <title> My first title </title>
+        <script src="script.js" defer></script>
+        <link href="styles.css" rel="stylesheet">
+        <link rel="icon" href="image/icon.png" type="image/x-icon">
+        <title> Genova Mongalo </title>
     </head>
-    <body>
-        <!--comment-->
-        <h1>My first heading</h1>
-        <p>My first paragraph</p>
+    <body style="background-color:#9B111E; color: #ffffff; font-family: 'Times New Roman'; font-size-adjust:inherit;" >
+        
+        <ul class="tabs">
+            <li data-tab-target="#home" class="active tab">Home</li>
+            <li data-tab-target="#resume" class="tab">Resume</li>
+            <li data-tab-target="#educational-background" class="tab">Education Background</li>
+        </ul>
+        <div class="tab-content">
+        
+            <div id="home" data-tab-content class="active">
+                
+                <div class="row">
+                    <div class="column">
+                        <h1>Home</h1>
+                        <p>My name is Genova Mongalo, I am currently pursuing a bachelor's degree in Computer Science from the University of Missouri: Kansas City. I expect to graduate in the fall semester of 2024.
+                             The majority of my experience has come from undergraduate research internships, but I am open to other jobs.</p>
+                    </div>
+                    <div class="column">
+                        <img class="image" src="image/ProfessionalPicture1.png">
+                    </div>
+                </div>
+            </div>
+            <div id="resume" data-tab-content>
+                <h1>Resume</h1>
+                <p>
+                    <embed src="files/Resume.pdf" width="800px" height="2100px" />
+                </p>
+            </div>
+            <div id="educational-background" data-tab-content>
+                <h1>Educational Background</h1>
+                <p>This is the EB</p>
+            </div>
+        </div>
     </body>
 </html>
