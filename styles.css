@@ -2,6 +2,16 @@
     display:none;
 }
 
+.bckgrnd{
+    border-radius: 50px 5px;
+    background: rgb(187, 73, 73);
+    margin-top: 10px;
+    padding: 20px;
+    width: auto;
+    height: auto;
+}
+
+
 .active[data-tab-content] {
     display: block;
 }
@@ -36,9 +46,13 @@
 
 .image { 
     margin-top: 30px;
-    width: 300px; 
+    width: 5px; 
     height: auto; 
-} 
+}
+.imtip {
+    position: absolute;
+    left: 39.5%;
+  }
 
 .center {
     display: block;
@@ -46,11 +60,3 @@
     margin-right: auto;
     width: 50%;
   }
-
-  .icon {
-    background: url('image/image.png');
-    height: 20px;
-    width: 20px;
-    display: block;
-    /* Other styles here */
-}
