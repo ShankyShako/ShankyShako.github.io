@@ -31,11 +31,14 @@
 }
 
 .tab.active {
-    background-color: #cccccc80;
+    background-color: #693c3c80;
+    border-left: 2px solid black;
+    border-right: 2px solid black;
+    border-top: 2px solid black;
 }
 
 .tab:hover {
-    background-color: #aaaaaa80;
+    background-color: #63000080;
 }
 
 .tab-content {
@@ -44,12 +47,24 @@
     margin-right: 20px;
 }
 
+.txtbckgrnd {
+    text-align: center; 
+    border-radius: 40px 5px 40px 10px;
+    background: rgba(0, 0, 0, 0.455);
+    padding: 20px;
+    width: auto;
+    height: auto;
+}
+
 .image { 
     margin-top: 30px;
     width: 5px; 
     height: auto; 
 }
 .imtip {
+    border-radius: 15px;
+    border: 20px solid rgba(0, 0, 0, 0.455);
+    width: 18.25%;
     position: absolute;
     left: 39.5%;
   }
