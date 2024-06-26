@@ -28,6 +28,9 @@
 .tab {
     cursor:pointer;
     padding:10px;
+    border-left: 2px solid rgba(0, 0, 0, 0);
+    border-right: 2px solid rgba(0, 0, 0, 0);
+    border-top: 2px solid rgba(0, 0, 0, 0);
 }
 
 .tab.active {
