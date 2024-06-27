@@ -51,7 +51,7 @@
 }
 
 .txtbckgrnd {
-    text-align: center; 
+    text-align: inline; 
     border-radius: 40px 5px 40px 10px;
     background: rgba(0, 0, 0, 0.455);   
     padding: 20px;
@@ -80,11 +80,11 @@
   }
   
 .bulletin{
-    font-size: medium;
+    font-size: large;
 }
 
 .subbulletin{
-    font-size: small;
+    font-size: medium;
 }
 .bulletinbckgrnd {
     border-radius: 40px 5px 40px 10px;
