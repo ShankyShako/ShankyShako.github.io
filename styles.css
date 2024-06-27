@@ -4,13 +4,13 @@
 
 .bckgrnd{
     border-radius: 50px 5px;
+    border: 3px solid black;
     background: rgb(187, 73, 73);
     margin-top: 10px;
     padding: 20px;
     width: auto;
     height: auto;
 }
-
 
 .active[data-tab-content] {
     display: block;
@@ -53,7 +53,7 @@
 .txtbckgrnd {
     text-align: center; 
     border-radius: 40px 5px 40px 10px;
-    background: rgba(0, 0, 0, 0.455);
+    background: rgba(0, 0, 0, 0.455);   
     padding: 20px;
     width: auto;
     height: auto;
@@ -78,3 +78,19 @@
     margin-right: auto;
     width: 50%;
   }
+  
+.bulletin{
+    font-size: medium;
+}
+
+.subbulletin{
+    font-size: small;
+}
+.bulletinbckgrnd {
+    border-radius: 40px 5px 40px 10px;
+    background: rgba(0, 0, 0, 0.455);   
+    padding: 30px;
+    position:unset;
+    width: fit-content;
+    height: auto;
+}
