@@ -11,18 +11,3 @@ tabs.forEach(tab => {
     })
 })
 
-var $window = $(window),
-  window_height = $window.height() - 150, // I'm using 150 (a random number) so the image appears 150px after it enters the screen, so the effect can be appreciated
-  $img = $('img.image'),
-  img_loaded = false,
-  img_top = $img.offset().top;
-
-$window.on('scroll', function() {
-
-  if (($window.scrollTop() + window_height) > img_top && img_loaded == false) {
-
-    $img.attr('src', $img.attr('image/ProfessionalPicture1.png'));
-
-  }
-
-});
