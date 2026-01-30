@@ -431,8 +431,8 @@
                     My name is Genova Mongalo, I am a summa cum laude graduate with a Bachelor of Science in Computer Science from the University of Missouri-Kansas City (UMKC). I am currently pursuing a Master's degree in Computer Science with an emphasis on Artificial Intelligence at Georgia Tech, beginning in August 2025. My primary focus is on AI/ML Engineering and Cybersecurity applications.
                 </p>
                 <p class="intro-text">
-                    Through the summer of 2025, I worked as a Federal AI/ML Engineer Contractor with the AFRL Sensors Directorate Internship Program at the University of Dayton. This role involves pioneering the development of generative AI models that enable CNN classifiers to recognize real objects when trained on generated data, utilizing transfer learning frameworks to address AFRL/DoD priorities.
-<!--                </p>-->
+                    During the summer of 2025, I worked as a Federal AI/ML Engineer Contractor with the AFRL Sensors Directorate Internship Program at the University of Dayton. This role involves pioneering the development of generative AI models that enable CNN classifiers to recognize real objects when trained on generated data, utilizing transfer learning frameworks to address AFRL/DoD priorities.
+                </p>
 <!--                <p class="intro-text">-->
 <!--                    From June to December 2024, I worked as an AI/ML Engineer Intern at the NSF REU AI-Empowered Cybersecurity program at UMKC, where I engineered a robust Large Language Model to detect ransomware threats within Industrial Control Systems, achieving 99% accuracy for binary classification and 85% accuracy for family classification. In December 2024, I presented my research "LLM Based Approach to Real Time Ransomware Detection for Industrial Control Systems" at IEEE Big Data 2024 in Washington, D.C.-->
 <!--                </p>-->
@@ -663,24 +663,53 @@
             }
         });
 
-        // DevTools detection using debugger timing
+        // DevTools detection - multiple methods for immediate detection
         let devtoolsOpen = false;
-        const devtoolsCheck = () => {
-            const startTime = performance.now();
-            debugger; // This pauses execution if DevTools is open
-            const endTime = performance.now();
 
-            // If debugger statement caused a significant delay (>100ms), DevTools is likely open
-            if (endTime - startTime > 100) {
+        // Method 1: Check window size difference (DevTools takes up space)
+        const checkDevTools = () => {
+            const widthThreshold = window.outerWidth - window.innerWidth > 160;
+            const heightThreshold = window.outerHeight - window.innerHeight > 160;
+
+            if ((widthThreshold || heightThreshold) && !devtoolsOpen) {
+                devtoolsOpen = true;
+                window.location.href = redirectUrl;
+            }
+        };
+
+        // Method 2: Debugger statement timing
+        const debuggerCheck = () => {
+            const before = new Date().getTime();
+            debugger;
+            const after = new Date().getTime();
+
+            if (after - before > 100 && !devtoolsOpen) {
+                devtoolsOpen = true;
+                window.location.href = redirectUrl;
+            }
+        };
+
+        // Method 3: Console detection
+        const element = new Image();
+        Object.defineProperty(element, 'id', {
+            get: function() {
                 if (!devtoolsOpen) {
                     devtoolsOpen = true;
                     window.location.href = redirectUrl;
                 }
             }
-        };
+        });
 
-        // Check periodically, but not too frequently
-        setInterval(devtoolsCheck, 1000);
+        // Run checks frequently
+        setInterval(() => {
+            checkDevTools();
+            debuggerCheck();
+            console.log(element);
+            console.clear();
+        }, 500);
+
+        // Also check on window resize
+        window.addEventListener('resize', checkDevTools);
 
         // Elmo decoy image functionality
         const profileContainer = document.querySelector('.profile-container');
