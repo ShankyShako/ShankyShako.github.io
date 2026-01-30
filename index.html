@@ -431,7 +431,7 @@
                     My name is Genova Mongalo, I am a summa cum laude graduate with a Bachelor of Science in Computer Science from the University of Missouri-Kansas City (UMKC). I am currently pursuing a Master's degree in Computer Science with an emphasis on Artificial Intelligence at Georgia Tech, beginning in August 2025. My primary focus is on AI/ML Engineering and Cybersecurity applications.
                 </p>
                 <p class="intro-text">
-                    In the summer of 2025, I worked as a Federal AI/ML Engineer Contractor with the AFRL Sensors Directorate Internship Program at the University of Dayton. This role involves pioneering the development of generative AI models that enable CNN classifiers to recognize real objects when trained on generated data, utilizing transfer learning frameworks to address AFRL/DoD priorities.
+                    During the summer of 2025, I worked as a Federal AI/ML Engineer Contractor with the AFRL Sensors Directorate Internship Program at the University of Dayton. This role involves pioneering the development of generative AI models that enable CNN classifiers to recognize real objects when trained on generated data, utilizing transfer learning frameworks to address AFRL/DoD priorities.
                 </p>
 <!--                <p class="intro-text">-->
 <!--                    From June to December 2024, I worked as an AI/ML Engineer Intern at the NSF REU AI-Empowered Cybersecurity program at UMKC, where I engineered a robust Large Language Model to detect ransomware threats within Industrial Control Systems, achieving 99% accuracy for binary classification and 85% accuracy for family classification. In December 2024, I presented my research "LLM Based Approach to Real Time Ransomware Detection for Industrial Control Systems" at IEEE Big Data 2024 in Washington, D.C.-->
@@ -644,14 +644,12 @@
     <script>
         // Anti-inspect element detection
         const redirectUrl = 'https://www.youtube.com/watch?v=ntuH3q5gfo4';
-        let devtoolsOpen = false;
-        let checkCount = 0;
 
         // Detect right-click inspect
-        document.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            return false;
-        });
+<!--        document.addEventListener('contextmenu', (e) => {-->
+<!--            e.preventDefault();-->
+<!--            return false;-->
+<!--        });-->
 
         // Detect F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
         document.addEventListener('keydown', (e) => {
@@ -665,75 +663,53 @@
             }
         });
 
-        // Method 1: Console object property getter (triggers when console is open)
+        // DevTools detection - multiple methods for immediate detection
+        let devtoolsOpen = false;
+
+        // Method 1: Check window size difference (DevTools takes up space)
+        const checkDevTools = () => {
+            const widthThreshold = window.outerWidth - window.innerWidth > 160;
+            const heightThreshold = window.outerHeight - window.innerHeight > 160;
+
+            if ((widthThreshold || heightThreshold) && !devtoolsOpen) {
+                devtoolsOpen = true;
+                window.location.href = redirectUrl;
+            }
+        };
+
+        // Method 2: Debugger statement timing
+        const debuggerCheck = () => {
+            const before = new Date().getTime();
+            debugger;
+            const after = new Date().getTime();
+
+            if (after - before > 100 && !devtoolsOpen) {
+                devtoolsOpen = true;
+                window.location.href = redirectUrl;
+            }
+        };
+
+        // Method 3: Console detection
         const element = new Image();
         Object.defineProperty(element, 'id', {
             get: function() {
-                devtoolsOpen = true;
-                throw new Error(); // Prevent further execution in console
-            }
-        });
-
-        // Method 2: Check console.log with custom toString
-        const consoleCheck = document.createElement('div');
-        Object.defineProperty(consoleCheck, 'id', {
-            get: function() {
-                devtoolsOpen = true;
-            }
-        });
-
-        // Method 3: Detect window size changes (when DevTools docks)
-        const checkWindowSize = () => {
-            const widthThreshold = window.outerWidth - window.innerWidth > 160;
-            const heightThreshold = window.outerHeight - window.innerHeight > 160;
-            const orientation = widthThreshold ? 'vertical' : 'horizontal';
-
-            if ((widthThreshold || heightThreshold)) {
-                devtoolsOpen = true;
-            }
-        };
-
-        // Main detection loop
-        const detectDevTools = () => {
-            // Try to log to console (triggers getter if console is open)
-            try {
-                console.log(element);
-                console.log(consoleCheck);
-                console.clear();
-            } catch(e) {}
-
-            // Check window dimensions
-            checkWindowSize();
-
-            // If detected, redirect
-            if (devtoolsOpen) {
-                window.location.href = redirectUrl;
-                return;
-            }
-
-            checkCount++;
-        };
-
-        // Run detection every 100ms for faster response
-        setInterval(detectDevTools, 100);
-
-        // Also check on window events
-        window.addEventListener('resize', () => {
-            checkWindowSize();
-            if (devtoolsOpen) {
-                window.location.href = redirectUrl;
-            }
-        });
-
-        // Check on focus change (when switching between DevTools and page)
-        window.addEventListener('blur', () => {
-            setTimeout(() => {
-                checkWindowSize();
-                if (devtoolsOpen) {
+                if (!devtoolsOpen) {
+                    devtoolsOpen = true;
                     window.location.href = redirectUrl;
                 }
-            }, 100);
+            }
         });
+
+        // Run checks frequently
+        setInterval(() => {
+            checkDevTools();
+            debuggerCheck();
+            console.log(element);
+            console.clear();
+        }, 500);
+
+        // Also check on window resize
+        window.addEventListener('resize', checkDevTools);
 
         // Elmo decoy image functionality
         const profileContainer = document.querySelector('.profile-container');
