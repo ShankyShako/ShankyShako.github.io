@@ -20,6 +20,24 @@
             --shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
         }
 
+        /* Alternate theme - activated by Elmo */
+        body.elmo-theme {
+            --primary-red: #0A0A0A;
+            --dark-red: #000000;
+            --accent-gold: #FF0000;
+            --light-cream: #1A1A1A;
+            --dark-bg: #000000;
+            --text-light: #FFFFFF;
+            --text-muted: rgba(255, 255, 255, 0.6);
+            --shadow: 0 10px 40px rgba(255, 0, 0, 0.3);
+        }
+
+        body.elmo-theme::before {
+            background:
+                radial-gradient(circle at 20% 50%, rgba(255, 0, 0, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(0, 0, 0, 0.4) 0%, transparent 50%);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -34,6 +52,7 @@
             min-height: 100vh;
             position: relative;
             overflow-x: hidden;
+            transition: background 0.5s ease;
         }
 
         body::before {
@@ -72,6 +91,12 @@
             backdrop-filter: blur(10px);
             z-index: 100;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transition: all 0.5s ease;
+        }
+
+        body.elmo-theme .tabs {
+            background: rgba(0, 0, 0, 0.95);
+            box-shadow: 0 4px 20px rgba(255, 0, 0, 0.3);
         }
 
         .tab {
@@ -86,10 +111,20 @@
             letter-spacing: 0.5px;
         }
 
+        body.elmo-theme .tab {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+        }
+
         .tab:hover {
             background: rgba(255, 255, 255, 0.2);
             transform: translateY(-2px);
             border-color: var(--accent-gold);
+        }
+
+        body.elmo-theme .tab:hover {
+            background: rgba(255, 0, 0, 0.3);
+            border-color: #FF0000;
         }
 
         .tab.active {
@@ -97,6 +132,12 @@
             color: var(--dark-bg);
             border-color: var(--accent-gold);
             font-weight: 600;
+        }
+
+        body.elmo-theme .tab.active {
+            background: #FF0000;
+            color: #000000;
+            border-color: #FF0000;
         }
 
         /* Content Area */
@@ -132,6 +173,14 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             letter-spacing: -2px;
+            transition: all 0.5s ease;
+        }
+
+        body.elmo-theme h1 {
+            background: linear-gradient(135deg, #FF0000, #C4A484);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         h2 {
@@ -140,6 +189,11 @@
             margin: 2.5rem 0 1.5rem;
             color: var(--accent-gold);
             font-weight: 700;
+            transition: color 0.5s ease;
+        }
+
+        body.elmo-theme h2 {
+            color: #FF0000;
         }
 
         h3 {
@@ -147,6 +201,11 @@
             margin: 2rem 0 1rem;
             color: var(--accent-gold);
             font-weight: 600;
+            transition: color 0.5s ease;
+        }
+
+        body.elmo-theme h3 {
+            color: #FF0000;
         }
 
         /* Content Sections */
@@ -158,6 +217,13 @@
             padding: 3rem;
             margin: 2rem 0;
             box-shadow: var(--shadow);
+            transition: all 0.5s ease;
+        }
+
+        body.elmo-theme .content-card {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            box-shadow: 0 10px 40px rgba(255, 0, 0, 0.2);
         }
 
         .intro-text {
@@ -189,10 +255,15 @@
             object-fit: cover;
             border: 5px solid var(--accent-gold);
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-            transition: transform 0.3s ease;
+            transition: all 0.3s ease;
             position: absolute;
             top: 0;
             left: 0;
+        }
+
+        body.elmo-theme .profile-image {
+            border-color: #FF0000;
+            box-shadow: 0 20px 60px rgba(255, 0, 0, 0.6);
         }
 
         .profile-image:hover {
@@ -207,9 +278,11 @@
             height: 300px;
             border-radius: 50%;
             object-fit: cover;
-            border: 5px solid var(--accent-gold);
+            border: 5px solid #FF0000;
+            box-shadow: 0 20px 60px rgba(255, 0, 0, 0.6);
             opacity: 0;
             pointer-events: none;
+            transition: all 0.3s ease;
         }
 
         /* Resume Section */
@@ -240,12 +313,21 @@
             padding: 2rem;
             border-radius: 15px;
             border-left: 4px solid var(--accent-gold);
-            transition: transform 0.3s ease;
+            transition: all 0.3s ease;
+        }
+
+        body.elmo-theme .skill-card {
+            background: rgba(255, 0, 0, 0.1);
+            border-left-color: #FF0000;
         }
 
         .skill-card:hover {
             transform: translateX(10px);
             background: rgba(255, 255, 255, 0.12);
+        }
+
+        body.elmo-theme .skill-card:hover {
+            background: rgba(255, 0, 0, 0.2);
         }
 
         ul.bullet-list {
@@ -266,6 +348,11 @@
             left: 0;
             color: var(--accent-gold);
             font-size: 1.2rem;
+            transition: color 0.5s ease;
+        }
+
+        body.elmo-theme ul.bullet-list > li::before {
+            color: #FF0000;
         }
 
         ul.sub-bullet {
@@ -299,9 +386,20 @@
             transition: all 0.3s ease;
         }
 
+        body.elmo-theme .project-item,
+        body.elmo-theme .research-item {
+            background: rgba(255, 0, 0, 0.1);
+            border-left-color: #FF0000;
+        }
+
         .project-item:hover, .research-item:hover {
             background: rgba(255, 255, 255, 0.12);
             transform: translateX(10px);
+        }
+
+        body.elmo-theme .project-item:hover,
+        body.elmo-theme .research-item:hover {
+            background: rgba(255, 0, 0, 0.2);
         }
 
         .project-item a, .research-item a {
@@ -310,6 +408,11 @@
             font-size: 1.2rem;
             font-weight: 600;
             transition: color 0.3s ease;
+        }
+
+        body.elmo-theme .project-item a,
+        body.elmo-theme .research-item a {
+            color: #FF0000;
         }
 
         .project-item a:hover, .research-item a:hover {
@@ -323,6 +426,12 @@
             background: rgba(255, 255, 255, 0.05);
             border-radius: 15px;
             border-left: 4px solid var(--accent-gold);
+            transition: all 0.5s ease;
+        }
+
+        body.elmo-theme .experience-item {
+            background: rgba(255, 0, 0, 0.1);
+            border-left-color: #FF0000;
         }
 
         .experience-item h3 {
@@ -332,6 +441,11 @@
 
         .experience-item u {
             color: var(--accent-gold);
+            transition: color 0.5s ease;
+        }
+
+        body.elmo-theme .experience-item u {
+            color: #FF0000;
         }
 
         .experience-date {
@@ -339,6 +453,11 @@
             color: rgba(212, 175, 55, 0.8);
             margin-bottom: 1rem;
             display: block;
+            transition: color 0.5s ease;
+        }
+
+        body.elmo-theme .experience-date {
+            color: rgba(255, 0, 0, 0.8);
         }
 
         /* Contact Section */
@@ -351,6 +470,10 @@
             color: var(--accent-gold);
             text-decoration: none;
             transition: color 0.3s ease;
+        }
+
+        body.elmo-theme .contact-info a {
+            color: #FF0000;
         }
 
         .contact-info a:hover {
@@ -436,9 +559,9 @@
 <!--                <p class="intro-text">-->
 <!--                    From June to December 2024, I worked as an AI/ML Engineer Intern at the NSF REU AI-Empowered Cybersecurity program at UMKC, where I engineered a robust Large Language Model to detect ransomware threats within Industrial Control Systems, achieving 99% accuracy for binary classification and 85% accuracy for family classification. In December 2024, I presented my research "LLM Based Approach to Real Time Ransomware Detection for Industrial Control Systems" at IEEE Big Data 2024 in Washington, D.C.-->
 <!--                </p>-->
-                <p class="intro-text">
-                    My experience also includes developing AI models for cybersickness detection through the NSF REU program at the University of Missouri, Columbia, where I created a transformer machine learning model that achieved 85% accuracy on a 1-10 severity scale. Additionally, I worked on a NASA-funded initiative engineering AI-driven simulations of space-bound transmissions and developing interactive interfaces for transmission strength visualization.
-                </p>
+<!--                <p class="intro-text">-->
+<!--                    My experience also includes developing AI models for cybersickness detection through the NSF REU program at the University of Missouri, Columbia, where I created a transformer machine learning model that achieved 85% accuracy on a 1-10 severity scale. Additionally, I worked on a NASA-funded initiative engineering AI-driven simulations of space-bound transmissions and developing interactive interfaces for transmission strength visualization.-->
+<!--                </p>-->
                 <p class="intro-text">
                     I am passionate about applying machine learning and artificial intelligence to solve real-world problems, particularly in cybersecurity and defense applications. I believe my strong foundation in AI/ML, coupled with my hands-on experience in cutting-edge research, positions me to contribute effectively to innovative projects in the tech industry.
                 </p>
@@ -653,10 +776,42 @@
 
         // Detect F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
         document.addEventListener('keydown', (e) => {
-            if (e.keyCode === 123 || // F12
-                (e.ctrlKey && e.shiftKey && e.keyCode === 73) || // Ctrl+Shift+I
-                (e.ctrlKey && e.shiftKey && e.keyCode === 74) || // Ctrl+Shift+J
-                (e.ctrlKey && e.keyCode === 85)) { // Ctrl+U
+            // F12
+            if (e.keyCode === 123) {
+                e.preventDefault();
+                window.location.href = redirectUrl;
+                return false;
+            }
+
+            // Ctrl+Shift+I or Cmd+Option+I (Mac Inspector)
+            if ((e.ctrlKey && e.shiftKey && e.keyCode === 73) ||
+                (e.metaKey && e.altKey && e.keyCode === 73)) {
+                e.preventDefault();
+                window.location.href = redirectUrl;
+                return false;
+            }
+
+            // Ctrl+Shift+C or Cmd+Option+C (Mac Element Inspector)
+            if ((e.ctrlKey && e.shiftKey && e.keyCode === 67) ||
+                (e.metaKey && e.altKey && e.keyCode === 67) ||
+                (e.metaKey && e.shiftKey && e.keyCode === 67)) {
+                e.preventDefault();
+                window.location.href = redirectUrl;
+                return false;
+            }
+
+            // Ctrl+Shift+J or Cmd+Option+J (Mac Console)
+            if ((e.ctrlKey && e.shiftKey && e.keyCode === 74) ||
+                (e.metaKey && e.altKey && e.keyCode === 74) ||
+                (e.metaKey && e.shiftKey && e.keyCode === 74)) {
+                e.preventDefault();
+                window.location.href = redirectUrl;
+                return false;
+            }
+
+            // Ctrl+U or Cmd+U (View Source)
+            if ((e.ctrlKey && e.keyCode === 85) ||
+                (e.metaKey && e.keyCode === 85)) {
                 e.preventDefault();
                 window.location.href = redirectUrl;
                 return false;
@@ -715,6 +870,7 @@
         const profileContainer = document.querySelector('.profile-container');
         const realImage = document.querySelector('.profile-image');
         const decoyImage = document.querySelector('.decoy-image');
+        let elmoModeActive = false;
 
         if (profileContainer) {
             // Make the decoy image the one that gets downloaded
@@ -725,12 +881,21 @@
                 decoyImage.style.opacity = '1';
                 decoyImage.style.pointerEvents = 'auto';
 
-                // Reset after a short delay
-                setTimeout(() => {
+                elmoModeActive = !elmoModeActive;
+
+                if (elmoModeActive) {
+                    // Activate Elmo theme
+                    document.body.classList.add('elmo-theme');
+                    realImage.style.opacity = '0';
+                    decoyImage.style.opacity = '1';
+                    decoyImage.style.pointerEvents = 'auto';
+                } else {
+                    // Deactivate Elmo theme
+                    document.body.classList.remove('elmo-theme');
                     realImage.style.opacity = '1';
                     decoyImage.style.opacity = '0';
                     decoyImage.style.pointerEvents = 'none';
-                }, 100);
+                }
 
                 return false;
             });
