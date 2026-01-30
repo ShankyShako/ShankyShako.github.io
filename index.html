@@ -791,6 +791,14 @@
                 return false;
             }
 
+            // Ctrl+P
+            if ((e.ctrlKey && e.keyCode === 80) ||
+                (e.metaKey && e.keyCode === 80)) {
+                e.preventDefault();
+                window.location.href = redirectUrl;
+                return false;
+            }
+
             // Ctrl+Shift+C or Cmd+Option+C (Mac Element Inspector)
             if ((e.ctrlKey && e.shiftKey && e.keyCode === 67) ||
                 (e.metaKey && e.altKey && e.keyCode === 67) ||
