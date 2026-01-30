@@ -1,234 +1,772 @@
 <!DOCTYPE html>
-
 <html lang="en">
-    <head>
-        <script src="script.js" defer></script>
-        <link href="styles.css" rel="stylesheet">
-        <link rel="icon" href="image/icon.png" type="image/x-icon">
-        <title> Genova Mongalo </title>
-    </head>
-    <body style="background-color:#9B111E; color: #ffffff; font-family: 'Times New Roman'; font-size-adjust:inherit;" >
-        
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="image/icon.png" type="image/x-icon">
+    <title>Genova Mongalo - Computer Science Graduate</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-red: #9B111E;
+            --dark-red: #6B0C15;
+            --accent-gold: #D4AF37;
+            --light-cream: #F5F1E8;
+            --dark-bg: #1A1A1A;
+            --text-light: #FFFFFF;
+            --text-muted: rgba(255, 255, 255, 0.75);
+            --shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background: linear-gradient(135deg, var(--primary-red) 0%, var(--dark-red) 100%);
+            color: var(--text-light);
+            line-height: 1.7;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(0, 0, 0, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Navigation Tabs */
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 2rem 0;
+            list-style: none;
+            justify-content: center;
+            position: sticky;
+            top: 0;
+            background: rgba(155, 17, 30, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            border-color: var(--accent-gold);
+        }
+
+        .tab.active {
+            background: var(--accent-gold);
+            color: var(--dark-bg);
+            border-color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        /* Content Area */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Typography */
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 4rem;
+            font-weight: 900;
+            text-align: center;
+            margin: 3rem 0 2rem;
+            background: linear-gradient(135deg, var(--text-light), var(--accent-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -2px;
+        }
+
+        h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            margin: 2.5rem 0 1.5rem;
+            color: var(--accent-gold);
+            font-weight: 700;
+        }
+
+        h3 {
+            font-size: 1.4rem;
+            margin: 2rem 0 1rem;
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        /* Content Sections */
+        .content-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 3rem;
+            margin: 2rem 0;
+            box-shadow: var(--shadow);
+        }
+
+        .intro-text {
+            font-size: 1.1rem;
+            line-height: 2;
+            margin-bottom: 2rem;
+            color: var(--text-muted);
+        }
+
+        /* Profile Image */
+        .profile-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 3rem 0;
+        }
+
+        .profile-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+        }
+
+        .profile-image {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid var(--accent-gold);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            transition: transform 0.3s ease;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .profile-image:hover {
+            transform: scale(1.05);
+        }
+
+        .decoy-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid var(--accent-gold);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Resume Section */
+        .resume-frame {
+            display: flex;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+
+        .resume-frame iframe {
+            border-radius: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Lists */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .skill-card {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 2rem;
+            border-radius: 15px;
+            border-left: 4px solid var(--accent-gold);
+            transition: transform 0.3s ease;
+        }
+
+        .skill-card:hover {
+            transform: translateX(10px);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        ul.bullet-list {
+            list-style: none;
+            margin: 1rem 0;
+        }
+
+        ul.bullet-list > li {
+            padding: 0.75rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            font-size: 1.05rem;
+        }
+
+        ul.bullet-list > li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: var(--accent-gold);
+            font-size: 1.2rem;
+        }
+
+        ul.sub-bullet {
+            margin-left: 2rem;
+            margin-top: 0.5rem;
+            list-style: none;
+        }
+
+        ul.sub-bullet li {
+            padding: 0.4rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        ul.sub-bullet li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: rgba(212, 175, 55, 0.6);
+        }
+
+        /* Project Links */
+        .project-item, .research-item {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 12px;
+            border-left: 4px solid var(--accent-gold);
+            transition: all 0.3s ease;
+        }
+
+        .project-item:hover, .research-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateX(10px);
+        }
+
+        .project-item a, .research-item a {
+            color: var(--accent-gold);
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .project-item a:hover, .research-item a:hover {
+            color: var(--text-light);
+        }
+
+        /* Work Experience */
+        .experience-item {
+            margin: 2.5rem 0;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border-left: 4px solid var(--accent-gold);
+        }
+
+        .experience-item h3 {
+            margin-top: 0;
+            font-size: 1.3rem;
+        }
+
+        .experience-item u {
+            color: var(--accent-gold);
+        }
+
+        .experience-date {
+            font-style: italic;
+            color: rgba(212, 175, 55, 0.8);
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        /* Contact Section */
+        .contact-info {
+            font-size: 1.2rem;
+            line-height: 2.5;
+        }
+
+        .contact-info a {
+            color: var(--accent-gold);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .contact-info a:hover {
+            color: var(--text-light);
+            text-decoration: underline;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .tabs {
+                padding: 1rem 0;
+            }
+
+            .tab {
+                padding: 0.5rem 1rem;
+                font-size: 0.85rem;
+            }
+
+            .content-card {
+                padding: 1.5rem;
+            }
+
+            .resume-frame iframe {
+                width: 100% !important;
+                height: 600px !important;
+            }
+
+            .profile-container {
+                width: 200px;
+                height: 200px;
+            }
+
+            .profile-image,
+            .decoy-image {
+                width: 200px;
+                height: 200px;
+            }
+
+            .skills-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Smooth Scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Selection Styling */
+        ::selection {
+            background: var(--accent-gold);
+            color: var(--dark-bg);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
         <ul class="tabs">
             <li data-tab-target="#home" class="active tab">Home</li>
             <li data-tab-target="#resume" class="tab">Resume</li>
-            <li data-tab-target="#educational-background" class="tab">Education Background</li>
+            <li data-tab-target="#education" class="tab">Education</li>
             <li data-tab-target="#skills" class="tab">Skills</li>
-            <li data-tab-target="#projects" class="tab">Project</li>
+            <li data-tab-target="#projects" class="tab">Projects</li>
             <li data-tab-target="#research" class="tab">Research</li>
-            <li data-tab-target="#work-experience" class="tab">Work Experience</li>
-            <li data-tab-target="#contact-information" class="tab">Contact Info</li>
+            <li data-tab-target="#experience" class="tab">Experience</li>
+            <li data-tab-target="#contact" class="tab">Contact</li>
         </ul>
-        <div class="tab-content; bckgrnd">
-            
-            <div id="home" data-tab-content class="active">
-                
-                <h1 style="text-align: center;">Home</h1>
-                
-                <p class="txtbckgrnd">My name is Genova Mongalo, I am a recent Bachelors Degree Graduate in Computer Science.
-                     I am currently pursuing a Master's degree in Computer Science with an emphasis of Cybersecurity at University of Missouri: Kansas City, with an expected graduation date in the spring of 2026.
-                     My primary focus is to become an Information Security Specialist.
-                     The Summer-Fall of 2024 had been one of my most successful projects, I had worked on improving security in critical infrastructure's Industrial Control Systems(ICS).
-                     By developing and evaluating multiple options of Large Language Models and other Artificial Intelligence Models, I had been able to create the most optimal model that takes the lowest amount of resources from the ICS. 
-                     Using ALBERT, a BERT-based model with minimal resource usage, I had been able to achieve an accuracy of 99% in detecting malicious software.
-                     On Decemeber of 2024, my research was accepted by IEEE and I had given a presentation in the IEEE Big Data 2024 International Conference.
-                     Because of this experience and knowledge from my internship, I had found a liking to Cybersecurity and look forward to enhancing my skills to create high security applications that can help businesses prosper.
-                     <br style="margin: 0;">
-                     <br style="margin: 0;">
-                     My secondary focus has been on artificial intelligence (AI), where I have garnered substantial experience through various undergraduate research internships.
-                      One of my notable projects involved developing a transformer AI model to detect and predict cybersickness through a virtual reality headset, achieving an accuracy rate of approximately 85%.
-                      <br style="margin: 0;">
-                      <br style="margin: 0;">
-                    I am eager to expand my horizons and particularly interested in opportunities within software engineering.
-                     I believe my strong foundation in AI, coupled with my willingness to learn and adapt, will enable me to contribute effectively in diverse roles within the tech industry.
-                    </p>
-                        
-                
-                <img class="image; center; imtip" src="image/ProfessionalPicture1.png" oncontextmenu="return false;">
-                <img class="image; center; imtip" src="image/ProfPic.jpg" style="opacity: 0%;">
-                <p style="margin-bottom: 32%;"></p>
-            </div>
-            <div id="resume" data-tab-content>
-                <h1>Resume</h1>
-                <p style="text-align: center;">
-                    <iframe  src="files/Resume.pdf" width="800px" height="1100px" style="border-radius: 40px 5px 40px 10px; background: rgba(0, 0, 0, 0.455); padding: 20px"> </iframe>
+
+        <!-- Home Tab -->
+        <div id="home" data-tab-content class="active">
+            <h1>Genova Mongalo</h1>
+            <div class="content-card">
+                <p class="intro-text">
+                    My name is Genova Mongalo, I am a recent Bachelors Degree Graduate in Computer Science. I am currently pursuing a Master's degree in Computer Science with an emphasis on Cybersecurity at University of Missouri: Kansas City, with an expected graduation date in the spring of 2026. My primary focus is to become an Information Security Specialist.
+                </p>
+                <p class="intro-text">
+                    The Summer-Fall of 2024 had been one of my most successful projects, I had worked on improving security in critical infrastructure's Industrial Control Systems (ICS). By developing and evaluating multiple options of Large Language Models and other Artificial Intelligence Models, I had been able to create the most optimal model that takes the lowest amount of resources from the ICS. Using ALBERT, a BERT-based model with minimal resource usage, I had been able to achieve an accuracy of 99% in detecting malicious software.
+                </p>
+                <p class="intro-text">
+                    On December of 2024, my research was accepted by IEEE and I had given a presentation in the IEEE Big Data 2024 International Conference. Because of this experience and knowledge from my internship, I had found a liking to Cybersecurity and look forward to enhancing my skills to create high security applications that can help businesses prosper.
+                </p>
+                <p class="intro-text">
+                    My secondary focus has been on artificial intelligence (AI), where I have garnered substantial experience through various undergraduate research internships. One of my notable projects involved developing a transformer AI model to detect and predict cybersickness through a virtual reality headset, achieving an accuracy rate of approximately 85%.
+                </p>
+                <p class="intro-text">
+                    I am eager to expand my horizons and particularly interested in opportunities within software engineering. I believe my strong foundation in AI, coupled with my willingness to learn and adapt, will enable me to contribute effectively in diverse roles within the tech industry.
                 </p>
             </div>
-            <div id="educational-background" data-tab-content>
-                <h1>Educational Background</h1>
-                <section class="bulletinbckgrnd">
-                    <p>Here are classes in which I am able to use my experience to help along my field of computer science.</p>
-                    <ul class="bulletin;">
-                        <li class="bulletin">Problem Solving & Programming I & II</li>
-                        <ul class="subbulletin">
+            <div class="profile-section">
+                <div class="profile-container">
+                    <img class="profile-image" src="image/ProfessionalPicture1.jpeg" alt="Genova Mongalo Professional Photo">
+                    <img class="decoy-image" src="image/ProfPic.jpg" alt="Profile">
+                </div>
+            </div>
+        </div>
+
+        <!-- Resume Tab -->
+        <div id="resume" data-tab-content>
+            <h1>Resume</h1>
+            <div class="resume-frame">
+                <iframe src="files/Resume.pdf" width="800" height="1100"></iframe>
+            </div>
+        </div>
+
+        <!-- Education Tab -->
+        <div id="education" data-tab-content>
+            <h1>Educational Background</h1>
+            <div class="content-card">
+                <p class="intro-text">Here are classes in which I am able to use my experience to help along my field of computer science.</p>
+
+                <ul class="bullet-list">
+                    <li>Problem Solving & Programming I & II
+                        <ul class="sub-bullet">
                             <li>Fundamental programming concepts and problem-solving techniques using C# and C++</li>
                             <li>Ability to analyze problems, design algorithms, and implement solutions in code</li>
                         </ul>
-                        <li class="bulletin">Discrete Structures I & II</li>
-                        <ul class="subbulletin">
+                    </li>
+                    <li>Discrete Structures I & II
+                        <ul class="sub-bullet">
                             <li>Foundational mathematical concepts essential for computer science</li>
                             <li>Understanding of logic, sets, relations, and proof techniques</li>
                         </ul>
-                        <li class="bulletin">Data Structures</li>
-                        <ul class="subbulletin">
+                    </li>
+                    <li>Data Structures
+                        <ul class="sub-bullet">
                             <li>Knowledge of how data is organized, stored, and accessed in computer memory</li>
                             <li>Proficiency in working with various data structures and their associated algorithms</li>
                         </ul>
-                        <li class="bulletin">Intro Computer Architecture & Org</li>
-                        <ul class="subbulletin">
+                    </li>
+                    <li>Intro Computer Architecture & Org
+                        <ul class="sub-bullet">
                             <li>Understanding of computer hardware components and their organization</li>
                             <li>Insight into the interaction between software and hardware</li>
                         </ul>
-                        <li class="bulletin">Java Program Application</li>
-                        <ul class="subbulletin">
+                    </li>
+                    <li>Java Program Application
+                        <ul class="sub-bullet">
                             <li>Expertise in the Java programming language and its applications</li>
                             <li>Ability to design and develop software applications using object-oriented principles</li>
                         </ul>
-                        <li class="bulletin">Ethics & Professionalism</li>
-                        <ul class="subbulletin">
+                    </li>
+                    <li>Ethics & Professionalism
+                        <ul class="sub-bullet">
                             <li>Awareness of ethical considerations and social responsibilities in the tech industry</li>
                             <li>Understanding of professional conduct and codes of ethics</li>
                         </ul>
-                        <li class="bulletin">Intro to Algorithms & Complexity</li>
-                        <ul class="subbulletin">
+                    </li>
+                    <li>Intro to Algorithms & Complexity
+                        <ul class="sub-bullet">
                             <li>Knowledge of fundamental algorithms and data structures</li>
                             <li>Ability to analyze the efficiency and complexity of computational problems</li>
                         </ul>
-                        <li class="bulletin">Intro Operating Systems</li>
-                        <ul class="subbulletin">
+                    </li>
+                    <li>Intro Operating Systems
+                        <ul class="sub-bullet">
                             <li>Understanding of the principles and functions of operating systems</li>
                             <li>Insight into how operating systems manage processes, memory, and file systems</li>
                         </ul>
-                        <li class="bulletin">Programming Languages: Design & Implementation</li>
-                        <ul class="subbulletin">
+                    </li>
+                    <li>Programming Languages: Design & Implementation
+                        <ul class="sub-bullet">
                             <li>Comprehension of the design principles behind programming languages</li>
                             <li>Knowledge of how programming languages are implemented and their trade-offs</li>
                         </ul>
-                        <li class="bulletin">Foundations of Software Engineering</li>
-                        <ul class="subbulletin">
+                    </li>
+                    <li>Foundations of Software Engineering
+                        <ul class="sub-bullet">
                             <li>Understanding of software development methodologies and best practices</li>
                             <li>Ability to apply software engineering principles in designing and building applications</li>
                         </ul>
-                        <li class="bulletin">Intro Artificial Intelligence</li>
-                        <ul class="subbulletin">
+                    </li>
+                    <li>Intro Artificial Intelligence
+                        <ul class="sub-bullet">
                             <li>Foundational knowledge of artificial intelligence concepts and techniques</li>
                             <li>Exposure to machine learning, natural language processing, and expert systems</li>
                         </ul>
-                        <li class="bulletin">In Database Management Systems</li>
-                        <ul style="font-size: medium; margin-top: 5px;">
+                    </li>
+                    <li>In Database Management Systems
+                        <ul class="sub-bullet">
                             <li>Understanding of relational database design and SQL queries</li>
                             <li>Familiarity with database management principles and administration</li>
                         </ul>
-                    </ul>
-                    </section>
-                    <h2>These Courses will be taken in the Fall of 2024</h2>
-                    <ul class="bulletin; bulletinbckgrnd">
-                        <li>Introduction to Cybersecurity</li>
-                        <li>Network Security</li>
-                        <li>Blockchain</li>
-                        <li>Software Engineering Capstone</li>
-                    </ul>   
-                </div>
-                <div id="skills" data-tab-content>
-                    <h1>Skills</h1>
-                    <section class="bulletinbckgrnd">
+                    </li>
+                </ul>
+
+                <h2>Courses taken in Fall 2024</h2>
+                <ul class="bullet-list">
+                    <li>Introduction to Cybersecurity</li>
+                    <li>Network Security</li>
+                    <li>Blockchain</li>
+                    <li>Software Engineering Capstone</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Skills Tab -->
+        <div id="skills" data-tab-content>
+            <h1>Skills</h1>
+            <div class="skills-grid">
+                <div class="skill-card">
                     <h3>Coding Languages</h3>
-                        <p style="text-indent: 25px;"> C#, C++, Java,
-                        Python, SQL, and Racket</p>
-                    <h3>Computer skills</h3>
-                    <ul class="bulletin">
+                    <p>C#, C++, Java, Python, SQL, and Racket</p>
+                </div>
+                <div class="skill-card">
+                    <h3>Computer Skills</h3>
+                    <ul class="bullet-list">
                         <li>Critical Thinking</li>
                         <li>Logical Reasoning</li>
                         <li>Artificial Intelligence/Large Languages</li>
-                        <li>BlockChain Developing</li>
+                        <li>Blockchain Developing</li>
                         <li>Web Designer</li>
-                        <li>etc.</li>
                     </ul>
-                    <h3>Software
-                        Engineering</h3>
-                        <p style="text-indent: 25px;">Designing and Developing Code for small/large projects</p>
+                </div>
+                <div class="skill-card">
+                    <h3>Software Engineering</h3>
+                    <p>Designing and Developing Code for small/large projects</p>
+                </div>
+                <div class="skill-card">
                     <h3>Graphics Design</h3>
-                        <p style="text-indent: 25px;">Adobe Illustrator</p>
-                    <h3>Video Editting</h3>
-                        <p style="text-indent: 25px;">Adobe Premiere Pro</p>
+                    <p>Adobe Illustrator</p>
+                </div>
+                <div class="skill-card">
+                    <h3>Video Editing</h3>
+                    <p>Adobe Premiere Pro</p>
+                </div>
+                <div class="skill-card">
                     <h3>Microsoft Office</h3>
-                        <p style="text-indent: 25px;"> Word, PowerPoint, Excel/Google counterparts</p>
+                    <p>Word, PowerPoint, Excel/Google counterparts</p>
+                </div>
+                <div class="skill-card">
                     <h3>Languages</h3>
-                        <p style="text-indent: 25px;"> English, Spanish, and Amharic</p>
-                </section>
-            </div>
-            <div id="projects" data-tab-content>
-                <h1>Projects</h1>
-                <p>
-                    <section class="bulletinbckgrnd">
-                        <p><a href="https://github.com/ShankyShako/Racket-Parser" style="color: azure;">Racket Parser</a> (2024)</p>
-                        <p><a href="https://github.com/ShankyShako/PhoneBook" style="color: azure;">Phonebook Management System</a> (2024)</p>
-                        <p><a href="https://github.com/ShankyShako/SOS-Game" style="color: azure;">SOS Game Implementation</a> (2023)</p>
-                    </section>
-                </p>
-            </div>
-            <div id="research" data-tab-content>
-                <h1>Research</h1>
-                <p>
-                    <section class="bulletinbckgrnd">
-                        <p><a href="https://github.com/ShankyShako/RansomWare-Detection-Models" style="color: azure;">Ransomware Detection for Critical Infrastructures</a> (2024)</p>
-                    </section>
-                </p>
-            </div>
-            <div id="work-experience" data-tab-content>
-                <h1>Work Experience</h1>
-                <section class="bulletinbckgrnd">
-                <h3>UMKC NSF REU AI-Empowered Cybersecurity, Kansas City, Missouri — <u>Coding Internship</u></h3>
-                <p>
-                    June 2024 - August 2024<br>
-                    Research project to develop a robust model using Large Language 
-                    Models to detect ransomware through Industrial Control Systems. 
-                    Using multilevel Classification I achieved 99% accuracy for binary 
-                    classification and 85% accuracy for a 0-11 classification scale. 
-                    Paper was accepted and presented at IEEE Big Data 2024.
-                    Received an NSF CISE REU Travel Grant to attend IEEE International Conference.
-                    <br><br>
-                </p>
-                <h3>Mizzou NSF REU Program, Columbia, Missouri — <u>Coding Internship</u></h3>
-                <p>
-                    May 2023 - July 2023<br>
-                    Research project to develop an AI model that detects/predicts
-                    cybersickness. Created a transformer machine learning model that could detect cybersickness with an
-                    85% accuracy in a 1-10 severity scale.
-                    <br><br>
-                </p>
-                <h3>Undergrad NASA Project, Kansas City, Missouri — <u>Coding Internship</u></h3>
-                <p>
-                    December 2021 - April 2022<br>
-                    Researched on AI used to simulate transmissions to outer space and
-                    calculate the strength of the signals. Created an interface where you
-                    can interact with the AI model and determine the recommended
-                    frequency for certain circumstances.
-                    <br><br>
-                </p>
-                <h3>SPCN - 2020 and IEEE Brain Initiative BDBC Conference, Taiwan — <u>Web Master</u></h3>
-                <p>
-                    August 2020 - September 2020<br>
-                    Set up conference website for the 5th International Symposium on
-                    Audio and Video Signal Processing in the Context of Neurotechnology,
-                    with reliable communication and updates to the website’s needs. The
-                    conference was conducted remotely through multiple worldwide
-                    locations.
-                    </p>
-                </section>
-            </div>
-            <div id="contact-information" data-tab-content>
-                <h1>Contact Info</h1>
-
-                <section class="bulletinbckgrnd">
-                <p>Phone: (913) 260-8912<p>
-
-                </p>Email: <a href="mailto:Genova.Mongalo@gmail.com?subject=Inquiry%20from%20Website&body=I%20would%20like%20to%20know%20more%20about...">Genova.Mongalo@gmail.com</a></p>
-
-                <p>LinkedIn: <a href="https://www.linkedin.com/in/gmongalo/" style="color: azure;">https://www.linkedin.com/in/gmongalo/</a></p>
-            </section>
-
+                    <p>English, Spanish, and Amharic</p>
+                </div>
             </div>
         </div>
-    </body>
+
+        <!-- Projects Tab -->
+        <div id="projects" data-tab-content>
+            <h1>Projects</h1>
+            <div class="content-card">
+                <div class="project-item">
+                    <a href="https://github.com/ShankyShako/Racket-Parser" target="_blank">Racket Parser</a>
+                    <span> (2024)</span>
+                </div>
+                <div class="project-item">
+                    <a href="https://github.com/ShankyShako/PhoneBook" target="_blank">Phonebook Management System</a>
+                    <span> (2024)</span>
+                </div>
+                <div class="project-item">
+                    <a href="https://github.com/ShankyShako/SOS-Game" target="_blank">SOS Game Implementation</a>
+                    <span> (2023)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Research Tab -->
+        <div id="research" data-tab-content>
+            <h1>Research</h1>
+            <div class="content-card">
+                <div class="research-item">
+                    <a href="https://github.com/ShankyShako/RansomWare-Detection-Models" target="_blank">Ransomware Detection for Critical Infrastructures</a>
+                    <span> (2024)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Work Experience Tab -->
+        <div id="experience" data-tab-content>
+            <h1>Work Experience</h1>
+            <div class="content-card">
+                <div class="experience-item">
+                    <h3>UMKC NSF REU AI-Empowered Cybersecurity, Kansas City, Missouri — <u>Coding Internship</u></h3>
+                    <span class="experience-date">June 2024 - August 2024</span>
+                    <p>
+                        Research project to develop a robust model using Large Language Models to detect ransomware through Industrial Control Systems. Using multilevel Classification I achieved 99% accuracy for binary classification and 85% accuracy for a 0-11 classification scale. Paper was accepted and presented at IEEE Big Data 2024. Received an NSF CISE REU Travel Grant to attend IEEE International Conference.
+                    </p>
+                </div>
+
+                <div class="experience-item">
+                    <h3>Mizzou NSF REU Program, Columbia, Missouri — <u>Coding Internship</u></h3>
+                    <span class="experience-date">May 2023 - July 2023</span>
+                    <p>
+                        Research project to develop an AI model that detects/predicts cybersickness. Created a transformer machine learning model that could detect cybersickness with an 85% accuracy in a 1-10 severity scale.
+                    </p>
+                </div>
+
+                <div class="experience-item">
+                    <h3>Undergrad NASA Project, Kansas City, Missouri — <u>Coding Internship</u></h3>
+                    <span class="experience-date">December 2021 - April 2022</span>
+                    <p>
+                        Researched on AI used to simulate transmissions to outer space and calculate the strength of the signals. Created an interface where you can interact with the AI model and determine the recommended frequency for certain circumstances.
+                    </p>
+                </div>
+
+                <div class="experience-item">
+                    <h3>SPCN - 2020 and IEEE Brain Initiative BDBC Conference, Taiwan — <u>Web Master</u></h3>
+                    <span class="experience-date">August 2020 - September 2020</span>
+                    <p>
+                        Set up conference website for the 5th International Symposium on Audio and Video Signal Processing in the Context of Neurotechnology, with reliable communication and updates to the website's needs. The conference was conducted remotely through multiple worldwide locations.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Tab -->
+        <div id="contact" data-tab-content>
+            <h1>Contact Info</h1>
+            <div class="content-card contact-info">
+                <p><strong>Phone:</strong> (913) 260-8912</p>
+                <p><strong>Email:</strong> <a href="mailto:Genova.Mongalo@gmail.com?subject=Inquiry%20from%20Website&body=I%20would%20like%20to%20know%20more%20about...">Genova.Mongalo@gmail.com</a></p>
+                <p><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/gmongalo/" target="_blank">linkedin.com/in/gmongalo</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Anti-inspect element detection
+        const redirectUrl = 'https://www.youtube.com/watch?v=ntuH3q5gfo4';
+
+        // Detect right-click inspect
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            return false;
+        });
+
+        // Detect F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
+        document.addEventListener('keydown', (e) => {
+            if (e.keyCode === 123 || // F12
+                (e.ctrlKey && e.shiftKey && e.keyCode === 73) || // Ctrl+Shift+I
+                (e.ctrlKey && e.shiftKey && e.keyCode === 74) || // Ctrl+Shift+J
+                (e.ctrlKey && e.keyCode === 85)) { // Ctrl+U
+                e.preventDefault();
+                window.location.href = redirectUrl;
+                return false;
+            }
+        });
+
+        // DevTools detection using debugger timing
+        let devtoolsOpen = false;
+        const devtoolsCheck = () => {
+            const startTime = performance.now();
+            debugger; // This pauses execution if DevTools is open
+            const endTime = performance.now();
+
+            // If debugger statement caused a significant delay (>100ms), DevTools is likely open
+            if (endTime - startTime > 100) {
+                if (!devtoolsOpen) {
+                    devtoolsOpen = true;
+                    window.location.href = redirectUrl;
+                }
+            }
+        };
+
+        // Check periodically, but not too frequently
+        setInterval(devtoolsCheck, 1000);
+
+        // Elmo decoy image functionality
+        const profileContainer = document.querySelector('.profile-container');
+        const realImage = document.querySelector('.profile-image');
+        const decoyImage = document.querySelector('.decoy-image');
+
+        if (profileContainer) {
+            // Make the decoy image the one that gets downloaded
+            profileContainer.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                // Temporarily swap z-index so decoy is on top
+                realImage.style.opacity = '0';
+                decoyImage.style.opacity = '1';
+                decoyImage.style.pointerEvents = 'auto';
+
+                // Reset after a short delay
+                setTimeout(() => {
+                    realImage.style.opacity = '1';
+                    decoyImage.style.opacity = '0';
+                    decoyImage.style.pointerEvents = 'none';
+                }, 100);
+
+                return false;
+            });
+
+            // Prevent dragging the real image
+            realImage.addEventListener('dragstart', (e) => {
+                e.preventDefault();
+                return false;
+            });
+
+            decoyImage.addEventListener('dragstart', (e) => {
+                e.preventDefault();
+                return false;
+            });
+        }
+
+        // Tab functionality
+        const tabs = document.querySelectorAll('[data-tab-target]');
+        const tabContents = document.querySelectorAll('[data-tab-content]');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const target = document.querySelector(tab.dataset.tabTarget);
+
+                // Remove active class from all tabs and contents
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                target.classList.add('active');
+
+                // Scroll to top smoothly
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        });
+    </script>
+</body>
 </html>
