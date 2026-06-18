@@ -1152,9 +1152,9 @@
         </div>
     </div>
 
-    <!-- Background music (local files, crossfaded between themes) -->
-    <audio id="audio-light" src="audio/light.mp3" loop preload="auto"></audio>
-    <audio id="audio-elmo" src="audio/elmo.mp3" loop preload="auto"></audio>
+    <!-- Background music: two decks that crossfade between tracks -->
+    <audio id="deck-a" preload="auto"></audio>
+    <audio id="deck-b" preload="auto"></audio>
 
     <div id="audio-bar" title="Music">
         <button id="audio-toggle" type="button" aria-label="Toggle sound">&#9835;</button>
@@ -1355,20 +1355,31 @@
             if (e.key === 'Escape') closeModal();
         });
 
-        // ===== Background music engine (crossfade between light/elmo) =====
-        const lightAudio = document.getElementById('audio-light');
-        const elmoAudio  = document.getElementById('audio-elmo');
-        const volSlider  = document.getElementById('audio-vol');
-        const muteBtn    = document.getElementById('audio-toggle');
+        // ===== Background music engine =====
+        // Two decks crossfade between tracks. Each theme has a 2-song
+        // playlist that alternates and loops; the starting song is random.
+        const deckA = document.getElementById('deck-a');
+        const deckB = document.getElementById('deck-b');
+        const decks = [deckA, deckB];
+        const volSlider = document.getElementById('audio-vol');
+        const muteBtn   = document.getElementById('audio-toggle');
 
-        const FADE_MS = 700;          // quick but smooth crossfade
+        const playlists = {
+            light: ['audio/light1.mp3', 'audio/light2.mp3'],
+            elmo:  ['audio/elmo1.mp3', 'audio/elmo2.mp3']
+        };
+
+        const FADE_MS = 700;                 // crossfade length
+        const FADE_SEC = FADE_MS / 1000;
         let masterVol = parseFloat(volSlider.value);
         let muted = false;
-        let started = false;          // becomes true after first user gesture
-        let currentMode = 'light';    // which track should be active
+        let started = false;                 // true after first user gesture
+        let currentMode = 'light';
+        let trackIndex = 0;
+        let activeDeck = 0;
 
-        lightAudio.volume = 0;
-        elmoAudio.volume = 0;
+        deckA.volume = 0;
+        deckB.volume = 0;
 
         function fadeTo(audio, target, ms, pauseAtZero) {
             if (audio._fadeRAF) cancelAnimationFrame(audio._fadeRAF);
@@ -1377,43 +1388,70 @@
             (function step(now) {
                 const p = Math.min(1, (now - t0) / ms);
                 audio.volume = Math.max(0, Math.min(1, from + (target - from) * p));
-                if (p < 1) {
-                    audio._fadeRAF = requestAnimationFrame(step);
-                } else {
-                    audio._fadeRAF = null;
-                    if (pauseAtZero && target === 0) audio.pause();
-                }
+                if (p < 1) audio._fadeRAF = requestAnimationFrame(step);
+                else { audio._fadeRAF = null; if (pauseAtZero && target === 0) audio.pause(); }
             })(t0);
         }
 
-        const activeAudio = () => currentMode === 'elmo' ? elmoAudio : lightAudio;
-        const otherAudio  = () => currentMode === 'elmo' ? lightAudio : elmoAudio;
-
-        function playCurrent() {
-            if (!started || muted) return;
-            const a = activeAudio(), b = otherAudio();
-            a.play().catch(() => {});           // ignore if file missing / blocked
-            fadeTo(a, masterVol, FADE_MS);
-            fadeTo(b, 0, FADE_MS, true);
+        // Crossfade the idle deck (loaded with `url`) in, active deck out
+        function crossfadeTo(url) {
+            const incoming = decks[1 - activeDeck];
+            const outgoing = decks[activeDeck];
+            incoming.src = url;
+            try { incoming.currentTime = 0; } catch (e) {}
+            incoming.volume = 0;
+            incoming._advancing = false;
+            incoming.play().catch(() => {});     // ignore missing file / autoplay block
+            fadeTo(incoming, masterVol, FADE_MS);
+            fadeTo(outgoing, 0, FADE_MS, true);
+            activeDeck = 1 - activeDeck;
         }
 
+        function playTrack() {
+            if (!started || muted) return;
+            crossfadeTo(playlists[currentMode][trackIndex]);
+        }
+
+        function advance() {
+            const list = playlists[currentMode];
+            trackIndex = (trackIndex + 1) % list.length;   // alternate / loop
+            playTrack();
+        }
+
+        // Switch theme: pick a random starting song, then play it
         function setMode(mode) {
             currentMode = mode;
-            playCurrent();
+            trackIndex = Math.floor(Math.random() * playlists[mode].length);
+            playTrack();
         }
+
+        // Auto-advance with a crossfade just before each track ends
+        decks.forEach((d, i) => {
+            d.addEventListener('timeupdate', () => {
+                if (i !== activeDeck || muted || !started) return;
+                if (!d.duration || isNaN(d.duration)) return;
+                if (d.duration - d.currentTime <= FADE_SEC && !d._advancing) {
+                    d._advancing = true;
+                    advance();
+                }
+            });
+            d.addEventListener('ended', () => {            // fallback if fade missed
+                if (i === activeDeck && started && !muted) advance();
+            });
+        });
 
         // Start on the first user interaction (autoplay policy)
         function firstStart() {
             if (started) return;
             started = true;
-            playCurrent();
+            setMode(currentMode);                          // random first song
         }
         ['pointerdown', 'keydown', 'touchstart'].forEach(ev =>
             document.addEventListener(ev, firstStart));
 
         volSlider.addEventListener('input', () => {
             masterVol = parseFloat(volSlider.value);
-            if (started && !muted) activeAudio().volume = masterVol;
+            if (started && !muted) decks[activeDeck].volume = masterVol;
         });
 
         muteBtn.addEventListener('click', (e) => {
@@ -1422,11 +1460,11 @@
             muteBtn.classList.toggle('muted', muted);
             muteBtn.innerHTML = muted ? '&#9834;' : '&#9835;';
             if (muted) {
-                fadeTo(lightAudio, 0, 300, true);
-                fadeTo(elmoAudio, 0, 300, true);
+                fadeTo(deckA, 0, 300, true);
+                fadeTo(deckB, 0, 300, true);
             } else {
                 started = true;
-                playCurrent();
+                playTrack();
             }
         });
     </script>
