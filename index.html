@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="image/icon.png" type="image/x-icon">
     <title>Genova Mongalo - Computer Science Graduate</title>
+    <!-- Social-share preview uses the watermarked copy, never the clean master -->
+    <meta property="og:title" content="Genova Mongalo - Computer Science Graduate">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://shankyshako.github.io/image/decoy-watermarked.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://shankyshako.github.io/image/decoy-watermarked.jpg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -246,6 +252,24 @@
             width: 300px;
             height: 300px;
             margin: 0 auto;
+            /* Block the iOS long-press "Save Image" callout */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .profile-container img {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        /* Block casual save/drag on ALL images site-wide */
+        img {
+            -webkit-touch-callout: none;
+            -webkit-user-drag: none;
+            user-select: none;
         }
 
         .profile-image {
@@ -1263,35 +1287,58 @@
         const decoyImage = document.querySelector('.decoy-image');
         let elmoModeActive = false;
 
-        if (profileContainer) {
-            // Make the decoy image the one that gets downloaded
-            profileContainer.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                // Temporarily swap z-index so decoy is on top
+        function toggleElmo() {
+            elmoModeActive = !elmoModeActive;
+
+            if (elmoModeActive) {
+                // Activate Elmo theme
+                document.body.classList.add('elmo-theme');
                 realImage.style.opacity = '0';
                 decoyImage.style.opacity = '1';
                 decoyImage.style.pointerEvents = 'auto';
+                setMode('elmo');
+            } else {
+                // Deactivate Elmo theme
+                document.body.classList.remove('elmo-theme');
+                realImage.style.opacity = '1';
+                decoyImage.style.opacity = '0';
+                decoyImage.style.pointerEvents = 'none';
+                setMode('light');
+            }
+        }
 
-                elmoModeActive = !elmoModeActive;
-
-                if (elmoModeActive) {
-                    // Activate Elmo theme
-                    document.body.classList.add('elmo-theme');
-                    realImage.style.opacity = '0';
-                    decoyImage.style.opacity = '1';
-                    decoyImage.style.pointerEvents = 'auto';
-                    setMode('elmo');
-                } else {
-                    // Deactivate Elmo theme
-                    document.body.classList.remove('elmo-theme');
-                    realImage.style.opacity = '1';
-                    decoyImage.style.opacity = '0';
-                    decoyImage.style.pointerEvents = 'none';
-                    setMode('light');
-                }
-
+        if (profileContainer) {
+            // Desktop: right-click toggles Elmo mode
+            profileContainer.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                toggleElmo();
                 return false;
             });
+
+            // Mobile: long-press toggles Elmo mode (and blocks the save callout)
+            let pressTimer = null;
+            let longPressed = false;
+            const LONG_PRESS_MS = 500;
+
+            const startPress = (e) => {
+                longPressed = false;
+                pressTimer = setTimeout(() => {
+                    longPressed = true;
+                    toggleElmo();
+                    if (navigator.vibrate) navigator.vibrate(20); // subtle haptic
+                }, LONG_PRESS_MS);
+            };
+            const cancelPress = () => {
+                if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+            };
+
+            profileContainer.addEventListener('touchstart', startPress, { passive: true });
+            profileContainer.addEventListener('touchmove', cancelPress, { passive: true });
+            profileContainer.addEventListener('touchend', (e) => {
+                cancelPress();
+                if (longPressed) e.preventDefault(); // swallow the tap that follows
+            });
+            profileContainer.addEventListener('touchcancel', cancelPress);
 
             realImage.addEventListener('dragstart', (e) => {
                 e.preventDefault();
@@ -1303,6 +1350,12 @@
                 return false;
             });
         }
+
+        // Block casual right-click/drag saving on every image site-wide
+        document.querySelectorAll('img').forEach(img => {
+            img.addEventListener('contextmenu', (e) => { e.preventDefault(); return false; });
+            img.addEventListener('dragstart', (e) => { e.preventDefault(); return false; });
+        });
 
         // Tab functionality
         const tabs = document.querySelectorAll('[data-tab-target]');
