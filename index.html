@@ -481,6 +481,209 @@
             text-decoration: underline;
         }
 
+        /* ===== Shop ===== */
+        .shop-tagline {
+            display: block;
+            margin-top: 0.75rem;
+            color: var(--accent-gold);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        body.elmo-theme .shop-tagline { color: #FF0000; }
+
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0 4rem;
+        }
+
+        .product {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        body.elmo-theme .product {
+            background: rgba(0, 0, 0, 0.5);
+            border-color: rgba(255, 0, 0, 0.3);
+        }
+
+        .product:hover {
+            transform: translateY(-6px);
+            border-color: var(--accent-gold);
+            box-shadow: var(--shadow);
+        }
+
+        body.elmo-theme .product:hover { border-color: #FF0000; }
+
+        .product-frame {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background: rgba(0, 0, 0, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .product-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(35%) brightness(0.78);
+            transition: all 0.3s ease;
+        }
+
+        .product:hover .product-frame img {
+            filter: grayscale(0%) brightness(0.92);
+            transform: scale(1.04);
+        }
+
+        /* Fallback when artwork file isn't added yet */
+        .product-frame img.img-missing {
+            opacity: 0;
+        }
+
+        .product-frame img.img-missing + .sold-badge::after {
+            content: 'Add artwork to image/store/';
+            position: absolute;
+            top: calc(50% + 2.6rem);
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.65rem;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            font-weight: 400;
+        }
+
+        .sold-badge {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-8deg);
+            background: rgba(155, 17, 30, 0.5);
+            color: var(--text-light);
+            font-family: 'Playfair Display', serif;
+            font-weight: 900;
+            font-size: 1.4rem;
+            letter-spacing: 2px;
+            padding: 0.5rem 1.5rem;
+            border: 3px solid var(--accent-gold);
+            border-radius: 6px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+        }
+
+        body.elmo-theme .sold-badge {
+            background: rgba(0, 0, 0, 0.5);
+            border-color: #FF0000;
+            color: #FF0000;
+        }
+
+        .product-info {
+            padding: 1.25rem 1.5rem;
+        }
+
+        .product-info h3 {
+            margin: 0 0 0.4rem;
+            font-size: 1.1rem;
+        }
+
+        .product-info .price {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 1.05rem;
+        }
+
+        .product-info .price s {
+            color: rgba(255, 255, 255, 0.45);
+        }
+
+        /* ===== Sold Out Modal ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal-box {
+            position: relative;
+            background: linear-gradient(135deg, var(--primary-red), var(--dark-red));
+            border: 2px solid var(--accent-gold);
+            border-radius: 20px;
+            padding: 2.5rem;
+            max-width: 460px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+        }
+
+        body.elmo-theme .modal-box {
+            background: linear-gradient(135deg, #1a0000, #000);
+            border-color: #FF0000;
+        }
+
+        .modal-eyebrow {
+            font-size: 2.4rem;
+            margin: 0 0 1rem;
+            color: var(--accent-gold);
+        }
+
+        body.elmo-theme .modal-eyebrow { color: #FF0000; }
+
+        .modal-gif {
+            width: 100%;
+            max-width: 260px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            margin: 0 auto 1.25rem;
+            display: block;
+        }
+
+        .modal-gif.img-missing { display: none; }
+
+        .modal-msg {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'Playfair Display', serif;
+            margin: 0 0 0.5rem;
+            color: var(--text-light);
+        }
+
+        .modal-sub {
+            margin: 0;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 0.75rem;
+            right: 1.25rem;
+            font-size: 2rem;
+            line-height: 1;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .modal-close:hover { color: var(--accent-gold); }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             h1 {
@@ -543,6 +746,7 @@
             <li data-tab-target="#projects" class="tab">Projects</li>
             <li data-tab-target="#research" class="tab">Research</li>
             <li data-tab-target="#experience" class="tab">Experience</li>
+            <li data-tab-target="#shop" class="tab">Shop</li>
             <li data-tab-target="#contact" class="tab">Contact</li>
         </ul>
 
@@ -692,14 +896,23 @@
                 <div class="project-item">
                     <a href="https://github.com/ShankyShako/Racket-Parser" target="_blank">Racket Parser</a>
                     <span> (2024)</span>
+                    <p>
+                        A custom parser built in Racket for a small artificial programming language inspired by FORTRAN. It reads .txt source files, validates syntax based on a defined grammar, and reports precise error lines when invalid constructs are encountered. This project demonstrates understanding of language grammars, recursive parsing techniques, and working with DrRacket tools to implement language analysis.
+                    </p>
                 </div>
                 <div class="project-item">
                     <a href="https://github.com/ShankyShako/PhoneBook" target="_blank">Phonebook Management System</a>
                     <span> (2024)</span>
+                    <p>
+                        A Java-based phonebook management application that integrates with Dolphin SQL for persistent storage. It supports user registration with secure password handling, contact addition/update/deletion, search functionality, and CSV export. Developed using Eclipse, this project highlights practical database integration, user interaction design, and CRUD operation management in a desktop application.
+                    </p>
                 </div>
                 <div class="project-item">
                     <a href="https://github.com/ShankyShako/SOS-Game" target="_blank">SOS Game Implementation</a>
                     <span> (2023)</span>
+                    <p>
+                        An implementation of the classic SOS paper-and-pencil game designed to explore software development workflows using Scrum methodology. Written in Python, this project reflects iterative development practices, automated testing, and simple game logic implementation. It’s a great example of applying agile principles to deliver a functional interactive game while learning team processes.
+                    </p>
                 </div>
             </div>
         </div>
@@ -750,6 +963,135 @@
                         Engineered an AI-driven simulation of space-bound transmissions as part of a NASA-funded initiative analyzing signal propagation and identifying optimal frequency bands under varying conditions. Developed an interactive interface to visualize transmission strength and provide adaptive frequency recommendations based on environmental parameters.
                     </p>
                 </div>
+                <div class="experience-item">
+                    <h3>SPCN - 2020 and IEEE Brain Initiative BDBC Conference, Taiwan — <u>Web Master</u></h3>
+                    <span class="experience-date">August 2020 - September 2020</span>
+                    <p>
+                        Set up conference website for the 5th International Symposium on Audio and Video Signal Processing in the Context of Neurotechnology, with reliable communication and updates to the website’s needs. The conference was conducted remotely through multiple worldwide locations.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shop Tab -->
+        <div id="shop" data-tab-content>
+            <h1>Shop</h1>
+            <div class="content-card">
+                <p class="intro-text" style="text-align:center; margin-bottom:0;">
+                    Hand-made originals. Limited runs. One of one.
+                    <span class="shop-tagline">Every piece is currently <strong>sold out</strong>. Restocking soon...</span>
+                </p>
+            </div>
+
+            <div class="shop-grid">
+                <!-- Each product: data-title + data-price feed the popup -->
+                <div class="product" data-title="Smurfed " data-price="$14">
+                    <div class="product-frame">
+                        <img src="image/store/among-us.jpg" alt="Handcut felt Among Us sticker"
+                             onerror="this.classList.add('img-missing')">
+                        <span class="sold-badge">SOLD OUT</span>
+                    </div>
+                    <div class="product-info">
+                        <h3>Smurfed — Handcut Felt Sticker</h3>
+                        <p class="price"><s>$14</s></p>
+                    </div>
+                </div>
+
+                <div class="product" data-title="Moyai" data-price="$45">
+                    <div class="product-frame">
+                        <img src="image/store/moai.jpg" alt="Moyai napkin ink drawing"
+                             onerror="this.classList.add('img-missing')">
+                        <span class="sold-badge">SOLD OUT</span>
+                    </div>
+                    <div class="product-info">
+                        <h3>Moyai (Original, 1 of 1)</h3>
+                        <p class="price"><s>$45</s></p>
+                    </div>
+                </div>
+
+                <div class="product" data-title="Portrait of a Frog" data-price="$120">
+                    <div class="product-frame">
+                        <img src="image/store/kermit.png" alt="Kermit portrait study"
+                             onerror="this.classList.add('img-missing')">
+                        <span class="sold-badge">SOLD OUT</span>
+                    </div>
+                    <div class="product-info">
+                        <h3>Portrait of a Frog (Oil Study)</h3>
+                        <p class="price"><s>$120</s></p>
+                    </div>
+                </div>
+
+                <div class="product" data-title="Strings" data-price="$90">
+                    <div class="product-frame">
+                        <img src="image/store/strings.jpg" alt="Ink study of two stringed instruments"
+                             onerror="this.classList.add('img-missing')">
+                        <span class="sold-badge">SOLD OUT</span>
+                    </div>
+                    <div class="product-info">
+                        <h3>Strings — Ink Study</h3>
+                        <p class="price"><s>$90</s></p>
+                    </div>
+                </div>
+
+                <div class="product" data-title="Plumber, Abstracted" data-price="$140">
+                    <div class="product-frame">
+                        <img src="image/store/mario.jpg" alt="Abstract Mario portrait"
+                             onerror="this.classList.add('img-missing')">
+                        <span class="sold-badge">SOLD OUT</span>
+                    </div>
+                    <div class="product-info">
+                        <h3>Plumber, Abstracted (Original)</h3>
+                        <p class="price"><s>$140</s></p>
+                    </div>
+                </div>
+
+                <div class="product" data-title="FOOD" data-price="$180">
+                    <div class="product-frame">
+                        <img src="image/store/fpdd.jpg" alt="FOOD digital illustration"
+                             onerror="this.classList.add('img-missing')">
+                        <span class="sold-badge">SOLD OUT</span>
+                    </div>
+                    <div class="product-info">
+                        <h3>FOOD (Digital Original)</h3>
+                        <p class="price"><s>$180</s></p>
+                    </div>
+                </div>
+
+                <div class="product" data-title="Paradise" data-price="$750">
+                    <div class="product-frame">
+                        <img src="image/store/paradise.jpg" alt="Palm tree paradise oil painting"
+                             onerror="this.classList.add('img-missing')">
+                        <span class="sold-badge">SOLD OUT</span>
+                    </div>
+                    <div class="product-info">
+                        <h3>Paradise — Oil on Canvas</h3>
+                        <p class="price"><s>$750</s></p>
+                    </div>
+                </div>
+
+                <div class="product" data-title="The Whole Collection" data-price="$1,999">
+                    <div class="product-frame">
+                        <img src="image/store/collection.jpg" alt="The full collection bundle"
+                             onerror="this.classList.add('img-missing')">
+                        <span class="sold-badge">SOLD OUT</span>
+                    </div>
+                    <div class="product-info">
+                        <h3>The Whole Collection</h3>
+                        <p class="price"><s>$1,999</s></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sold Out Popup -->
+        <div id="sold-modal" class="modal-overlay">
+            <div class="modal-box">
+                <span class="modal-close">&times;</span>
+                <h2 class="modal-eyebrow">Too late.</h2>
+                <img class="modal-gif" src="image/store/sold-out.gif" alt="Sold out"
+                     onerror="this.classList.add('img-missing')">
+                <p class="modal-msg">Sold out. <span id="modal-item"></span></p>
+                <p class="modal-sub">Should've been faster.</p>
             </div>
         </div>
 
@@ -765,16 +1107,14 @@
     </div>
 
     <script>
-        // Anti-inspect element detection
         const redirectUrl = 'https://www.youtube.com/watch?v=ntuH3q5gfo4';
 
-        // Detect right-click inspect
+
 <!--        document.addEventListener('contextmenu', (e) => {-->
 <!--            e.preventDefault();-->
 <!--            return false;-->
 <!--        });-->
 
-        // Detect F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
         document.addEventListener('keydown', (e) => {
             // F12
             if (e.keyCode === 123) {
@@ -783,7 +1123,6 @@
                 return false;
             }
 
-            // Ctrl+Shift+I or Cmd+Option+I (Mac Inspector)
             if ((e.ctrlKey && e.shiftKey && e.keyCode === 73) ||
                 (e.metaKey && e.altKey && e.keyCode === 73)) {
                 e.preventDefault();
@@ -791,7 +1130,6 @@
                 return false;
             }
 
-            // Ctrl+P
             if ((e.ctrlKey && e.keyCode === 80) ||
                 (e.metaKey && e.keyCode === 80)) {
                 e.preventDefault();
@@ -799,7 +1137,6 @@
                 return false;
             }
 
-            // Ctrl+Shift+C or Cmd+Option+C (Mac Element Inspector)
             if ((e.ctrlKey && e.shiftKey && e.keyCode === 67) ||
                 (e.metaKey && e.altKey && e.keyCode === 67) ||
                 (e.metaKey && e.shiftKey && e.keyCode === 67)) {
@@ -808,7 +1145,6 @@
                 return false;
             }
 
-            // Ctrl+Shift+J or Cmd+Option+J (Mac Console)
             if ((e.ctrlKey && e.shiftKey && e.keyCode === 74) ||
                 (e.metaKey && e.altKey && e.keyCode === 74) ||
                 (e.metaKey && e.shiftKey && e.keyCode === 74)) {
@@ -817,7 +1153,6 @@
                 return false;
             }
 
-            // Ctrl+U or Cmd+U (View Source)
             if ((e.ctrlKey && e.keyCode === 85) ||
                 (e.metaKey && e.keyCode === 85)) {
                 e.preventDefault();
@@ -826,10 +1161,8 @@
             }
         });
 
-        // DevTools detection - multiple methods for immediate detection
         let devtoolsOpen = false;
 
-        // Method 1: Check window size difference (DevTools takes up space)
         const checkDevTools = () => {
             const widthThreshold = window.outerWidth - window.innerWidth > 160;
             const heightThreshold = window.outerHeight - window.innerHeight > 160;
@@ -840,7 +1173,6 @@
             }
         };
 
-        // Method 2: Debugger statement timing
         const debuggerCheck = () => {
             const before = new Date().getTime();
             debugger;
@@ -852,7 +1184,6 @@
             }
         };
 
-        // Method 3: Console detection
         const element = new Image();
         Object.defineProperty(element, 'id', {
             get: function() {
@@ -863,7 +1194,6 @@
             }
         });
 
-        // Run checks frequently
         setInterval(() => {
             checkDevTools();
             debuggerCheck();
@@ -871,10 +1201,8 @@
             console.clear();
         }, 500);
 
-        // Also check on window resize
         window.addEventListener('resize', checkDevTools);
 
-        // Elmo decoy image functionality
         const profileContainer = document.querySelector('.profile-container');
         const realImage = document.querySelector('.profile-image');
         const decoyImage = document.querySelector('.decoy-image');
@@ -908,7 +1236,6 @@
                 return false;
             });
 
-            // Prevent dragging the real image
             realImage.addEventListener('dragstart', (e) => {
                 e.preventDefault();
                 return false;
@@ -939,6 +1266,36 @@
                 // Scroll to top smoothly for clean view
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             });
+        });
+
+        // Sold-out popup
+        const soldModal = document.getElementById('sold-modal');
+        const modalItem = document.getElementById('modal-item');
+        const modalClose = document.querySelector('.modal-close');
+
+        const modalGif = document.querySelector('.modal-gif');
+        const gifPool = ['image/store/sold-out.gif', 'image/store/cry-about-it.gif'];
+
+        document.querySelectorAll('.product').forEach(product => {
+            product.addEventListener('click', () => {
+                const title = product.dataset.title || '';
+                modalItem.textContent = title ? `"${title}" is gone.` : '';
+                // 50/50 coin flip on which gif shows
+                if (modalGif) {
+                    modalGif.classList.remove('img-missing');
+                    modalGif.src = gifPool[Math.random() < 0.5 ? 0 : 1];
+                }
+                soldModal.classList.add('open');
+            });
+        });
+
+        const closeModal = () => soldModal.classList.remove('open');
+        if (modalClose) modalClose.addEventListener('click', closeModal);
+        if (soldModal) soldModal.addEventListener('click', (e) => {
+            if (e.target === soldModal) closeModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
         });
     </script>
 </body>
