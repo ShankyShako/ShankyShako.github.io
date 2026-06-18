@@ -714,7 +714,7 @@
             bottom: 1.2rem;
             right: 1.2rem;
             z-index: 600;
-            display: flex;
+            display: none;
             align-items: center;
             gap: 0.7rem;
             background: rgba(0, 0, 0, 0.55);
@@ -725,6 +725,8 @@
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
             transition: all 0.5s ease;
         }
+
+        #audio-bar.revealed { display: flex; }
 
         body.elmo-theme #audio-bar {
             border-color: rgba(255, 0, 0, 0.7);
@@ -1288,6 +1290,7 @@
         let elmoModeActive = false;
 
         function toggleElmo() {
+            activateAudio();                 // first photo interaction starts the music
             elmoModeActive = !elmoModeActive;
 
             if (elmoModeActive) {
@@ -1493,14 +1496,14 @@
             });
         });
 
-        // Start on the first user interaction (autoplay policy)
-        function firstStart() {
+        // Music stays OFF until the profile photo is used (Elmo toggle).
+        // Once activated, it stays on permanently and reveals the volume bar.
+        function activateAudio() {
             if (started) return;
             started = true;
-            setMode(currentMode);                          // random first song
+            const bar = document.getElementById('audio-bar');
+            if (bar) bar.classList.add('revealed');
         }
-        ['pointerdown', 'keydown', 'touchstart'].forEach(ev =>
-            document.addEventListener(ev, firstStart));
 
         volSlider.addEventListener('input', () => {
             masterVol = parseFloat(volSlider.value);
@@ -1515,8 +1518,7 @@
             if (muted) {
                 fadeTo(deckA, 0, 300, true);
                 fadeTo(deckB, 0, 300, true);
-            } else {
-                started = true;
+            } else if (started) {
                 playTrack();
             }
         });
