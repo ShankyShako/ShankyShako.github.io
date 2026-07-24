@@ -874,43 +874,52 @@
                     Starting August 2025
                 </p>
 
-                <h2>Relevant Coursework</h2>
+                <h2>Graduate Coursework</h2>
+                <p class="intro-text"><em>Georgia Tech — M.S. in Computer Science (AI emphasis)</em></p>
 
                 <ul class="bullet-list">
-                    <li>Artificial Intelligence
+                    <li>Deep Learning
                         <ul class="sub-bullet">
-                            <li>Foundational knowledge of AI concepts and techniques</li>
-                            <li>Exposure to machine learning, natural language processing, and expert systems</li>
+                            <li>Neural network architectures: CNNs, RNNs, and transformers</li>
+                            <li>Training, optimization, and regularization of deep models at scale</li>
+                        </ul>
+                    </li>
+                    <li>Reinforcement Learning
+                        <ul class="sub-bullet">
+                            <li>Markov decision processes, value-based and policy-gradient methods</li>
+                            <li>Reward design and sequential decision-making for autonomous agents</li>
                         </ul>
                     </li>
                     <li>Machine Learning
                         <ul class="sub-bullet">
-                            <li>Advanced study of machine learning algorithms and applications</li>
-                            <li>Hands-on experience with model training and evaluation</li>
+                            <li>Supervised and unsupervised learning algorithms and applications</li>
+                            <li>Model training, evaluation, and generalization</li>
                         </ul>
                     </li>
-                    <li>Algorithms & Complexity
+                    <li>Artificial Intelligence
                         <ul class="sub-bullet">
-                            <li>Knowledge of fundamental algorithms and data structures</li>
-                            <li>Ability to analyze the efficiency and complexity of computational problems</li>
+                            <li>Search, knowledge representation, planning, and reasoning</li>
+                            <li>Foundational AI techniques underpinning modern ML systems</li>
                         </ul>
                     </li>
-                    <li>Discrete Structures I & II
+                    <li>Brain &amp; Cognitive Science
                         <ul class="sub-bullet">
-                            <li>Foundational mathematical concepts essential for computer science</li>
-                            <li>Understanding of logic, sets, relations, and proof techniques</li>
+                            <li>Computational models of perception, memory, and learning</li>
+                            <li>Neuroscience principles that inspire AI architectures</li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <h2>Core Foundations</h2>
+                <ul class="bullet-list">
+                    <li>Algorithms &amp; Complexity
+                        <ul class="sub-bullet">
+                            <li>Algorithm design and analysis of computational complexity</li>
                         </ul>
                     </li>
                     <li>Data Structures
                         <ul class="sub-bullet">
-                            <li>Knowledge of how data is organized, stored, and accessed in computer memory</li>
-                            <li>Proficiency in working with various data structures and their associated algorithms</li>
-                        </ul>
-                    </li>
-                    <li>Database Management Systems
-                        <ul class="sub-bullet">
-                            <li>Understanding of relational database design and SQL queries</li>
-                            <li>Familiarity with database management principles and administration</li>
+                            <li>Efficient organization, storage, and access of data</li>
                         </ul>
                     </li>
                 </ul>
@@ -966,6 +975,13 @@
             <h1>Projects</h1>
             <div class="content-card">
                 <div class="project-item">
+                    <a href="https://github.com/ShankyShako/Federated-BlockChain" target="_blank">Federated Blockchain — Model Registry</a>
+                    <span> (2025–2026)</span>
+                    <p>
+                        A federated-learning model registry on Ethereum that lets nodes share and audit machine-learning models without putting large weights on-chain. Solidity smart contracts (FederatedModelStorage, FederatedLedger, and an ERC-20 FederatedToken), deployed with Hardhat and tested on Ganache, record each model's IPFS content ID on-chain. Trained models — including the ALBERT ransomware classifier from my research — are exported as self-describing bundles, uploaded to IPFS, and registered via either a Node.js script or a React/Vite frontend with MetaMask wallet integration. Includes an automated Hardhat test suite verifying a model CID round-trips through all three contracts.
+                    </p>
+                </div>
+                <div class="project-item">
                     <a href="https://github.com/ShankyShako/Racket-Parser" target="_blank">Racket Parser</a>
                     <span> (2024)</span>
                     <p>
@@ -995,7 +1011,10 @@
             <div class="content-card">
                 <div class="research-item">
                     <a href="https://github.com/ShankyShako/RansomWare-Detection-Models" target="_blank">Ransomware Detection for Critical Infrastructures</a>
-                    <span> (2024)</span>
+                    <span> (2024–2026)</span>
+                    <p>
+                        A comparative study of deep-learning and transformer models for detecting and classifying ransomware from Windows API-call features, aimed at Industrial Control Systems. Each model predicts at three levels simultaneously — binary (benign vs. malicious), coarse family group, and specific family (12 classes) — and is evaluated under three feature-engineering setups (baseline, autoencoder, and K-Means clustering). The pipeline compares a DNN, a 1-D CNN, and RoBERTa- and ALBERT-style transformers against classical baselines, using chi-squared feature selection to reduce ~31,000 features to the most informative 1,000 and class-weighting to handle rare families. The reproducible PyTorch/scikit-learn pipeline reaches ~98% accuracy on binary detection, with early stopping and weight sharing (ALBERT) used to control overfitting on the small dataset. GPU-accelerated on Apple Silicon via Metal.
+                    </p>
                 </div>
             </div>
         </div>

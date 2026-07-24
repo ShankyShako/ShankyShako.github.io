@@ -1,0 +1,40 @@
+name: Build Resume PDF
+
+# Recompiles resume/Resume.tex into files/Resume.pdf (the file the site shows)
+# whenever the LaTeX source changes. Also runnable manually from the Actions tab.
+on:
+  push:
+    paths:
+      - 'resume/**'
+      - '.github/workflows/build-resume.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Compile LaTeX -> PDF
+        uses: xu-cheng/latex-action@v3
+        with:
+          working_directory: resume
+          root_file: Resume.tex
+
+      - name: Publish PDF into the site
+        run: |
+          mkdir -p files
+          cp resume/Resume.pdf files/Resume.pdf
+
+      - name: Commit updated PDF
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add files/Resume.pdf
+          # Only commit if the PDF actually changed
+          git diff --staged --quiet || git commit -m "Auto-build Resume.pdf from LaTeX"
+          git push
