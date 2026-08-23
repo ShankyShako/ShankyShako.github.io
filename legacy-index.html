@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="image/favicon-32.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="image/favicon-16.png" type="image/png" sizes="16x16">
+    <link rel="shortcut icon" href="image/favicon.ico">
+    <link rel="apple-touch-icon" href="image/apple-touch-icon.png">
+    <title>Genova Mongalo - AI Engineer</title>
+    <!-- Social-share preview uses the watermarked copy, never the clean master -->
+    <meta property="og:title" content="Genova Mongalo - AI Engineer">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://gmango.dev/image/decoy-watermarked.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://gmango.dev/image/decoy-watermarked.jpg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-red: #9B111E;
+            --dark-red: #6B0C15;
+            --accent-gold: #D4AF37;
+            --light-cream: #F5F1E8;
+            --dark-bg: #1A1A1A;
+            --text-light: #FFFFFF;
+            --text-muted: rgba(255, 255, 255, 0.75);
+            --shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Alternate theme - activated by Elmo */
+        body.elmo-theme {
+            --primary-red: #0A0A0A;
+            --dark-red: #000000;
+            --accent-gold: #FF0000;
+            --light-cream: #1A1A1A;
+            --dark-bg: #000000;
+            --text-light: #FFFFFF;
+            --text-muted: rgba(255, 255, 255, 0.6);
+            --shadow: 0 10px 40px rgba(255, 0, 0, 0.3);
+        }
+
+        body.elmo-theme::before {
+            background:
+                radial-gradient(circle at 20% 50%, rgba(255, 0, 0, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(0, 0, 0, 0.4) 0%, transparent 50%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background: linear-gradient(135deg, var(--primary-red) 0%, var(--dark-red) 100%);
+            color: var(--text-light);
+            line-height: 1.7;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            transition: background 0.5s ease;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(0, 0, 0, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Navigation Tabs */
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 2rem 0;
+            list-style: none;
+            justify-content: center;
+            position: sticky;
+            top: 0;
+            background: rgba(155, 17, 30, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transition: all 0.5s ease;
+        }
+
+        body.elmo-theme .tabs {
+            background: rgba(0, 0, 0, 0.95);
+            box-shadow: 0 4px 20px rgba(255, 0, 0, 0.3);
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+
+        body.elmo-theme .tab {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            border-color: var(--accent-gold);
+        }
+
+        body.elmo-theme .tab:hover {
+            background: rgba(255, 0, 0, 0.3);
+            border-color: #FF0000;
+        }
+
+        .tab.active {
+            background: var(--accent-gold);
+            color: var(--dark-bg);
+            border-color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        body.elmo-theme .tab.active {
+            background: #FF0000;
+            color: #000000;
+            border-color: #FF0000;
+        }
+
+        /* Content Area */
+        [data-tab-content] {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        [data-tab-content].active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Typography */
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 4rem;
+            font-weight: 900;
+            text-align: center;
+            margin: 3rem 0 2rem;
+            background: linear-gradient(135deg, var(--text-light), var(--accent-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -2px;
+            transition: all 0.5s ease;
+        }
+
+        body.elmo-theme h1 {
+            background: linear-gradient(135deg, #FF0000, #C4A484);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            margin: 2.5rem 0 1.5rem;
+            color: var(--accent-gold);
+            font-weight: 700;
+            transition: color 0.5s ease;
+        }
+
+        body.elmo-theme h2 {
+            color: #FF0000;
+        }
+
+        h3 {
+            font-size: 1.4rem;
+            margin: 2rem 0 1rem;
+            color: var(--accent-gold);
+            font-weight: 600;
+            transition: color 0.5s ease;
+        }
+
+        body.elmo-theme h3 {
+            color: #FF0000;
+        }
+
+        /* Content Sections */
+        .content-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 3rem;
+            margin: 2rem 0;
+            box-shadow: var(--shadow);
+            transition: all 0.5s ease;
+        }
+
+        body.elmo-theme .content-card {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            box-shadow: 0 10px 40px rgba(255, 0, 0, 0.2);
+        }
+
+        .intro-text {
+            font-size: 1.1rem;
+            line-height: 2;
+            margin-bottom: 2rem;
+            color: var(--text-muted);
+        }
+
+        /* Profile Image */
+        .profile-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 3rem 0;
+        }
+
+        .profile-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+            /* Block the iOS long-press "Save Image" callout */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .profile-container img {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        /* Block casual save/drag on ALL images site-wide */
+        img {
+            -webkit-touch-callout: none;
+            -webkit-user-drag: none;
+            user-select: none;
+        }
+
+        .profile-image {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid var(--accent-gold);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        body.elmo-theme .profile-image {
+            border-color: #FF0000;
+            box-shadow: 0 20px 60px rgba(255, 0, 0, 0.6);
+        }
+
+        .profile-image:hover {
+            transform: scale(1.05);
+        }
+
+        .decoy-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid #FF0000;
+            box-shadow: 0 20px 60px rgba(255, 0, 0, 0.6);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        /* Resume Section */
+        .resume-frame {
+            display: flex;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+
+        .resume-frame iframe {
+            border-radius: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Lists */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .skill-card {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 2rem;
+            border-radius: 15px;
+            border-left: 4px solid var(--accent-gold);
+            transition: all 0.3s ease;
+        }
+
+        body.elmo-theme .skill-card {
+            background: rgba(255, 0, 0, 0.1);
+            border-left-color: #FF0000;
+        }
+
+        .skill-card:hover {
+            transform: translateX(10px);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        body.elmo-theme .skill-card:hover {
+            background: rgba(255, 0, 0, 0.2);
+        }
+
+        ul.bullet-list {
+            list-style: none;
+            margin: 1rem 0;
+        }
+
+        ul.bullet-list > li {
+            padding: 0.75rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            font-size: 1.05rem;
+        }
+
+        ul.bullet-list > li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: var(--accent-gold);
+            font-size: 1.2rem;
+            transition: color 0.5s ease;
+        }
+
+        body.elmo-theme ul.bullet-list > li::before {
+            color: #FF0000;
+        }
+
+        ul.sub-bullet {
+            margin-left: 2rem;
+            margin-top: 0.5rem;
+            list-style: none;
+        }
+
+        ul.sub-bullet li {
+            padding: 0.4rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        ul.sub-bullet li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: rgba(212, 175, 55, 0.6);
+        }
+
+        /* Project Links */
+        .project-item, .research-item {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 12px;
+            border-left: 4px solid var(--accent-gold);
+            transition: all 0.3s ease;
+        }
+
+        body.elmo-theme .project-item,
+        body.elmo-theme .research-item {
+            background: rgba(255, 0, 0, 0.1);
+            border-left-color: #FF0000;
+        }
+
+        .project-item:hover, .research-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateX(10px);
+        }
+
+        body.elmo-theme .project-item:hover,
+        body.elmo-theme .research-item:hover {
+            background: rgba(255, 0, 0, 0.2);
+        }
+
+        .project-item a, .research-item a {
+            color: var(--accent-gold);
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        body.elmo-theme .project-item a,
+        body.elmo-theme .research-item a {
+            color: #FF0000;
+        }
+
+        .project-item a:hover, .research-item a:hover {
+            color: var(--text-light);
+        }
+
+        /* Work Experience */
+        .experience-item {
+            margin: 2.5rem 0;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border-left: 4px solid var(--accent-gold);
+            transition: all 0.5s ease;
+        }
+
+        body.elmo-theme .experience-item {
+            background: rgba(255, 0, 0, 0.1);
+            border-left-color: #FF0000;
+        }
+
+        .experience-item h3 {
+            margin-top: 0;
+            font-size: 1.3rem;
+        }
+
+        .experience-item u {
+            color: var(--accent-gold);
+            transition: color 0.5s ease;
+        }
+
+        body.elmo-theme .experience-item u {
+            color: #FF0000;
+        }
+
+        .experience-date {
+            font-style: italic;
+            color: rgba(212, 175, 55, 0.8);
+            margin-bottom: 1rem;
+            display: block;
+            transition: color 0.5s ease;
+        }
+
+        body.elmo-theme .experience-date {
+            color: rgba(255, 0, 0, 0.8);
+        }
+
+        /* Contact Section */
+        .contact-info {
+            font-size: 1.2rem;
+            line-height: 2.5;
+        }
+
+        .contact-info a {
+            color: var(--accent-gold);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        body.elmo-theme .contact-info a {
+            color: #FF0000;
+        }
+
+        .contact-info a:hover {
+            color: var(--text-light);
+            text-decoration: underline;
+        }
+
+        /* ===== Shop ===== */
+        .shop-tagline {
+            display: block;
+            margin-top: 0.75rem;
+            color: var(--accent-gold);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        body.elmo-theme .shop-tagline { color: #FF0000; }
+
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0 4rem;
+        }
+
+        .product {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        body.elmo-theme .product {
+            background: rgba(0, 0, 0, 0.5);
+            border-color: rgba(255, 0, 0, 0.3);
+        }
+
+        .product:hover {
+            transform: translateY(-6px);
+            border-color: var(--accent-gold);
+            box-shadow: var(--shadow);
+        }
+
+        body.elmo-theme .product:hover { border-color: #FF0000; }
+
+        .product-frame {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background: rgba(0, 0, 0, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .product-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(35%) brightness(0.78);
+            transition: all 0.3s ease;
+        }
+
+        .product:hover .product-frame img {
+            filter: grayscale(0%) brightness(0.92);
+            transform: scale(1.04);
+        }
+
+        /* Fallback when artwork file isn't added yet */
+        .product-frame img.img-missing {
+            opacity: 0;
+        }
+
+        .product-frame img.img-missing + .sold-badge::after {
+            content: 'Add artwork to image/store/';
+            position: absolute;
+            top: calc(50% + 2.6rem);
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.65rem;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            font-weight: 400;
+        }
+
+        .sold-badge {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-8deg);
+            background: rgba(155, 17, 30, 0.5);
+            color: var(--text-light);
+            font-family: 'Playfair Display', serif;
+            font-weight: 900;
+            font-size: 1.4rem;
+            letter-spacing: 2px;
+            padding: 0.5rem 1.5rem;
+            border: 3px solid var(--accent-gold);
+            border-radius: 6px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+        }
+
+        body.elmo-theme .sold-badge {
+            background: rgba(0, 0, 0, 0.5);
+            border-color: #FF0000;
+            color: #FF0000;
+        }
+
+        .product-info {
+            padding: 1.25rem 1.5rem;
+        }
+
+        .product-info h3 {
+            margin: 0 0 0.4rem;
+            font-size: 1.1rem;
+        }
+
+        .product-info .price {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 1.05rem;
+        }
+
+        .product-info .price s {
+            color: rgba(255, 255, 255, 0.45);
+        }
+
+        /* ===== Sold Out Modal ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal-box {
+            position: relative;
+            background: linear-gradient(135deg, var(--primary-red), var(--dark-red));
+            border: 2px solid var(--accent-gold);
+            border-radius: 20px;
+            padding: 2.5rem;
+            max-width: 460px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+        }
+
+        body.elmo-theme .modal-box {
+            background: linear-gradient(135deg, #1a0000, #000);
+            border-color: #FF0000;
+        }
+
+        .modal-eyebrow {
+            font-size: 2.4rem;
+            margin: 0 0 1rem;
+            color: var(--accent-gold);
+        }
+
+        body.elmo-theme .modal-eyebrow { color: #FF0000; }
+
+        .modal-gif {
+            width: 100%;
+            max-width: 260px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            margin: 0 auto 1.25rem;
+            display: block;
+        }
+
+        .modal-gif.img-missing { display: none; }
+
+        .modal-msg {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'Playfair Display', serif;
+            margin: 0 0 0.5rem;
+            color: var(--text-light);
+        }
+
+        .modal-sub {
+            margin: 0;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 0.75rem;
+            right: 1.25rem;
+            font-size: 2rem;
+            line-height: 1;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .modal-close:hover { color: var(--accent-gold); }
+
+        /* ===== Audio control bar ===== */
+        #audio-bar {
+            position: fixed;
+            bottom: 1.2rem;
+            right: 1.2rem;
+            z-index: 600;
+            display: none;
+            align-items: center;
+            gap: 0.7rem;
+            background: rgba(0, 0, 0, 0.55);
+            border: 1px solid rgba(212, 175, 55, 0.6);
+            border-radius: 30px;
+            padding: 0.5rem 1rem;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+            transition: all 0.5s ease;
+        }
+
+        #audio-bar.revealed { display: flex; }
+
+        body.elmo-theme #audio-bar {
+            border-color: rgba(255, 0, 0, 0.7);
+            box-shadow: 0 6px 20px rgba(255, 0, 0, 0.25);
+        }
+
+        #audio-bar button {
+            background: none;
+            border: none;
+            color: var(--accent-gold);
+            cursor: pointer;
+            font-size: 1.3rem;
+            line-height: 1;
+            padding: 0;
+            transition: color 0.3s ease, transform 0.2s ease;
+        }
+
+        #audio-bar button:hover { transform: scale(1.15); }
+        #audio-bar button.muted { color: var(--text-muted); }
+        body.elmo-theme #audio-bar button { color: #FF0000; }
+
+        #audio-bar input[type="range"] {
+            width: 90px;
+            accent-color: var(--accent-gold);
+            cursor: pointer;
+        }
+
+        body.elmo-theme #audio-bar input[type="range"] { accent-color: #FF0000; }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .tabs {
+                padding: 1rem 0;
+            }
+
+            .tab {
+                padding: 0.5rem 1rem;
+                font-size: 0.85rem;
+            }
+
+            .content-card {
+                padding: 1.5rem;
+            }
+
+            .resume-frame iframe {
+                width: 100% !important;
+                height: 600px !important;
+            }
+
+            .profile-container {
+                width: 200px;
+                height: 200px;
+            }
+
+            .profile-image,
+            .decoy-image {
+                width: 200px;
+                height: 200px;
+            }
+
+            .skills-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Smooth Scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Selection Styling */
+        ::selection {
+            background: var(--accent-gold);
+            color: var(--dark-bg);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <ul class="tabs">
+            <li data-tab-target="#home" class="active tab">Home</li>
+            <li data-tab-target="#resume" class="tab">Resume</li>
+            <li data-tab-target="#education" class="tab">Education</li>
+            <li data-tab-target="#skills" class="tab">Skills</li>
+            <li data-tab-target="#projects" class="tab">Projects</li>
+            <li data-tab-target="#research" class="tab">Research</li>
+            <li data-tab-target="#experience" class="tab">Experience</li>
+            <li data-tab-target="#shop" class="tab">Shop</li>
+            <li data-tab-target="#contact" class="tab">Contact</li>
+        </ul>
+
+        <!-- Home Tab -->
+        <div id="home" data-tab-content class="active">
+            <h1>Genova Mongalo</h1>
+            <div class="content-card">
+                <p class="intro-text">
+                    My name is Genova Mongalo, I am a summa cum laude graduate with a Bachelor of Science in Computer Science from the University of Missouri-Kansas City (UMKC). I am currently pursuing a Master's degree in Computer Science with an emphasis on Artificial Intelligence at Georgia Tech, beginning in August 2025. My primary focus is on AI/ML Engineering and Cybersecurity applications.
+                </p>
+                <p class="intro-text">
+                    During the summer of 2025, I worked as a Federal AI/ML Engineer Contractor with the AFRL Sensors Directorate Internship Program at the University of Dayton. This role involves pioneering the development of generative AI models that enable CNN classifiers to recognize real objects when trained on generated data, utilizing transfer learning frameworks to address AFRL/DoD priorities.
+                </p>
+<!--                <p class="intro-text">-->
+<!--                    From June to December 2024, I worked as an AI/ML Engineer Intern at the NSF REU AI-Empowered Cybersecurity program at UMKC, where I engineered a robust Large Language Model to detect ransomware threats within Industrial Control Systems, achieving 99% accuracy for binary classification and 85% accuracy for family classification. In December 2024, I presented my research "LLM Based Approach to Real Time Ransomware Detection for Industrial Control Systems" at IEEE Big Data 2024 in Washington, D.C.-->
+<!--                </p>-->
+<!--                <p class="intro-text">-->
+<!--                    My experience also includes developing AI models for cybersickness detection through the NSF REU program at the University of Missouri, Columbia, where I created a transformer machine learning model that achieved 85% accuracy on a 1-10 severity scale. Additionally, I worked on a NASA-funded initiative engineering AI-driven simulations of space-bound transmissions and developing interactive interfaces for transmission strength visualization.-->
+<!--                </p>-->
+                <p class="intro-text">
+                    I am passionate about applying machine learning and artificial intelligence to solve real-world problems, particularly in cybersecurity and defense applications. I believe my strong foundation in AI/ML, coupled with my hands-on experience in cutting-edge research, positions me to contribute effectively to innovative projects in the tech industry.
+                </p>
+            </div>
+            <div class="profile-section">
+                <div class="profile-container">
+                    <img class="profile-image" src="image/ProfessionalPicture1.jpeg" alt="Genova Mongalo Professional Photo">
+                    <img class="decoy-image" src="image/ProfPic.jpg" alt="Profile">
+                </div>
+            </div>
+        </div>
+
+        <!-- Resume Tab -->
+        <div id="resume" data-tab-content>
+            <h1>Resume</h1>
+            <div class="resume-frame">
+                <iframe src="files/Resume.pdf" width="800" height="1100"></iframe>
+            </div>
+        </div>
+
+        <!-- Education Tab -->
+        <div id="education" data-tab-content>
+            <h1>Educational Background</h1>
+            <div class="content-card">
+                <h2>University of Missouri-Kansas City (UMKC) — Kansas City, MO</h2>
+                <p class="intro-text">
+                    <strong>Bachelor of Science in Computer Science, summa cum laude</strong><br>
+                    August 2021 – December 2024
+                </p>
+
+                <h2>Georgia Tech — Atlanta, GA</h2>
+                <p class="intro-text">
+                    <strong>Master's in Computer Science - Emphasis on Artificial Intelligence</strong><br>
+                    Starting August 2025
+                </p>
+
+                <h2>Graduate Coursework</h2>
+                <p class="intro-text"><em>Georgia Tech — M.S. in Computer Science (AI emphasis)</em></p>
+
+                <ul class="bullet-list">
+                    <li>Deep Learning
+                        <ul class="sub-bullet">
+                            <li>Neural network architectures: CNNs, RNNs, and transformers</li>
+                            <li>Training, optimization, and regularization of deep models at scale</li>
+                        </ul>
+                    </li>
+                    <li>Reinforcement Learning
+                        <ul class="sub-bullet">
+                            <li>Markov decision processes, value-based and policy-gradient methods</li>
+                            <li>Reward design and sequential decision-making for autonomous agents</li>
+                        </ul>
+                    </li>
+                    <li>Machine Learning
+                        <ul class="sub-bullet">
+                            <li>Supervised and unsupervised learning algorithms and applications</li>
+                            <li>Model training, evaluation, and generalization</li>
+                        </ul>
+                    </li>
+                    <li>Artificial Intelligence
+                        <ul class="sub-bullet">
+                            <li>Search, knowledge representation, planning, and reasoning</li>
+                            <li>Foundational AI techniques underpinning modern ML systems</li>
+                        </ul>
+                    </li>
+                    <li>Brain &amp; Cognitive Science
+                        <ul class="sub-bullet">
+                            <li>Computational models of perception, memory, and learning</li>
+                            <li>Neuroscience principles that inspire AI architectures</li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <h2>Core Foundations</h2>
+                <ul class="bullet-list">
+                    <li>Algorithms &amp; Complexity
+                        <ul class="sub-bullet">
+                            <li>Algorithm design and analysis of computational complexity</li>
+                        </ul>
+                    </li>
+                    <li>Data Structures
+                        <ul class="sub-bullet">
+                            <li>Efficient organization, storage, and access of data</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Skills Tab -->
+        <div id="skills" data-tab-content>
+            <h1>Skills</h1>
+            <div class="skills-grid">
+                <div class="skill-card">
+                    <h3>Programming Languages</h3>
+                    <p>Python, C / C++, Java / C#, SQL (Postgres), JavaScript, HTML/CSS, LISP</p>
+                </div>
+                <div class="skill-card">
+                    <h3>Frameworks & Technologies</h3>
+                    <ul class="bullet-list">
+                        <li>Machine Learning</li>
+                        <li>React</li>
+                        <li>Node.js</li>
+                        <li>WireShark</li>
+                        <li>FastAPI</li>
+                    </ul>
+                </div>
+                <div class="skill-card">
+                    <h3>Developer Tools</h3>
+                    <p>Git, VS Code, Visual Studio, PyCharm, Eclipse, Anaconda, Unity, Google Cloud Platform</p>
+                </div>
+                <div class="skill-card">
+                    <h3>Libraries</h3>
+                    <p>pandas, NumPy, Matplotlib, PyTorch, tkinter</p>
+                </div>
+                <div class="skill-card">
+                    <h3>Specialized Skills</h3>
+                    <ul class="bullet-list">
+                        <li>Generative AI & GANs</li>
+                        <li>Large Language Models</li>
+                        <li>Transfer Learning</li>
+                        <li>CNN Classifiers</li>
+                        <li>Cybersecurity Applications</li>
+                        <li>Parallel Computing (Slurm)</li>
+                    </ul>
+                </div>
+                <div class="skill-card">
+                    <h3>Spoken Languages</h3>
+                    <p>English, Spanish, and Amharic</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Projects Tab -->
+        <div id="projects" data-tab-content>
+            <h1>Projects</h1>
+            <div class="content-card">
+                <div class="project-item">
+                    <a href="https://github.com/ShankyShako/Federated-BlockChain" target="_blank">Federated Blockchain — Model Registry</a>
+                    <span> (2025–2026)</span>
+                    <p>
+                        A federated-learning model registry on Ethereum that lets nodes share and audit machine-learning models without putting large weights on-chain. Solidity smart contracts (FederatedModelStorage, FederatedLedger, and an ERC-20 FederatedToken), deployed with Hardhat and tested on Ganache, record each model's IPFS content ID on-chain. Trained models — including the ALBERT ransomware classifier from my research — are exported as self-describing bundles, uploaded to IPFS, and registered via either a Node.js script or a React/Vite frontend with MetaMask wallet integration. Includes an automated Hardhat test suite verifying a model CID round-trips through all three contracts.
+                    </p>
+                </div>
+                <div class="project-item">
+                    <a href="https://github.com/ShankyShako/Racket-Parser" target="_blank">Racket Parser</a>
+                    <span> (2024)</span>
+                    <p>
+                        A custom parser built in Racket for a small artificial programming language inspired by FORTRAN. It reads .txt source files, validates syntax based on a defined grammar, and reports precise error lines when invalid constructs are encountered. This project demonstrates understanding of language grammars, recursive parsing techniques, and working with DrRacket tools to implement language analysis.
+                    </p>
+                </div>
+                <div class="project-item">
+                    <a href="https://github.com/ShankyShako/PhoneBook" target="_blank">Phonebook Management System</a>
+                    <span> (2024)</span>
+                    <p>
+                        A Java-based phonebook management application that integrates with Dolphin SQL for persistent storage. It supports user registration with secure password handling, contact addition/update/deletion, search functionality, and CSV export. Developed using Eclipse, this project highlights practical database integration, user interaction design, and CRUD operation management in a desktop application.
+                    </p>
+                </div>
+                <div class="project-item">
+                    <a href="https://github.com/ShankyShako/SOS-Game" target="_blank">SOS Game Implementation</a>
+                    <span> (2023)</span>
+                    <p>
+                        An implementation of the classic SOS paper-and-pencil game designed to explore software development workflows using Scrum methodology. Written in Python, this project reflects iterative development practices, automated testing, and simple game logic implementation. It’s a great example of applying agile principles to deliver a functional interactive game while learning team processes.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Research Tab -->
+        <div id="research" data-tab-content>
+            <h1>Research</h1>
+            <div class="content-card">
+                <div class="research-item">
+                    <a href="https://github.com/ShankyShako/RansomWare-Detection-Models" target="_blank">Ransomware Detection for Critical Infrastructures</a>
+                    <span> (2024–2026)</span>
+                    <p>
+                        A comparative study of deep-learning and transformer models for detecting and classifying ransomware from Windows API-call features, aimed at Industrial Control Systems. Each model predicts at three levels simultaneously — binary (benign vs. malicious), coarse family group, and specific family (12 classes) — and is evaluated under three feature-engineering setups (baseline, autoencoder, and K-Means clustering). The pipeline compares a DNN, a 1-D CNN, and RoBERTa- and ALBERT-style transformers against classical baselines, using chi-squared feature selection to reduce ~31,000 features to the most informative 1,000 and class-weighting to handle rare families. The reproducible PyTorch/scikit-learn pipeline reaches ~98% accuracy on binary detection, with early stopping and weight sharing (ALBERT) used to control overfitting on the small dataset. GPU-accelerated on Apple Silicon via Metal.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Work Experience Tab -->
+        <div id="experience" data-tab-content>
+            <h1>Work Experience</h1>
+            <div class="content-card">
+                <div class="experience-item">
+                    <h3>AFRL Sensors Directorate Internship Program, University of Dayton — <u>Federal AI/ML Engineer Contractor</u></h3>
+                    <span class="experience-date">May 2025 - August 2025</span>
+                    <p>
+                        Pioneering the development of generative AI models enabling a CNN classifier to successfully recognize real objects when trained on generated data when utilized in transfer learning framework, addressing AFRL/DoD priorities. Using PyTorch, adapting state of the art classifiers to handle novel imaging modalities. Utilizing slurm to enable large batches of parallelized computation. Creating an innovative game theory approach to GAN training, significantly improving the results of the generator's development. The generative model's output is expected to lead to an increase of 50 percentage points in the downstream classifier compared to the baseline.
+                    </p>
+                </div>
+
+                <div class="experience-item">
+                    <h3>NSF REU AI-Empowered Cybersecurity, University of Missouri Kansas City — <u>AI/ML Engineer Intern</u></h3>
+                    <span class="experience-date">June 2024 - December 2024</span>
+                    <p>
+                        Engineered a robust Large Language Model to detect ransomware threats within Industrial Control Systems. Achieved 99% accuracy for binary classification and 85% accuracy for family classification scale respectively. Research was accepted and presented at IEEE Big Data 2024 in Washington, D.C. as the solo author with mentor guidance.
+                    </p>
+                </div>
+
+                <div class="experience-item">
+                    <h3>NSF REU in Consumer Networking, University of Missouri Columbia — <u>Research Intern</u></h3>
+                    <span class="experience-date">May 2023 - July 2023</span>
+                    <p>
+                        Designed a model that detects/predicts cybersickness using a transformer machine learning model. Succeeded with an accuracy of 85% from a 1-10 cybersickness severity scale.
+                    </p>
+                </div>
+
+                <div class="experience-item">
+                    <h3>NASA Missouri Space Grant Consortium — <u>Research Intern</u></h3>
+                    <span class="experience-date">December 2021 - April 2022</span>
+                    <p>
+                        Engineered an AI-driven simulation of space-bound transmissions as part of a NASA-funded initiative analyzing signal propagation and identifying optimal frequency bands under varying conditions. Developed an interactive interface to visualize transmission strength and provide adaptive frequency recommendations based on environmental parameters.
+                    </p>
+                </div>
+                <div class="experience-item">
+                    <h3>SPCN - 2020 and IEEE Brain Initiative BDBC Conference, Taiwan — <u>Web Master</u></h3>
+                    <span class="experience-date">August 2020 - September 2020</span>
+                    <p>
+                        Set up conference website for the 5th International Symposium on Audio and Video Signal Processing in the Context of Neurotechnology, with reliable communication and updates to the website’s needs. The conference was conducted remotely through multiple worldwide locations.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shop Tab -->
+        <div id="shop" data-tab-content>
+            <h1>Shop</h1>
+            <div class="content-card">
+                <p class="intro-text" style="text-align:center; margin-bottom:0;">
+                    Hand-made originals. Limited runs. One of one.
+                    <span class="shop-tagline">Every piece is currently <strong>sold out</strong>. Restocking soon...</span>
+                </p>
+            </div>
+
+            <div class="shop-grid">
+                <!-- Each product: data-title + data-price feed the popup -->
+                <div class="product" data-title="Smurfed " data-price="$14">
+                    <div class="product-frame">
+                        <img src="image/store/among-us.jpg" alt="Handcut felt Among Us sticker"
+                             onerror="this.classList.add('img-missing')">
+                        <span class="sold-badge">SOLD OUT</span>
+                    </div>
+                    <div class="product-info">
+                        <h3>Smurfed — Handcut Felt Sticker</h3>
+                        <p class="price"><s>$14</s></p>
+                    </div>
+                </div>
+
+                <div class="product" data-title="Moyai" data-price="$45">
+                    <div class="product-frame">
+                        <img src="image/store/moai.jpg" alt="Moyai napkin ink drawing"
+                             onerror="this.classList.add('img-missing')">
+                        <span class="sold-badge">SOLD OUT</span>
+                    </div>
+                    <div class="product-info">
+                        <h3>Moyai (Original, 1 of 1)</h3>
+                        <p class="price"><s>$45</s></p>
+                    </div>
+                </div>
+
+                <div class="product" data-title="Portrait of a Frog" data-price="$120">
+                    <div class="product-frame">
+                        <img src="image/store/kermit.png" alt="Kermit portrait study"
+                             onerror="this.classList.add('img-missing')">
+                        <span class="sold-badge">SOLD OUT</span>
+                    </div>
+                    <div class="product-info">
+                        <h3>Portrait of a Frog (Oil Study)</h3>
+                        <p class="price"><s>$120</s></p>
+                    </div>
+                </div>
+
+                <div class="product" data-title="Strings" data-price="$90">
+                    <div class="product-frame">
+                        <img src="image/store/strings.jpg" alt="Ink study of two stringed instruments"
+                             onerror="this.classList.add('img-missing')">
+                        <span class="sold-badge">SOLD OUT</span>
+                    </div>
+                    <div class="product-info">
+                        <h3>Strings — Ink Study</h3>
+                        <p class="price"><s>$90</s></p>
+                    </div>
+                </div>
+
+                <div class="product" data-title="Plumber, Abstracted" data-price="$140">
+                    <div class="product-frame">
+                        <img src="image/store/mario.jpg" alt="Abstract Mario portrait"
+                             onerror="this.classList.add('img-missing')">
+                        <span class="sold-badge">SOLD OUT</span>
+                    </div>
+                    <div class="product-info">
+                        <h3>Plumber, Abstracted (Original)</h3>
+                        <p class="price"><s>$140</s></p>
+                    </div>
+                </div>
+
+                <div class="product" data-title="FOOD" data-price="$180">
+                    <div class="product-frame">
+                        <img src="image/store/fpdd.jpg" alt="FOOD digital illustration"
+                             onerror="this.classList.add('img-missing')">
+                        <span class="sold-badge">SOLD OUT</span>
+                    </div>
+                    <div class="product-info">
+                        <h3>FOOD (Digital Original)</h3>
+                        <p class="price"><s>$180</s></p>
+                    </div>
+                </div>
+
+                <div class="product" data-title="Paradise" data-price="$750">
+                    <div class="product-frame">
+                        <img src="image/store/paradise.jpg" alt="Palm tree paradise oil painting"
+                             onerror="this.classList.add('img-missing')">
+                        <span class="sold-badge">SOLD OUT</span>
+                    </div>
+                    <div class="product-info">
+                        <h3>Paradise — Oil on Canvas</h3>
+                        <p class="price"><s>$750</s></p>
+                    </div>
+                </div>
+
+                <div class="product" data-title="The Whole Collection" data-price="$1,999">
+                    <div class="product-frame">
+                        <img src="image/store/collection.jpg" alt="The full collection bundle"
+                             onerror="this.classList.add('img-missing')">
+                        <span class="sold-badge">SOLD OUT</span>
+                    </div>
+                    <div class="product-info">
+                        <h3>The Whole Collection</h3>
+                        <p class="price"><s>$1,999</s></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sold Out Popup -->
+        <div id="sold-modal" class="modal-overlay">
+            <div class="modal-box">
+                <span class="modal-close">&times;</span>
+                <h2 class="modal-eyebrow">Too late.</h2>
+                <img class="modal-gif" src="image/store/sold-out.gif" alt="Sold out"
+                     onerror="this.classList.add('img-missing')">
+                <p class="modal-msg">Sold out. <span id="modal-item"></span></p>
+                <p class="modal-sub">Should've been faster.</p>
+            </div>
+        </div>
+
+        <!-- Contact Tab -->
+        <div id="contact" data-tab-content>
+            <h1>Contact Info</h1>
+            <div class="content-card contact-info">
+                <p><strong>Phone:</strong> (913) 260-8912</p>
+                <p><strong>Email:</strong> <a href="mailto:Genova.Mongalo@gmail.com?subject=Inquiry%20from%20Website&body=I%20would%20like%20to%20know%20more%20about...">Genova.Mongalo@gmail.com</a></p>
+                <p><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/gmongalo/" target="_blank">linkedin.com/in/gmongalo</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Background music: two decks that crossfade between tracks -->
+    <audio id="deck-a" preload="auto"></audio>
+    <audio id="deck-b" preload="auto"></audio>
+
+    <div id="audio-bar" title="Music">
+        <button id="audio-toggle" type="button" aria-label="Toggle sound">&#9835;</button>
+        <input id="audio-vol" type="range" min="0" max="1" step="0.01" value="0.2" aria-label="Volume">
+    </div>
+
+    <script>
+        const redirectUrl = 'https://www.youtube.com/watch?v=ntuH3q5gfo4';
+
+
+<!--        document.addEventListener('contextmenu', (e) => {-->
+<!--            e.preventDefault();-->
+<!--            return false;-->
+<!--        });-->
+
+        document.addEventListener('keydown', (e) => {
+            // F12
+            if (e.keyCode === 123) {
+                e.preventDefault();
+                window.location.href = redirectUrl;
+                return false;
+            }
+
+            if ((e.ctrlKey && e.shiftKey && e.keyCode === 73) ||
+                (e.metaKey && e.altKey && e.keyCode === 73)) {
+                e.preventDefault();
+                window.location.href = redirectUrl;
+                return false;
+            }
+
+            if ((e.ctrlKey && e.keyCode === 80) ||
+                (e.metaKey && e.keyCode === 80)) {
+                e.preventDefault();
+                window.location.href = redirectUrl;
+                return false;
+            }
+
+            if ((e.ctrlKey && e.shiftKey && e.keyCode === 67) ||
+                (e.metaKey && e.altKey && e.keyCode === 67) ||
+                (e.metaKey && e.shiftKey && e.keyCode === 67)) {
+                e.preventDefault();
+                window.location.href = redirectUrl;
+                return false;
+            }
+
+            if ((e.ctrlKey && e.shiftKey && e.keyCode === 74) ||
+                (e.metaKey && e.altKey && e.keyCode === 74) ||
+                (e.metaKey && e.shiftKey && e.keyCode === 74)) {
+                e.preventDefault();
+                window.location.href = redirectUrl;
+                return false;
+            }
+
+            if ((e.ctrlKey && e.keyCode === 85) ||
+                (e.metaKey && e.keyCode === 85)) {
+                e.preventDefault();
+                window.location.href = redirectUrl;
+                return false;
+            }
+        });
+
+        let devtoolsOpen = false;
+
+        const checkDevTools = () => {
+            const widthThreshold = window.outerWidth - window.innerWidth > 160;
+            const heightThreshold = window.outerHeight - window.innerHeight > 160;
+
+            if ((widthThreshold || heightThreshold) && !devtoolsOpen) {
+                devtoolsOpen = true;
+                window.location.href = redirectUrl;
+            }
+        };
+
+        const debuggerCheck = () => {
+            const before = new Date().getTime();
+            debugger;
+            const after = new Date().getTime();
+
+            if (after - before > 100 && !devtoolsOpen) {
+                devtoolsOpen = true;
+                window.location.href = redirectUrl;
+            }
+        };
+
+        const element = new Image();
+        Object.defineProperty(element, 'id', {
+            get: function() {
+                if (!devtoolsOpen) {
+                    devtoolsOpen = true;
+                    window.location.href = redirectUrl;
+                }
+            }
+        });
+
+        setInterval(() => {
+            checkDevTools();
+            debuggerCheck();
+            console.log(element);
+            console.clear();
+        }, 500);
+
+        window.addEventListener('resize', checkDevTools);
+
+        const profileContainer = document.querySelector('.profile-container');
+        const realImage = document.querySelector('.profile-image');
+        const decoyImage = document.querySelector('.decoy-image');
+        let elmoModeActive = false;
+
+        function toggleElmo() {
+            activateAudio();                 // first photo interaction starts the music
+            elmoModeActive = !elmoModeActive;
+
+            if (elmoModeActive) {
+                // Activate Elmo theme
+                document.body.classList.add('elmo-theme');
+                realImage.style.opacity = '0';
+                decoyImage.style.opacity = '1';
+                decoyImage.style.pointerEvents = 'auto';
+                setMode('elmo');
+            } else {
+                // Deactivate Elmo theme
+                document.body.classList.remove('elmo-theme');
+                realImage.style.opacity = '1';
+                decoyImage.style.opacity = '0';
+                decoyImage.style.pointerEvents = 'none';
+                setMode('light');
+            }
+        }
+
+        if (profileContainer) {
+            // Desktop: right-click toggles Elmo mode
+            profileContainer.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                toggleElmo();
+                return false;
+            });
+
+            // Mobile: long-press toggles Elmo mode (and blocks the save callout)
+            let pressTimer = null;
+            let longPressed = false;
+            const LONG_PRESS_MS = 500;
+
+            const startPress = (e) => {
+                longPressed = false;
+                pressTimer = setTimeout(() => {
+                    longPressed = true;
+                    toggleElmo();
+                    if (navigator.vibrate) navigator.vibrate(20); // subtle haptic
+                }, LONG_PRESS_MS);
+            };
+            const cancelPress = () => {
+                if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+            };
+
+            profileContainer.addEventListener('touchstart', startPress, { passive: true });
+            profileContainer.addEventListener('touchmove', cancelPress, { passive: true });
+            profileContainer.addEventListener('touchend', (e) => {
+                cancelPress();
+                if (longPressed) e.preventDefault(); // swallow the tap that follows
+            });
+            profileContainer.addEventListener('touchcancel', cancelPress);
+
+            realImage.addEventListener('dragstart', (e) => {
+                e.preventDefault();
+                return false;
+            });
+
+            decoyImage.addEventListener('dragstart', (e) => {
+                e.preventDefault();
+                return false;
+            });
+        }
+
+        // Block casual right-click/drag saving on every image site-wide
+        document.querySelectorAll('img').forEach(img => {
+            img.addEventListener('contextmenu', (e) => { e.preventDefault(); return false; });
+            img.addEventListener('dragstart', (e) => { e.preventDefault(); return false; });
+        });
+
+        // Tab functionality
+        const tabs = document.querySelectorAll('[data-tab-target]');
+        const tabContents = document.querySelectorAll('[data-tab-content]');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const target = document.querySelector(tab.dataset.tabTarget);
+
+                // Remove active class from all tabs and contents
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                target.classList.add('active');
+
+                // Scroll to top smoothly for clean view
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        });
+
+        // Sold-out popup
+        const soldModal = document.getElementById('sold-modal');
+        const modalItem = document.getElementById('modal-item');
+        const modalClose = document.querySelector('.modal-close');
+
+        const modalGif = document.querySelector('.modal-gif');
+        const gifPool = ['image/store/sold-out.gif', 'image/store/cry-about-it.gif'];
+
+        document.querySelectorAll('.product').forEach(product => {
+            product.addEventListener('click', () => {
+                const title = product.dataset.title || '';
+                modalItem.textContent = title ? `"${title}" is gone.` : '';
+                // 50/50 coin flip on which gif shows
+                if (modalGif) {
+                    modalGif.classList.remove('img-missing');
+                    modalGif.src = gifPool[Math.random() < 0.5 ? 0 : 1];
+                }
+                soldModal.classList.add('open');
+            });
+        });
+
+        const closeModal = () => soldModal.classList.remove('open');
+        if (modalClose) modalClose.addEventListener('click', closeModal);
+        if (soldModal) soldModal.addEventListener('click', (e) => {
+            if (e.target === soldModal) closeModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // ===== Background music engine =====
+        // Two decks crossfade between tracks. Each theme has a 2-song
+        // playlist that alternates and loops; the starting song is random.
+        const deckA = document.getElementById('deck-a');
+        const deckB = document.getElementById('deck-b');
+        const decks = [deckA, deckB];
+        const volSlider = document.getElementById('audio-vol');
+        const muteBtn   = document.getElementById('audio-toggle');
+
+        const playlists = {
+            light: ['audio/light1.mp3', 'audio/light2.mp3'],
+            elmo:  ['audio/elmo1.mp3', 'audio/elmo2.mp3']
+        };
+
+        const FADE_MS = 700;                 // crossfade length
+        const FADE_SEC = FADE_MS / 1000;
+        let masterVol = parseFloat(volSlider.value);
+        let muted = false;
+        let started = false;                 // true after first user gesture
+        let currentMode = 'light';
+        let trackIndex = 0;
+        let activeDeck = 0;
+
+        deckA.volume = 0;
+        deckB.volume = 0;
+
+        function fadeTo(audio, target, ms, pauseAtZero) {
+            if (audio._fadeRAF) cancelAnimationFrame(audio._fadeRAF);
+            const from = audio.volume;
+            const t0 = performance.now();
+            (function step(now) {
+                const p = Math.min(1, (now - t0) / ms);
+                audio.volume = Math.max(0, Math.min(1, from + (target - from) * p));
+                if (p < 1) audio._fadeRAF = requestAnimationFrame(step);
+                else { audio._fadeRAF = null; if (pauseAtZero && target === 0) audio.pause(); }
+            })(t0);
+        }
+
+        // Crossfade the idle deck (loaded with `url`) in, active deck out
+        function crossfadeTo(url) {
+            const incoming = decks[1 - activeDeck];
+            const outgoing = decks[activeDeck];
+            incoming.src = url;
+            try { incoming.currentTime = 0; } catch (e) {}
+            incoming.volume = 0;
+            incoming._advancing = false;
+            incoming.play().catch(() => {});     // ignore missing file / autoplay block
+            fadeTo(incoming, masterVol, FADE_MS);
+            fadeTo(outgoing, 0, FADE_MS, true);
+            activeDeck = 1 - activeDeck;
+        }
+
+        function playTrack() {
+            if (!started || muted) return;
+            crossfadeTo(playlists[currentMode][trackIndex]);
+        }
+
+        function advance() {
+            const list = playlists[currentMode];
+            trackIndex = (trackIndex + 1) % list.length;   // alternate / loop
+            playTrack();
+        }
+
+        // Switch theme: pick a random starting song, then play it
+        function setMode(mode) {
+            currentMode = mode;
+            trackIndex = Math.floor(Math.random() * playlists[mode].length);
+            playTrack();
+        }
+
+        // Auto-advance with a crossfade just before each track ends
+        decks.forEach((d, i) => {
+            d.addEventListener('timeupdate', () => {
+                if (i !== activeDeck || muted || !started) return;
+                if (!d.duration || isNaN(d.duration)) return;
+                if (d.duration - d.currentTime <= FADE_SEC && !d._advancing) {
+                    d._advancing = true;
+                    advance();
+                }
+            });
+            d.addEventListener('ended', () => {            // fallback if fade missed
+                if (i === activeDeck && started && !muted) advance();
+            });
+        });
+
+        // Music stays OFF until the profile photo is used (Elmo toggle).
+        // Once activated, it stays on permanently and reveals the volume bar.
+        function activateAudio() {
+            if (started) return;
+            started = true;
+            const bar = document.getElementById('audio-bar');
+            if (bar) bar.classList.add('revealed');
+        }
+
+        volSlider.addEventListener('input', () => {
+            masterVol = parseFloat(volSlider.value);
+            if (started && !muted) decks[activeDeck].volume = masterVol;
+        });
+
+        muteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            muted = !muted;
+            muteBtn.classList.toggle('muted', muted);
+            muteBtn.innerHTML = muted ? '&#9834;' : '&#9835;';
+            if (muted) {
+                fadeTo(deckA, 0, 300, true);
+                fadeTo(deckB, 0, 300, true);
+            } else if (started) {
+                playTrack();
+            }
+        });
+    </script>
+</body>
+</html>

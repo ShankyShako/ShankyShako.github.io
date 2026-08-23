@@ -1,0 +1,262 @@
+/* ==========================================================================
+   Palette. Elmo mode swaps the same token set, so every component that reads
+   the variables reacts without needing its own override rule.
+   ========================================================================== */
+:root {
+  --primary-red: #9b111e;
+  --dark-red: #6b0c15;
+  --accent: #d4af37;
+  --accent-soft: rgba(212, 175, 55, 0.6);
+  --light-cream: #f5f1e8;
+  --dark-bg: #1a1a1a;
+  --text-light: #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.75);
+  --shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+
+  --surface: rgba(255, 255, 255, 0.05);
+  --surface-hover: rgba(255, 255, 255, 0.12);
+  --surface-solid: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.2);
+  --nav-bg: rgba(155, 17, 30, 0.95);
+  --glow: rgba(0, 0, 0, 0.2);
+  --on-accent: var(--dark-bg);
+}
+
+:root[data-theme='elmo'] {
+  --primary-red: #0a0a0a;
+  --dark-red: #000000;
+  --accent: #ff0000;
+  --accent-soft: rgba(255, 0, 0, 0.8);
+  --light-cream: #1a1a1a;
+  --dark-bg: #000000;
+  --text-muted: rgba(255, 255, 255, 0.6);
+  --shadow: 0 10px 40px rgba(255, 0, 0, 0.3);
+
+  --surface: rgba(255, 0, 0, 0.1);
+  --surface-hover: rgba(255, 0, 0, 0.2);
+  --surface-solid: rgba(255, 0, 0, 0.1);
+  --border: rgba(255, 0, 0, 0.3);
+  --border-strong: rgba(255, 0, 0, 0.3);
+  --nav-bg: rgba(0, 0, 0, 0.95);
+  --glow: rgba(255, 0, 0, 0.3);
+  --on-accent: #000000;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Work Sans', sans-serif;
+  background: linear-gradient(135deg, var(--primary-red) 0%, var(--dark-red) 100%);
+  color: var(--text-light);
+  line-height: 1.7;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  transition: background 0.5s ease;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 50%, color-mix(in srgb, var(--accent) 12%, transparent) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, var(--glow) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+  transition: background 0.5s ease;
+}
+
+::selection { background: var(--accent); color: var(--on-accent); }
+
+img {
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== Navigation ===== */
+.tab-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--nav-bg);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px var(--glow);
+  transition: background 0.5s ease, box-shadow 0.5s ease;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 2rem 0;
+  list-style: none;
+  justify-content: center;
+}
+
+.tab {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: var(--surface-solid);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+  color: var(--text-light);
+  text-decoration: none;
+}
+
+.tab:hover {
+  background: var(--surface-hover);
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+
+.tab.active {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+/* ===== Typography ===== */
+h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 4rem;
+  font-weight: 900;
+  text-align: center;
+  margin: 3rem 0 2rem;
+  background: linear-gradient(135deg, var(--text-light), var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -2px;
+  transition: background 0.5s ease;
+}
+
+:root[data-theme='elmo'] h1 {
+  background: linear-gradient(135deg, #ff0000, #c4a484);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  margin: 2.5rem 0 1.5rem;
+  color: var(--accent);
+  font-weight: 700;
+  transition: color 0.5s ease;
+}
+
+h3 {
+  font-size: 1.4rem;
+  margin: 2rem 0 1rem;
+  color: var(--accent);
+  font-weight: 600;
+  transition: color 0.5s ease;
+}
+
+a { color: var(--accent); }
+
+/* ===== Cards ===== */
+.content-card {
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3rem;
+  margin: 2rem 0;
+  box-shadow: var(--shadow);
+  transition: background 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+}
+
+.intro-text {
+  font-size: 1.1rem;
+  line-height: 2;
+  margin-bottom: 2rem;
+  color: var(--text-muted);
+}
+
+.intro-text:last-child { margin-bottom: 0; }
+
+/* ===== Scroll reveal ===== */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.reveal.is-visible { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  html { scroll-behavior: auto; }
+}
+
+/* ===== Route transition ===== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: none; }
+}
+
+.route-enter { animation: fadeIn 0.5s ease; }
+
+/* ===== Lists ===== */
+ul.bullet-list { list-style: none; margin: 1rem 0; }
+
+ul.bullet-list > li {
+  padding: 0.75rem 0 0.75rem 1.5rem;
+  position: relative;
+  font-size: 1.05rem;
+}
+
+ul.bullet-list > li::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-size: 1.2rem;
+  transition: color 0.5s ease;
+}
+
+ul.sub-bullet { margin: 0.5rem 0 0 2rem; list-style: none; }
+
+ul.sub-bullet li {
+  padding: 0.4rem 0 0.4rem 1.5rem;
+  position: relative;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+ul.sub-bullet li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--accent-soft);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  h1 { font-size: 2.5rem; }
+  .container { padding: 0 1rem; }
+  .tabs { padding: 1rem 0; }
+  .tab { padding: 0.5rem 1rem; font-size: 0.85rem; }
+  .content-card { padding: 1.5rem; }
+}

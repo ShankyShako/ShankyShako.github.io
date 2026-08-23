@@ -1,0 +1,104 @@
+import { Resend } from 'resend';
+
+/**
+ * Contact endpoint. Runs on Vercel, so the API key never reaches the browser.
+ *
+ * Required env vars (set in the Vercel dashboard):
+ *   RESEND_API_KEY  — from resend.com
+ *   CONTACT_TO      — where mail lands (e.g. genova@gmango.dev)
+ *   CONTACT_FROM    — verified sender on your domain (e.g. site@gmango.dev)
+ */
+
+const MAX = { name: 120, email: 200, message: 5000 };
+
+/* Crude per-instance rate limit: enough to blunt casual floods. */
+const hits = new Map<string, number[]>();
+const WINDOW_MS = 60_000;
+const LIMIT = 3;
+
+function rateLimited(ip: string) {
+  const now = Date.now();
+  const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
+  recent.push(now);
+  hits.set(ip, recent);
+  return recent.length > LIMIT;
+}
+
+function escapeHtml(s: string) {
+  return s.replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!,
+  );
+}
+
+export default async function handler(req: Request): Promise<Response> {
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+  if (req.method !== 'POST') return json({ error: 'Method not allowed.' }, 405);
+
+  const ip =
+    req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown';
+  if (rateLimited(ip)) return json({ error: 'Slow down a moment.' }, 429);
+
+  let body: Record<string, unknown>;
+  try {
+    body = await req.json();
+  } catch {
+    return json({ error: 'Malformed request.' }, 400);
+  }
+
+  const name = String(body.name ?? '').trim();
+  const email = String(body.email ?? '').trim();
+  const message = String(body.message ?? '').trim();
+  const company = String(body.company ?? '').trim(); // honeypot
+
+  /* A filled honeypot means a bot. Return success so it stops retrying. */
+  if (company) return json({ ok: true });
+
+  if (name.length < 2 || name.length > MAX.name) return json({ error: 'Invalid name.' }, 400);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > MAX.email) {
+    return json({ error: 'Invalid email.' }, 400);
+  }
+  if (message.length < 10 || message.length > MAX.message) {
+    return json({ error: 'Invalid message.' }, 400);
+  }
+
+  const apiKey = process.env.RESEND_API_KEY;
+  const to = process.env.CONTACT_TO;
+  const from = process.env.CONTACT_FROM;
+
+  if (!apiKey || !to || !from) {
+    console.error('contact: missing RESEND_API_KEY / CONTACT_TO / CONTACT_FROM');
+    return json({ error: 'Mail is not configured yet.' }, 500);
+  }
+
+  try {
+    const resend = new Resend(apiKey);
+    const { error } = await resend.emails.send({
+      from: `gmango.dev <${from}>`,
+      to: [to],
+      replyTo: email, // replying in your inbox goes straight to the sender
+      subject: `gmango.dev — ${name}`,
+      html: `
+        <h2>New message from gmango.dev</h2>
+        <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+        <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+        <hr />
+        <p style="white-space:pre-wrap">${escapeHtml(message)}</p>
+      `,
+    });
+
+    if (error) {
+      console.error('contact: resend error', error);
+      return json({ error: 'Could not send. Try email instead.' }, 502);
+    }
+
+    return json({ ok: true });
+  } catch (err) {
+    console.error('contact: unexpected', err);
+    return json({ error: 'Could not send. Try email instead.' }, 500);
+  }
+}
