@@ -2,6 +2,28 @@ import { useEffect } from 'react';
 
 const REDIRECT_URL = 'https://www.youtube.com/watch?v=ntuH3q5gfo4';
 
+type KeyLike = Pick<KeyboardEvent, 'code' | 'ctrlKey' | 'metaKey' | 'shiftKey' | 'altKey'>;
+
+/**
+ * Matches the original site's shortcut list. Keyed on `event.code` (the
+ * physical key) rather than `event.key` (the character produced): on macOS,
+ * Option+I emits the dead key "ˆ", not "i", so a character-based check would
+ * miss every Cmd+Option combination.
+ */
+export function isInspectorShortcut(e: KeyLike): boolean {
+  const ctrlOrMeta = e.ctrlKey || e.metaKey;
+  const is = (...codes: string[]) => codes.includes(e.code);
+
+  return (
+    e.code === 'F12' ||
+    // Inspect / element picker / console
+    (ctrlOrMeta && e.shiftKey && is('KeyI', 'KeyC', 'KeyJ')) ||
+    (e.metaKey && e.altKey && is('KeyI', 'KeyC', 'KeyJ')) ||
+    // View source, print, save
+    (ctrlOrMeta && is('KeyU', 'KeyP', 'KeyS'))
+  );
+}
+
 /**
  * The original site's devtools deterrent, carried over. It is decorative —
  * anyone determined can still read the bundle — so it only runs in production
@@ -19,15 +41,7 @@ export function useDevtoolsTrap(enabled = import.meta.env.PROD) {
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
-      const k = e.key.toLowerCase();
-      const ctrlOrMeta = e.ctrlKey || e.metaKey;
-      const inspector =
-        e.key === 'F12' ||
-        (ctrlOrMeta && e.shiftKey && ['i', 'c', 'j'].includes(k)) ||
-        (e.metaKey && e.altKey && ['i', 'c', 'j'].includes(k)) ||
-        (ctrlOrMeta && ['u', 'p', 's'].includes(k));
-
-      if (inspector) {
+      if (isInspectorShortcut(e)) {
         e.preventDefault();
         trip();
       }
