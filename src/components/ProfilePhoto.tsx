@@ -48,7 +48,7 @@ export function ProfilePhoto() {
           draggable={false}
         />
       </div>
-      <span className="profile-hint">Some photos keep secrets.</span>
+      <span className="profile-hint">Genova Mongalo.</span>
     </>
   );
 }
