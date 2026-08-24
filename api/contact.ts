@@ -1,7 +1,16 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Resend } from 'resend';
 
 /**
  * Contact endpoint. Runs on Vercel, so the API key never reaches the browser.
+ *
+ * Uses the Node handler signature — `export default (req, res)` — because that
+ * is what Vercel invokes for functions in /api. A Web-standard
+ * `(Request) => Response` handler is NOT called with a Fetch Request here, and
+ * fails at runtime the moment you touch `req.headers.get(...)`.
+ *
+ * `resend` must stay in `dependencies`, not `devDependencies`: Vercel prunes
+ * dev deps when bundling the function, and the import fails at runtime.
  *
  * Required env vars (set in the Vercel dashboard):
  *   RESEND_API_KEY  — from resend.com
@@ -30,24 +39,23 @@ function escapeHtml(s: string) {
   );
 }
 
-export default async function handler(req: Request): Promise<Response> {
-  const json = (body: unknown, status = 200) =>
-    new Response(JSON.stringify(body), {
-      status,
-      headers: { 'Content-Type': 'application/json' },
-    });
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).json({ error: 'Method not allowed.' });
+  }
 
-  if (req.method !== 'POST') return json({ error: 'Method not allowed.' }, 405);
+  const fwd = req.headers['x-forwarded-for'];
+  const ip = (Array.isArray(fwd) ? fwd[0] : fwd)?.split(',')[0]?.trim() || 'unknown';
+  if (rateLimited(ip)) return res.status(429).json({ error: 'Slow down a moment.' });
 
-  const ip =
-    req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown';
-  if (rateLimited(ip)) return json({ error: 'Slow down a moment.' }, 429);
-
+  /* Vercel parses JSON bodies, but a string can still arrive if the client
+     sent an unexpected content-type. */
   let body: Record<string, unknown>;
   try {
-    body = await req.json();
+    body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body ?? {});
   } catch {
-    return json({ error: 'Malformed request.' }, 400);
+    return res.status(400).json({ error: 'Malformed request.' });
   }
 
   const name = String(body.name ?? '').trim();
@@ -56,14 +64,16 @@ export default async function handler(req: Request): Promise<Response> {
   const company = String(body.company ?? '').trim(); // honeypot
 
   /* A filled honeypot means a bot. Return success so it stops retrying. */
-  if (company) return json({ ok: true });
+  if (company) return res.status(200).json({ ok: true });
 
-  if (name.length < 2 || name.length > MAX.name) return json({ error: 'Invalid name.' }, 400);
+  if (name.length < 2 || name.length > MAX.name) {
+    return res.status(400).json({ error: 'Invalid name.' });
+  }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > MAX.email) {
-    return json({ error: 'Invalid email.' }, 400);
+    return res.status(400).json({ error: 'Invalid email.' });
   }
   if (message.length < 10 || message.length > MAX.message) {
-    return json({ error: 'Invalid message.' }, 400);
+    return res.status(400).json({ error: 'Invalid message.' });
   }
 
   const apiKey = process.env.RESEND_API_KEY;
@@ -72,7 +82,7 @@ export default async function handler(req: Request): Promise<Response> {
 
   if (!apiKey || !to || !from) {
     console.error('contact: missing RESEND_API_KEY / CONTACT_TO / CONTACT_FROM');
-    return json({ error: 'Mail is not configured yet.' }, 500);
+    return res.status(500).json({ error: 'Mail is not configured yet.' });
   }
 
   try {
@@ -93,12 +103,12 @@ export default async function handler(req: Request): Promise<Response> {
 
     if (error) {
       console.error('contact: resend error', error);
-      return json({ error: 'Could not send. Try email instead.' }, 502);
+      return res.status(502).json({ error: 'Could not send. Try email instead.' });
     }
 
-    return json({ ok: true });
+    return res.status(200).json({ ok: true });
   } catch (err) {
     console.error('contact: unexpected', err);
-    return json({ error: 'Could not send. Try email instead.' }, 500);
+    return res.status(500).json({ error: 'Could not send. Try email instead.' });
   }
 }

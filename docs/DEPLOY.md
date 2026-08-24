@@ -113,12 +113,41 @@ Only after step 3 checks out.
 2. Vercel displays the exact records it wants. **Use the values it shows** —
    Vercel has changed its apex IP and its CNAME targets are now per-project, so
    don't copy values from an old blog post.
-3. In Cloudflare → **DNS** → **Records**:
-   - **Delete** the four GitHub Pages A records (`185.199.108–111.153`).
-   - **Delete** the `www` CNAME pointing to `shankyshako.github.io`.
-   - **Add** the apex record Vercel specified.
-   - **Add** the `www` CNAME Vercel specified.
-   - Leave the MX and TXT records from steps 1 and 2 alone.
+3. In Cloudflare → **DNS** → **Records**, delete exactly these:
+
+   | Name                                | Type | Value                          |
+   | ----------------------------------- | ---- | ------------------------------ |
+   | `gmango.dev`                        | A    | `185.199.108.153` (and .109, .110, .111 — four records) |
+   | `www`                               | CNAME| `shankyshako.github.io`        |
+   | `_github-pages-challenge-shankyshako` | TXT | Pages verification token — delete *after* the cutover works |
+
+   Then add the apex and `www` records Vercel specified.
+
+   > **Sort the list by Type before deleting anything.** Five rows are named
+   > `gmango.dev`: four are the A records above, the rest are MX and TXT
+   > records that must survive. Deleting by name will take out your mail.
+
+   **Everything below stays. Do not touch it:**
+
+   | Name                  | Type | Purpose                                   |
+   | --------------------- | ---- | ----------------------------------------- |
+   | `gmango.dev`          | MX   | `route1/2/3.mx.cloudflare.net` — inbound mail (3 records, locked) |
+   | `gmango.dev`          | TXT  | `v=spf1 include:_spf.mx.cloudflare.net ~all` |
+   | `cf2024-1._domainkey` | TXT  | Cloudflare Email Routing DKIM (locked)    |
+   | `send`                | MX   | `feedback-smtp.us-east-1.amazonses.com`   |
+   | `send`                | TXT  | `v=spf1 include:amazonses.com ~all`       |
+   | `resend._domainkey`   | TXT  | Resend DKIM                               |
+
+   A 🔒 padlock means Cloudflare manages the record for Email Routing. Nothing
+   locked should ever be deleted here.
+
+   > **The apex SPF looks incomplete but is correct.** It lists Cloudflare and
+   > not Amazon SES, even though the contact form sends via Resend. SPF
+   > validates the *envelope* sender, which Resend places on `send.gmango.dev`,
+   > and that subdomain's SPF does include `amazonses.com`. DKIM at
+   > `resend._domainkey` is what aligns with the visible `From` address. Adding
+   > SES to the apex SPF is unnecessary.
+
 4. Set both new records to **DNS only** (grey cloud, not orange). Vercel issues
    and renews its own TLS certificate. Proxying through Cloudflare on top of
    that causes a redirect loop unless Cloudflare's SSL/TLS mode is

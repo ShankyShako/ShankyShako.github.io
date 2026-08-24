@@ -42,7 +42,21 @@ export function ContactForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
       });
-      const data = (await res.json()) as { error?: string };
+
+      /* A crashed or misrouted function returns an HTML error page, not JSON.
+         Parse defensively so the user sees a real sentence instead of
+         "JSON.parse: unexpected character at line 1 column 1". */
+      const raw = await res.text();
+      let data: { error?: string } = {};
+      try {
+        data = raw ? (JSON.parse(raw) as { error?: string }) : {};
+      } catch {
+        throw new Error(
+          res.ok
+            ? 'Unexpected reply from the server.'
+            : `Mail service error (${res.status}). Try emailing me directly.`,
+        );
+      }
 
       if (!res.ok) throw new Error(data.error || 'Something went wrong.');
 
