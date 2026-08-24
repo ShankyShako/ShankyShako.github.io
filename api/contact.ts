@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Resend } from 'resend';
+import { buildContactEmail } from './_email';
 
 /**
  * Contact endpoint. Runs on Vercel, so the API key never reaches the browser.
@@ -31,12 +32,6 @@ function rateLimited(ip: string) {
   recent.push(now);
   hits.set(ip, recent);
   return recent.length > LIMIT;
-}
-
-function escapeHtml(s: string) {
-  return s.replace(/[&<>"']/g, (c) =>
-    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!,
-  );
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -86,19 +81,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    const { subject, html, text } = buildContactEmail({ name, email, message });
+
     const resend = new Resend(apiKey);
     const { error } = await resend.emails.send({
       from: `gmango.dev <${from}>`,
       to: [to],
       replyTo: email, // replying in your inbox goes straight to the sender
-      subject: `gmango.dev — ${name}`,
-      html: `
-        <h2>New message from gmango.dev</h2>
-        <p><strong>Name:</strong> ${escapeHtml(name)}</p>
-        <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-        <hr />
-        <p style="white-space:pre-wrap">${escapeHtml(message)}</p>
-      `,
+      subject,
+      html,
+      text, // HTML-only mail scores worse with spam filters
     });
 
     if (error) {
