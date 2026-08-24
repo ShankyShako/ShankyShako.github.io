@@ -102,13 +102,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     if (error) {
+      /* Surface the provider's reason. These are configuration complaints
+         ("The gmango.dev domain is not verified"), not secrets, and hiding
+         them behind a generic string makes the form impossible to debug. */
       console.error('contact: resend error', error);
-      return res.status(502).json({ error: 'Could not send. Try email instead.' });
+      const reason = typeof error.message === 'string' ? error.message : '';
+      return res.status(502).json({
+        error: reason ? `Mail service rejected the message: ${reason}` : 'Could not send. Try email instead.',
+      });
     }
 
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error('contact: unexpected', err);
-    return res.status(500).json({ error: 'Could not send. Try email instead.' });
+    const reason = err instanceof Error ? err.message : '';
+    return res.status(500).json({
+      error: reason ? `Could not send: ${reason}` : 'Could not send. Try email instead.',
+    });
   }
 }
