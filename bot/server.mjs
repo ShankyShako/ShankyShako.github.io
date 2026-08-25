@@ -51,7 +51,9 @@ const KEEP_ALIVE = process.env.BOT_KEEP_ALIVE ?? '30m';
 
 /* Short ceiling on replies. This is a site chat bubble, not an essay window —
    and generation time is linear in tokens produced. */
-const MAX_TOKENS = Number(process.env.BOT_MAX_TOKENS ?? 400);
+/* 600, not 400: reasoning the gateway strips still consumed generation
+   budget, so a model that drafts before speaking ran out mid-answer. */
+const MAX_TOKENS = Number(process.env.BOT_MAX_TOKENS ?? 600);
 /* 12288, not 8192: the assembled system prompt is ~9.6k tokens on its own, so
    8192 cannot hold it before the visitor has typed anything. See the VRAM
    table in docs/CHATBOT.md before raising this on a small GPU — the KV cache
@@ -210,10 +212,23 @@ const TAGS = ['[[LEAD]]', '[[LINK]]', '[[SUGGEST]]', '[[MUSIC]]'];
 const THINK_OPEN = ['<think>', '<thinking>', '<reasoning>'];
 const THINK_CLOSE = ['</think>', '</thinking>', '</reasoning>'];
 
-/* The phrase a model uses to hand off from working to answer. Anchored near a
-   line start so an answer that merely contains "final answer" is not eaten. */
-const HANDOFF =
-  /(?:^|\n)[^\n]{0,60}?(?:the response should be(?: something like)?|here'?s (?:my|the) (?:response|answer)|final (?:answer|response)|my response(?: would be)?)\s*[:\-—]*\s*\n*/i;
+/* The phrase a model uses to hand off from working to answer. The trailing
+   punctuation-or-newline is load-bearing: without it, "his final answer on the
+   GAN was..." is read as a handoff and the real reply gets thrown away. */
+const HANDOFF = new RegExp(
+  '(?:^|\\n)[^\\n]{0,40}?(?:' +
+    'let me (?:draft|write|craft|compose|put (?:it|this) together)|' +
+    'the response should be(?: something like)?|' +
+    "here.?s (?:my|the) (?:response|answer|draft)|" +
+    'final (?:answer|response)|' +
+    'my response(?: would be)?|' +
+    'so,? my answer|' +
+    'putting (?:it|this) together|' +
+    'now (?:let me |i.?ll )?write|' +
+    'draft|response' +
+  ')\\s*(?:[:\\-\u2014]+\\s*|\\n+)',
+  'i',
+);
 
 const DEBUG = process.env.BOT_DEBUG === 'true';
 
@@ -923,7 +938,7 @@ async function handleChat(req, res) {
 
   const think = { inside: false };
   let shown = ''; // visible text sent so far, for handoff detection
-  let didReset = false;
+  let resets = 0;
 
   const flush = (text) => {
     /* Tagged reasoning first — whatever survives is candidate answer text. */
@@ -937,9 +952,12 @@ async function handleChat(req, res) {
       /* Untagged reasoning: the model rambled, then announced its real answer.
          Everything before the announcement was working, not speech. Tell the
          browser to throw it away and start from the answer. */
-      const handoff = didReset ? null : shown.match(HANDOFF);
+      /* Not once. A model that pads can announce its answer, keep working,
+         and announce again; the LAST announcement is the real one. Capped so
+         a pathological reply cannot spin here. */
+      const handoff = resets < 5 ? shown.match(HANDOFF) : null;
       if (handoff) {
-        didReset = true;
+        resets++;
         const answer = shown.slice(handoff.index + handoff[0].length).trimStart();
         shown = answer;
         res.write(JSON.stringify({ reset: true }) + '\n');
