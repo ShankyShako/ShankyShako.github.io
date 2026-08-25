@@ -495,17 +495,17 @@ export function ChatWidget() {
 
               return (
                 <div key={i} className={`chat-row ${turn.role === 'user' ? 'me' : 'bot'}`}>
-                  <p className={`chat-msg ${turn.role === 'user' ? 'me' : 'bot'}`}>
-                    {body
-                      ? nodes
-                      : busy && isLast
-                        ? (
-                            <span className="chat-typing" aria-label="Thinking">
-                              <i /><i /><i />
-                            </span>
-                          )
-                        : null}
-                  </p>
+                  {/* No empty bubble when a reply is nothing but a button —
+                      an empty rounded rectangle reads as a bug. */}
+                  {(body || (busy && isLast)) && (
+                    <p className={`chat-msg ${turn.role === 'user' ? 'me' : 'bot'}`}>
+                      {body ? nodes : (
+                        <span className="chat-typing" aria-label="Thinking">
+                          <i /><i /><i />
+                        </span>
+                      )}
+                    </p>
+                  )}
                   {turn.actions && (
                     <div className="chat-chips">{renderActions(turn, isLast, linked)}</div>
                   )}

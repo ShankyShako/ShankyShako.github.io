@@ -51,9 +51,11 @@ const KEEP_ALIVE = process.env.BOT_KEEP_ALIVE ?? '30m';
 
 /* Short ceiling on replies. This is a site chat bubble, not an essay window —
    and generation time is linear in tokens produced. */
-/* 600, not 400: reasoning the gateway strips still consumed generation
-   budget, so a model that drafts before speaking ran out mid-answer. */
-const MAX_TOKENS = Number(process.env.BOT_MAX_TOKENS ?? 600);
+/* Covers the private scratchpad AND the spoken answer, since both come out of
+   one generation. Nothing here is billed — the cost is latency, and generation
+   time is linear in tokens, so a model that reasons for 800 tokens keeps the
+   visitor waiting for all of them before the first word appears. */
+const MAX_TOKENS = Number(process.env.BOT_MAX_TOKENS ?? 1500);
 /* 12288, not 8192: the assembled system prompt is ~9.6k tokens on its own, so
    8192 cannot hold it before the visitor has typed anything. See the VRAM
    table in docs/CHATBOT.md before raising this on a small GPU — the KV cache
@@ -191,7 +193,7 @@ function modePrompt(name) {
  * emit is a link to a page of Genova's own site. Giving it raw hrefs would
  * make a successful prompt injection into a phishing-link generator.
  * ------------------------------------------------------------------------ */
-const TAGS = ['[[LEAD]]', '[[LINK]]', '[[SUGGEST]]', '[[MUSIC]]'];
+const TAGS = ['[[SAY]]', '[[LEAD]]', '[[LINK]]', '[[SUGGEST]]', '[[MUSIC]]'];
 
 /* ---------------------------------------------------------------------------
  * Reasoning suppression.
@@ -343,6 +345,10 @@ function drain(buf, found) {
  */
 function resolve({ tag, payload }, state) {
   switch (tag) {
+    /* Handled by the caller as a gate, not an action. */
+    case 'SAY':
+      return null;
+
     case 'LEAD':
       state.leads.push(payload);
       return null;
@@ -940,11 +946,44 @@ async function handleChat(req, res) {
   let shown = ''; // visible text sent so far, for handoff detection
   let resets = 0;
 
+  /* ---------------------------------------------------------------------
+   * The [[SAY]] gate.
+   *
+   * Two rounds of pattern-matching against "Let me draft:" style preambles
+   * taught the obvious lesson: a model can phrase its throat-clearing an
+   * unbounded number of ways, so matching phrasings is unwinnable. Inverting
+   * it is not. The model is told everything before [[SAY]] is discarded, so
+   * it may reason as much as it likes — nothing is shown until it declares
+   * it is ready to speak.
+   *
+   * The regex path below survives only as the fallback for when the model
+   * forgets the marker entirely.
+   * ------------------------------------------------------------------- */
+  let speaking = false;
+  let swallowed = '';
+
   const flush = (text) => {
     /* Tagged reasoning first — whatever survives is candidate answer text. */
     const stripped = stripThink(text, think);
     const found = [];
     const { out, keep } = drain(stripped.out, found);
+
+    /* The gate opens the moment [[SAY]] appears; text in the same chunk that
+       preceded it is still working, and is dropped with the rest. */
+    const opens = found.some((d) => d.tag === 'SAY');
+    if (opens && !speaking) {
+      speaking = true;
+      if (DEBUG) console.log(`[bot] gate opened after ${swallowed.length} chars of working`);
+    }
+
+    if (!speaking) {
+      swallowed += out;
+      for (const d of found) {
+        const action = resolve(d, state);
+        if (action) res.write(JSON.stringify({ a: action }) + '\n');
+      }
+      return stripped.keep + keep;
+    }
 
     if (out) {
       shown += out;
@@ -1009,6 +1048,18 @@ async function handleChat(req, res) {
     /* Models routinely end without a trailing newline, which would strand a
        final directive in `held` forever. The synthetic newline closes it. */
     if (held) flush(held + '\n');
+
+    /* The model never opened the gate. Rather than show nothing, fall back to
+       the old handoff heuristic over everything it wrote, and failing that,
+       show the lot — a reply with visible working beats an empty bubble. */
+    if (!speaking && swallowed.trim()) {
+      const handoff = [...swallowed.matchAll(new RegExp(HANDOFF.source, 'gi'))].pop();
+      const answer = handoff
+        ? swallowed.slice(handoff.index + handoff[0].length).trim()
+        : swallowed.trim();
+      if (DEBUG) console.log(`[bot] no [[SAY]] — fell back to ${handoff ? 'handoff split' : 'raw text'}`);
+      if (answer) res.write(JSON.stringify({ t: answer }) + '\n');
+    }
 
     res.write(JSON.stringify({ done: true }) + '\n');
   } catch (err) {
