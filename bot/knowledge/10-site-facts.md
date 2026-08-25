@@ -123,20 +123,6 @@ the joke and it is not going to change. Listed prices:
 - Paradise — Oil on Canvas — $750
 - The Whole Collection — $1,999
 
-## Pages on this site
-
-- / — Home: AI/ML engineer focused on generative models, transformers, and cybersecurity applications.
-- /resume — Resume: Resume of Genova Mongalo, AI/ML engineer.
-- /education — Education: B.S. Computer Science (summa cum laude, UMKC) and M.S. Computer Science, AI emphasis (Georgia Tech).
-- /skills — Skills: Languages, frameworks, libraries, and specialized AI/ML and security skills.
-- /projects — Projects: Federated blockchain model registry, Racket parser, phonebook system, and more.
-- /research — Research: Ransomware detection for critical infrastructure using transformer models.
-- /experience — Experience: AFRL Sensors Directorate, NSF REU programs, and NASA Missouri Space Grant Consortium.
-- /shop — Shop: Hand-made originals. Limited runs. One of one. All sold out.
-- /contact — Contact: Get in touch with Genova Mongalo.
-
-There is also a downloadable resume at /files/Resume.pdf.
-
 ## Links you can attach
 
 To put a button under your answer, print `[[LINK]] key` on its own line —

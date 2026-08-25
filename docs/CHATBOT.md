@@ -494,6 +494,47 @@ at build time; redeploy.
 response and `fetch` throws a `TypeError`, which makes the widget hide itself.
 Check the exact origin, scheme and all, against `BOT_ALLOWED_ORIGINS`.
 
+**"NetworkError when attempting to fetch", fan spinning, nothing on screen.**
+The classic one, and it is almost never the network. Check the gateway's
+startup lines — `npm run bot` measures the real prompt size against `num_ctx`
+and says so:
+
+```
+[bot] warmup: 7,666 prompt tokens in 9.5s (806 tok/s)
+[bot] STOP: the system prompt is 7,666 tokens and BOT_NUM_CTX is 8,192 — 94% …
+```
+
+That state means the prompt loads and leaves nothing for the conversation. On a
+small GPU the model plus KV cache stops fitting in VRAM, the prompt pass spills
+to CPU, and it grinds — Ollama's log shows `POST /api/chat` returning 500 after
+exactly `5m0s`, and cloudflared logs `context canceled` because the browser gave
+up long before. Raise `BOT_NUM_CTX` to the value the STOP message names, or trim
+`bot/knowledge/*.md`.
+
+The gateway reports itself unhealthy in that state, so the site hides the chat
+button rather than offering one that hangs.
+
+### How much context fits in VRAM
+
+KV cache grows linearly with `num_ctx`. For `qwen3:4b` (36 layers, 8 KV heads,
+128 head dim, fp16) on a **6 GB GTX 1660 Ti**:
+
+| `num_ctx` | KV cache | model + KV + buffers | verdict |
+| --------- | -------- | -------------------- | ------- |
+| 8 192     | 1.12 GB  | 4.12 GB              | fits, but too small for the prompt |
+| **12 288**| 1.69 GB  | **4.69 GB**          | **the sweet spot on this card** |
+| 16 384    | 2.25 GB  | 5.25 GB              | fits; needed for JD mode |
+| 20 480    | 2.81 GB  | 5.81 GB              | spills to CPU |
+
+`qwen3:8b` roughly doubles the weights to ~5.2 GB and does **not** leave room
+for a usable KV cache on 6 GB. Run 8b on the 24 GB Mac and 4b on the 1660 Ti —
+`BOT_MODEL` is per-machine config, so one repo serves both.
+
+Job-description mode carries its own budget (`BOT_JD_NUM_CTX`, default 16384)
+because a pasted posting is 1-2k tokens before the model writes anything.
+
+---
+
 **Replies are slow to start.** First message after an idle period pays for
 loading the weights. Raise `BOT_KEEP_ALIVE`.
 

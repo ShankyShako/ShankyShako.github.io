@@ -52,7 +52,11 @@ const KEEP_ALIVE = process.env.BOT_KEEP_ALIVE ?? '30m';
 /* Short ceiling on replies. This is a site chat bubble, not an essay window —
    and generation time is linear in tokens produced. */
 const MAX_TOKENS = Number(process.env.BOT_MAX_TOKENS ?? 400);
-const NUM_CTX = Number(process.env.BOT_NUM_CTX ?? 8192);
+/* 12288, not 8192: the assembled system prompt is ~9.6k tokens on its own, so
+   8192 cannot hold it before the visitor has typed anything. See the VRAM
+   table in docs/CHATBOT.md before raising this on a small GPU — the KV cache
+   grows linearly with it. */
+const NUM_CTX = Number(process.env.BOT_NUM_CTX ?? 12288);
 
 /* Job-description mode gets its own budget: a pasted posting is 1-2k tokens
    before the model has written anything, and the answer it deserves is longer
@@ -62,6 +66,12 @@ const JD_NUM_CTX = Number(process.env.BOT_JD_NUM_CTX ?? 16384);
 const JD_MAX_TOKENS = Number(process.env.BOT_JD_MAX_TOKENS ?? 700);
 
 const LOG_QUESTIONS = process.env.BOT_LOG_QUESTIONS !== 'false';
+
+/* How long to wait for the *next* token before giving up. Not a cap on the
+   whole reply — a slow GPU generating 400 tokens is fine, a GPU that has sent
+   nothing for a minute is wedged. Ollama's own timeout is 5 minutes, which is
+   long past the point every browser has already shown a network error. */
+const STALL_MS = Number(process.env.BOT_STALL_MS ?? 60_000);
 
 /* Lower than a chat model's usual 0.7. This bot's job is to be accurate about
    a real person's resume, and sampling temperature is the single biggest dial
@@ -448,7 +458,7 @@ function logQuestion(entry) {
    flag outright, so the first rejection turns it off for good. */
 let sendThinkFlag = process.env.BOT_THINK !== 'true';
 
-async function ollamaChat(messages, profile) {
+async function ollamaChat(messages, profile, signal) {
   const body = {
     model: profile.model,
     messages,
@@ -467,6 +477,7 @@ async function ollamaChat(messages, profile) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
+    signal,
   });
 
   if (!res.ok && sendThinkFlag) {
@@ -479,6 +490,7 @@ async function ollamaChat(messages, profile) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
+        signal,
       });
     } else {
       throw new Error(`ollama ${res.status}: ${why.slice(0, 300)}`);
@@ -486,6 +498,114 @@ async function ollamaChat(messages, profile) {
   }
   if (!res.ok) throw new Error(`ollama ${res.status}: ${(await res.text()).slice(0, 300)}`);
   return res;
+}
+
+/* ---------------------------------------------------------------------------
+ * Warmup.
+ *
+ * One real generation at startup, with num_predict 1. Three things fall out of
+ * it, none of which are visible any other way:
+ *
+ *   1. Ollama reports `prompt_eval_count` — the EXACT token count of the
+ *      assembled system prompt. Guessing from character count is how a prompt
+ *      quietly grows past num_ctx and starts getting truncated.
+ *   2. It times the prompt pass, which is the number that decides whether this
+ *      machine can serve the bot at all.
+ *   3. It leaves the weights loaded and the prompt prefix in the KV cache, so
+ *      the first visitor is not the one who pays for it.
+ *
+ * A prompt that does not fit is reported as unhealthy, so the site hides the
+ * chat button rather than offering one that times out.
+ * ------------------------------------------------------------------------ */
+let readiness = { ok: false, checked: false, promptTokens: 0, note: 'not checked yet' };
+
+async function warmup() {
+  const prompt = systemPrompt();
+  const t0 = Date.now();
+
+  try {
+    const body = {
+      model: MODEL,
+      messages: [
+        { role: 'system', content: prompt },
+        { role: 'user', content: 'hi' },
+      ],
+      stream: false,
+      keep_alive: KEEP_ALIVE,
+      options: { num_ctx: NUM_CTX, num_predict: 1 },
+    };
+    if (sendThinkFlag) body.think = false;
+
+    const res = await fetch(`${OLLAMA}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(Number(process.env.BOT_WARMUP_MS ?? 180_000)),
+    });
+
+    if (!res.ok) {
+      const why = (await res.text()).slice(0, 200);
+      /* Same one-shot fallback as ollamaChat: a model with no thinking mode
+         rejects the flag rather than ignoring it. */
+      if (sendThinkFlag && /think/i.test(why)) {
+        sendThinkFlag = false;
+        return warmup();
+      }
+      throw new Error(`ollama ${res.status}: ${why}`);
+    }
+
+    const data = await res.json();
+    const tokens = data.prompt_eval_count ?? 0;
+    const secs = (Date.now() - t0) / 1000;
+
+    readiness = { ok: true, checked: true, promptTokens: tokens, note: 'ready' };
+
+    console.log(
+      `[bot] warmup: ${tokens.toLocaleString()} prompt tokens in ${secs.toFixed(1)}s` +
+        (tokens && secs ? ` (${Math.round(tokens / secs).toLocaleString()} tok/s)` : ''),
+    );
+
+    /* "Fits" is not the bar — the prompt has to leave room for the exchange.
+       At 96% of num_ctx the prompt loads fine and then every conversation is
+       immediately truncated, which looks like a broken bot, not a full one. */
+    const HEADROOM = 0.85;
+    if (tokens >= NUM_CTX * HEADROOM) {
+      readiness = {
+        ok: false,
+        checked: true,
+        promptTokens: tokens,
+        note: `prompt ${tokens} fills ${Math.round((tokens / NUM_CTX) * 100)}% of num_ctx ${NUM_CTX}`,
+      };
+      console.error(
+        `\n[bot] STOP: the system prompt is ${tokens.toLocaleString()} tokens and ` +
+          `BOT_NUM_CTX is ${NUM_CTX.toLocaleString()} — ` +
+          `${Math.round((tokens / NUM_CTX) * 100)}% of the window.\n` +
+          `      There is no room left for the conversation, so every reply is ` +
+          `truncated, and on a small GPU\n      the prompt pass spills to CPU and stalls ` +
+          `for minutes.\n` +
+          `      Fix: set BOT_NUM_CTX=${Math.ceil((tokens * 1.4) / 1024) * 1024} in bot/.env, ` +
+          `or trim bot/knowledge/*.md.\n` +
+          `      Chat is reporting itself unhealthy until then, so the site hides the button.\n`,
+      );
+    } else if (tokens > NUM_CTX * 0.7) {
+      console.warn(
+        `[bot] warning: the prompt uses ${Math.round((tokens / NUM_CTX) * 100)}% of num_ctx — ` +
+          `long conversations will start dropping their earliest turns.`,
+      );
+    }
+
+    if (secs > 30) {
+      console.warn(
+        `[bot] warning: the prompt pass took ${secs.toFixed(0)}s. That is the delay before ` +
+          `the FIRST token of every cold conversation.\n` +
+          `      Usually means the model plus KV cache does not fit in VRAM. Lower ` +
+          `BOT_NUM_CTX or use a smaller model.`,
+      );
+    }
+  } catch (err) {
+    readiness = { ok: false, checked: true, promptTokens: 0, note: err.message };
+    console.error(`[bot] warmup failed: ${err.message}`);
+  }
 }
 
 /* /health must stay cheap — the site polls it. Cache so a refresh storm does
@@ -623,11 +743,26 @@ async function handleChat(req, res) {
   const started = Date.now();
   const question = turns[turns.length - 1].content;
 
+  /* Abort if the model goes quiet. The timer is reset by every chunk, so it
+     bounds the gap between tokens rather than the length of the answer. */
+  const ctrl = new AbortController();
+  let stalled = false;
+  let stallTimer;
+  const kick = () => {
+    clearTimeout(stallTimer);
+    stallTimer = setTimeout(() => {
+      stalled = true;
+      ctrl.abort();
+    }, STALL_MS);
+  };
+  kick();
+
   inFlight++;
   let upstream;
   try {
-    upstream = await ollamaChat(messages, profile);
+    upstream = await ollamaChat(messages, profile, ctrl.signal);
   } catch (err) {
+    clearTimeout(stallTimer);
     logQuestion({
       ts: new Date().toISOString(),
       visitor: visitorId(ip),
@@ -637,6 +772,13 @@ async function handleChat(req, res) {
       error: 'model-unreachable',
     });
     inFlight--;
+    if (stalled) {
+      console.error(
+        `[bot] no first token in ${STALL_MS / 1000}s — the prompt pass is probably ` +
+          `spilling out of VRAM. Check BOT_NUM_CTX.`,
+      );
+      return json(res, 504, { error: 'The model is taking too long to start. Try again shortly.' });
+    }
     console.error('[bot] ollama call failed:', err.message);
     return json(res, 502, { error: 'The model is not responding right now.' });
   }
@@ -670,6 +812,7 @@ async function handleChat(req, res) {
 
   try {
     for await (const chunk of upstream.body) {
+      kick();
       ndjson += decoder.decode(chunk, { stream: true });
       const lines = ndjson.split('\n');
       ndjson = lines.pop() ?? '';
@@ -696,9 +839,13 @@ async function handleChat(req, res) {
 
     res.write(JSON.stringify({ done: true }) + '\n');
   } catch (err) {
-    console.error('[bot] stream broke:', err.message);
-    res.write(JSON.stringify({ error: 'Connection interrupted.' }) + '\n');
+    const why = stalled
+      ? `The model stopped responding after ${STALL_MS / 1000}s.`
+      : 'Connection interrupted.';
+    console.error('[bot] stream broke:', stalled ? 'stalled' : err.message);
+    res.write(JSON.stringify({ error: why }) + '\n');
   } finally {
+    clearTimeout(stallTimer);
     inFlight--;
     res.end();
   }
@@ -739,13 +886,18 @@ const server = createServer(async (req, res) => {
 
   if (req.method === 'GET' && (path === '/health' || path === '/')) {
     const { ok, installed } = await ollamaUp();
-    /* Non-200 when the model is missing, so the site hides the button rather
-       than showing one that answers with an error. */
-    return json(res, ok && installed ? 200 : 503, {
-      ok: ok && installed,
+    /* Non-200 when the model is missing OR when warmup found the prompt does
+       not fit, so the site hides the button rather than showing one that
+       answers with an error — or worse, one that hangs. */
+    const healthy = ok && installed && readiness.ok;
+    return json(res, healthy ? 200 : 503, {
+      ok: healthy,
       ollama: ok,
       model: MODEL,
       modelInstalled: installed,
+      promptTokens: readiness.promptTokens,
+      numCtx: NUM_CTX,
+      note: readiness.note,
     });
   }
 
@@ -762,4 +914,5 @@ server.listen(PORT, '0.0.0.0', () => {
     `[bot] leads    ${RESEND_KEY && LEAD_TO && LEAD_FROM ? `on → ${LEAD_TO}` : 'off (RESEND_API_KEY / LEAD_TO / LEAD_FROM unset)'}`,
   );
   systemPrompt();
+  warmup();
 });

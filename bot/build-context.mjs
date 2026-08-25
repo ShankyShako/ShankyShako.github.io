@@ -104,12 +104,8 @@ w();
 for (const p of products) w(`- ${p.title} — ${p.price}`);
 w();
 
-w('## Pages on this site');
-w();
-for (const n of nav) w(`- ${n.path} — ${n.label}: ${n.description}`);
-w();
-w('There is also a downloadable resume at /files/Resume.pdf.');
-w();
+/* No page list here: the link menu below already names every route, and every
+   token in this file is a token the model re-reads on a cold conversation. */
 
 /* ---------------------------------------------------------------------------
  * Link menu.
