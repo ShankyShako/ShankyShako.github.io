@@ -136,6 +136,14 @@
 }
 
 .project-item a:hover { color: var(--text-light); }
+
+/* Coursework has no public repo, so its title is a <span>. Same weight and
+   size as a linked title, minus the accent colour that promises a link. */
+.project-title {
+  color: var(--text-light);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
 .project-years { color: var(--text-muted); font-size: 0.95rem; }
 .project-item p { margin-top: 0.75rem; color: var(--text-muted); }
 
@@ -430,6 +438,45 @@
 }
 
 /* ==========================================================================
+   Deep-link targets
+
+   The chat bot links at one specific card. Landing mid-page with no signal of
+   which card you were sent to is the "guess where it is" problem, so the
+   target announces itself, then gets out of the way.
+   ========================================================================== */
+.experience-item[id],
+.project-item[id] {
+  /* Clear the sticky tab bar, which would otherwise sit over the heading. */
+  scroll-margin-top: 5.5rem;
+}
+
+.is-target { animation: cardFlash 2.4s ease-out; }
+
+/* Only box-shadow, deliberately: background and border-left already differ
+   between card types, and animating those would mean writing the base value
+   into the keyframe for each one. */
+@keyframes cardFlash {
+  0%, 12% {
+    box-shadow:
+      0 0 0 3px var(--accent),
+      0 0 44px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+  100% {
+    box-shadow:
+      0 0 0 0 transparent,
+      0 0 0 transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Still say "this one", just without the pulse. */
+  .is-target {
+    animation: none;
+    box-shadow: 0 0 0 3px var(--accent);
+  }
+}
+
+/* ==========================================================================
    Chat widget
 
    Only ever in the DOM when the gateway on Genova's laptop answered /health,
@@ -547,6 +594,26 @@
   border-bottom-right-radius: 4px;
 }
 
+/* A name the model mentioned, made clickable. A <button> rather than an <a>
+   because it routes client-side — but it sits inside a sentence, so it has to
+   shed every default a button carries and read as prose. */
+.chat-inline-link {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: var(--accent-soft);
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: text-decoration-color 0.2s ease;
+}
+
+.chat-inline-link:hover { text-decoration-color: var(--accent); }
+
 .chat-typing { display: inline-flex; gap: 4px; padding: 0.15rem 0; }
 
 .chat-typing i {
@@ -565,9 +632,14 @@
   30% { opacity: 1; }
 }
 
-.chat-openers { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.25rem; }
+/* A turn is its message plus whatever buttons the model attached to it. */
+.chat-row { display: flex; flex-direction: column; gap: 0.45rem; }
 
-.chat-openers button {
+.chat-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; align-self: flex-start; }
+.chat-row.me .chat-chips { align-self: flex-end; }
+
+.chat-chip {
+  display: inline-block;
   border: 1px solid var(--border-strong);
   background: transparent;
   color: var(--text-muted);
@@ -575,13 +647,56 @@
   padding: 0.35rem 0.8rem;
   font: inherit;
   font-size: 0.8rem;
+  line-height: 1.4;
+  text-decoration: none;
   cursor: pointer;
-  transition: color 0.2s ease, border-color 0.2s ease;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
 
-.chat-openers button:hover { color: var(--accent); border-color: var(--accent); }
+.chat-chip:hover { color: var(--accent); border-color: var(--accent); }
+
+/* Navigation the model offered, as opposed to a question it suggested. Reads
+   as an action rather than another thing to read. */
+.chat-chip.solid {
+  color: var(--accent);
+  border-color: var(--accent-soft);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  font-weight: 500;
+}
+
+.chat-chip.solid:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
 
 .chat-error { font-size: 0.82rem; color: #ff8a8a; align-self: center; text-align: center; }
+
+/* Job-description mode. Announces itself, because a visitor who pastes 4000
+   characters into what looked like a one-line box deserves to know it was
+   expected. */
+.chat-jd-note {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0.7rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--accent-soft);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.chat-jd-note button {
+  margin-left: auto;
+  flex: none;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.chat-jd-note button:hover { color: var(--accent); }
 
 .chat-input {
   display: flex;
@@ -590,6 +705,28 @@
   padding: 0.7rem;
   border-top: 1px solid var(--border);
   background: var(--surface);
+}
+
+.chat-mode {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  filter: grayscale(1) opacity(0.65);
+  transition: filter 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.chat-mode:hover { filter: none; border-color: var(--accent-soft); }
+
+.chat-mode.active {
+  filter: none;
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .chat-input textarea {

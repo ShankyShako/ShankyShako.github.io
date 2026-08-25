@@ -10,6 +10,7 @@ import { ChatWidget } from './components/ChatWidget';
 import { useSeo } from './hooks/useSeo';
 import { useImageGuard } from './hooks/useImageGuard';
 import { useDevtoolsTrap } from './hooks/useDevtoolsTrap';
+import { useHashHighlight } from './hooks/useHashHighlight';
 import { nav } from './data/site';
 
 import { Home } from './pages/Home';
@@ -31,17 +32,21 @@ const NOT_FOUND = {
 };
 
 function Shell() {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   const meta = nav.find((n) => n.path === pathname) ?? NOT_FOUND;
 
   useSeo(meta.title, meta.description, pathname);
   useImageGuard();
   useDevtoolsTrap();
+  useHashHighlight();
 
-  /* Each route starts at the top, matching the old tab behaviour. */
+  /* Each route starts at the top, matching the old tab behaviour — unless the
+     URL names an anchor, in which case useHashHighlight owns the scroll and
+     jumping to the top first would just fight it. */
   useEffect(() => {
+    if (hash) return;
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [pathname]);
+  }, [pathname, hash]);
 
   return (
     <>

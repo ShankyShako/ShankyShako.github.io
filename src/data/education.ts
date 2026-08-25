@@ -10,7 +10,7 @@ export const degrees: Degree[] = [
   {
     school: 'Georgia Tech — Atlanta, GA',
     degree: "Master's in Computer Science — Emphasis on Artificial Intelligence",
-    date: 'Starting August 2025',
+    date: 'August 2025 – expected 2027',
   },
 ];
 
@@ -27,6 +27,9 @@ export const graduateCoursework: Course[] = [
   { name: 'Artificial Intelligence', points: [
     'Search, knowledge representation, planning, and reasoning',
     'Foundational AI techniques underpinning modern ML systems' ] },
+  { name: 'Computer Vision', points: [
+    'Image formation, feature detection, and recognition pipelines',
+    'The perception techniques underpinning the classifier work at AFRL' ] },
   { name: 'Brain & Cognitive Science', points: [
     'Computational models of perception, memory, and learning',
     'Neuroscience principles that inspire AI architectures' ] },

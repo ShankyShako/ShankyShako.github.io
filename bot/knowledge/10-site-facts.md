@@ -18,7 +18,7 @@ script to recite.
 ## Education
 
 - **Bachelor of Science in Computer Science, summa cum laude** — University of Missouri-Kansas City (UMKC) — Kansas City, MO (August 2021 – December 2024)
-- **Master's in Computer Science — Emphasis on Artificial Intelligence** — Georgia Tech — Atlanta, GA (Starting August 2025)
+- **Master's in Computer Science — Emphasis on Artificial Intelligence** — Georgia Tech — Atlanta, GA (August 2025 – expected 2027)
 
 Graduate coursework:
 
@@ -26,6 +26,7 @@ Graduate coursework:
 - Reinforcement Learning: Markov decision processes, value-based and policy-gradient methods; Reward design and sequential decision-making for autonomous agents
 - Machine Learning: Supervised and unsupervised learning algorithms and applications; Model training, evaluation, and generalization
 - Artificial Intelligence: Search, knowledge representation, planning, and reasoning; Foundational AI techniques underpinning modern ML systems
+- Computer Vision: Image formation, feature detection, and recognition pipelines; The perception techniques underpinning the classifier work at AFRL
 - Brain & Cognitive Science: Computational models of perception, memory, and learning; Neuroscience principles that inspire AI architectures
 
 Core foundations:
@@ -35,10 +36,15 @@ Core foundations:
 
 ## Experience
 
+### Founding AI/ML Product Engineer — Geometry Health and Wellness
+*September 2025 – Present*
+
+Founding engineer on a clinical mobility platform, taken from MVP to production. Ported clinically validated mobility assessments from MATLAB research prototypes to a production iOS app, matching the clinical reference within 0.56% on a 15-biomarker postural-sway test and reproducing 10-meter-walk gait speed exactly. Built the on-device biomarker signal-processing pipeline in Swift — 100 Hz CoreMotion capture, gravity removal, zero-phase Butterworth band-pass filtering, double integration, and PCA into 15 biomarkers with automated quality flags — alongside the in-house data-collection app that exports each trial as timestamped JSON, building the labeled datasets the models are validated against. Implemented an end-to-end LLM workflow for a context-aware clinical assistant (data preparation, patient-context retrieval, and PubMed/NCBI evidence via Entrez) on a self-hosted Ollama DeepSeek-V2 16B deployment with Flask REST and WebSocket streaming under one second of latency. Owns the technical architecture, sprint cycles, and coordination across clinical, engineering, and product.
+
 ### Federal AI/ML Engineer Contractor — AFRL Sensors Directorate Internship Program, University of Dayton
 *May 2025 – August 2025*
 
-Pioneering the development of generative AI models enabling a CNN classifier to successfully recognize real objects when trained on generated data when utilized in transfer learning framework, addressing AFRL/DoD priorities. Using PyTorch, adapting state of the art classifiers to handle novel imaging modalities. Utilizing slurm to enable large batches of parallelized computation. Creating an innovative game theory approach to GAN training, significantly improving the results of the generator's development. The generative model's output is expected to lead to an increase of 50 percentage points in the downstream classifier compared to the baseline.
+Pioneered the development of generative AI models enabling a CNN classifier to successfully recognize real objects when trained on generated data when utilized in transfer learning framework, addressing AFRL/DoD priorities. Using PyTorch, adapted state of the art classifiers to handle novel imaging modalities. Utilized Slurm to enable large batches of parallelized computation. Created an innovative game theory approach to GAN training, significantly improving the results of the generator's development. The generative model's output led to an increase of 50 percentage points in the downstream classifier compared to the baseline.
 
 ### AI/ML Engineer Intern — NSF REU AI-Empowered Cybersecurity, University of Missouri Kansas City
 *June 2024 – December 2024*
@@ -69,6 +75,11 @@ A comparative study of deep-learning and transformer models for detecting and cl
 
 ## Projects
 
+### AWS DeepRacer — Reward Shaping (2026)
+Repo: undefined — Reinforcement Learning, TD3, Reward Shaping, Docker, Simulation
+
+A reinforcement-learning agent for the AWS DeepRacer environment, a 1/18-scale autonomous vehicle on a simulated physics track. A TD3 policy trains in a containerised local stack (Docker/Apptainer, GPU-accelerated on Apple Silicon via Metal) rather than in the cloud. The substance of the work is the reward function: a hand-built shaping scheme that bands reward by distance from the centre line, aligns heading against the upcoming waypoints, trades speed against steering angle, and applies hard penalties for leaving the track or crashing. The learning algorithm is off the shelf; the incentives are not, and reward design is where the difficulty in DeepRacer actually lives — a poorly shaped reward produces an agent that drives beautifully and never finishes a lap. Graduate coursework for CS 7642, Reinforcement Learning & Decision Making, at Georgia Tech; the repository is private under the university's academic-honesty policy.
+
 ### Federated Blockchain — Model Registry (2025–2026)
 Repo: https://github.com/ShankyShako/Federated-BlockChain — Solidity, React, IPFS, Hardhat, Web3
 
@@ -91,11 +102,11 @@ An implementation of the classic SOS paper-and-pencil game designed to explore s
 
 ## Skills
 
-- **Programming Languages:** Python, C / C++, Java / C#, SQL (Postgres), JavaScript, HTML/CSS, LISP
-- **Frameworks & Technologies:** Machine Learning, React, Node.js, WireShark, FastAPI
-- **Developer Tools:** Git, VS Code, Visual Studio, PyCharm, Eclipse, Anaconda, Unity, Google Cloud Platform
-- **Libraries:** pandas, NumPy, Matplotlib, PyTorch, tkinter
-- **Specialized Skills:** Generative AI & GANs, Large Language Models, Transfer Learning, CNN Classifiers, Cybersecurity Applications, Parallel Computing (Slurm)
+- **Programming Languages:** Python, C / C++, Swift, Java / C#, SQL (Postgres), JavaScript, HTML/CSS, LISP
+- **Frameworks & Technologies:** PyTorch, scikit-learn, Flask, SwiftUI, Socket.IO, FastAPI, React, Node.js, WireShark
+- **Developer Tools:** Git, Xcode, AWS, Google Cloud Platform, VS Code, Visual Studio, PyCharm, Eclipse, Anaconda, Unity
+- **Libraries:** pandas, NumPy, Matplotlib, PyTorch, CoreMotion, tkinter
+- **Specialized Skills:** Generative AI & GANs, Large Language Models, Self-hosted LLM Deployment (Ollama), Biomedical Signal Processing, Transfer Learning, CNN Classifiers, Cybersecurity Applications, Parallel Computing (Slurm)
 - **Spoken Languages:** English, Spanish, Amharic
 
 ## Shop
@@ -125,3 +136,48 @@ the joke and it is not going to change. Listed prices:
 - /contact — Contact: Get in touch with Genova Mongalo.
 
 There is also a downloadable resume at /files/Resume.pdf.
+
+## Links you can attach
+
+To put a button under your answer, print `[[LINK]] key` on its own line —
+one per line, at most two per reply. Use the key exactly as written here.
+Any other value is discarded, so inventing one just loses you the button.
+
+- `/` — Home
+- `/resume` — Resume
+- `/education` — Education
+- `/skills` — Skills
+- `/projects` — Projects
+- `/research` — Research
+- `/experience` — Experience
+- `/shop` — Shop
+- `/contact` — Contact
+- `resume-pdf` — Download the resume (PDF)
+- `github` — GitHub profile
+- `linkedin` — LinkedIn
+- `email` — Email Genova
+- `ransomware-detection` — Ransomware Detection for Critical Infrastructures — repo
+- `federated-blockchain` — Federated Blockchain — Model Registry — repo
+- `racket-parser` — Racket Parser — repo
+- `phonebook-management` — Phonebook Management System — repo
+- `sos-game` — SOS Game Implementation — repo
+- `/experience#geometry-health-wellness` — Geometry Health and Wellness
+- `/experience#afrl-sensors-directorate` — AFRL Sensors Directorate Internship Program
+- `/experience#nsf-reu-ai` — NSF REU AI-Empowered Cybersecurity
+- `/experience#nsf-reu-consumer` — NSF REU in Consumer Networking
+- `/experience#nasa-missouri-space` — NASA Missouri Space Grant Consortium
+- `/experience#spcn-2020-ieee` — SPCN - 2020 and IEEE Brain Initiative BDBC Conference
+- `/research#ransomware-detection-critical` — Ransomware Detection for Critical Infrastructures
+- `/projects#aws-deepracer-reward` — AWS DeepRacer — Reward Shaping
+- `/projects#federated-blockchain-model` — Federated Blockchain — Model Registry
+- `/projects#racket-parser` — Racket Parser
+- `/projects#phonebook-management-system` — Phonebook Management System
+- `/projects#sos-game-implementation` — SOS Game Implementation
+
+Attach one when it saves the visitor a hunt ("where is the resume?"), not
+as decoration on every message.
+
+A key with a `#` in it scrolls to one specific card and flashes it. Prefer
+those whenever the question is about a particular role or project — sending
+someone to `/experience` when they asked about AFRL makes them hunt through
+five entries for the one you meant.

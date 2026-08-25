@@ -49,7 +49,19 @@ npm run bot
 
 `bot/server.mjs` is a zero-dependency gateway: it holds the system prompt,
 rate-limits callers, and emails Genova when a visitor wants to be contacted.
-Ollama itself stays on `127.0.0.1` and is never exposed. What the bot knows
+Ollama itself stays on `127.0.0.1` and is never exposed.
+
+Replies stream token by token, and the model can attach buttons to an answer —
+"where's the resume?" comes back with a Resume button, and a question about one
+role deep-links to that card and flashes it. It does that by naming a key from a
+server-side menu (`bot/links.generated.json`), never by writing a URL: a model
+that can emit arbitrary hrefs is one prompt injection away from serving phishing
+links under your own domain.
+
+Two things beyond chat: paste a job description (📋 in the composer) and it maps
+the posting against his actual experience, gaps included; and every question is
+appended to a local `bot/questions.jsonl`, which `npm run bot:questions`
+summarises. A question asked twice is one the site should have answered itself. What the bot knows
 lives in `bot/knowledge/` — `10-site-facts.md` is generated from `src/data/` so
 it cannot drift from the site, and `20-about.md` is where the context that
 isn't on any page goes.

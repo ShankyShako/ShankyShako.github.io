@@ -1,9 +1,23 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useBotStatus } from '../hooks/useBotStatus';
+import { useAudio } from '../context/AudioContext';
+import { ENTITY_BY_ALIAS, ENTITY_PATTERN } from '../data/entities';
 
-type Turn = { role: 'user' | 'assistant'; content: string };
+/**
+ * Actions the gateway is willing to hand the browser. Every field has already
+ * been validated server-side against a fixed menu — in particular `href` is
+ * resolved from a key the model chose, never a URL the model wrote — so this
+ * component can act on them without re-checking.
+ */
+type Action =
+  | { type: 'link'; href: string; label: string; kind: 'route' | 'file' | 'external' }
+  | { type: 'suggest'; items: string[] }
+  | { type: 'music'; state: 'on' | 'off' };
+
+type Turn = { role: 'user' | 'assistant'; content: string; actions?: Action[] };
 
 const GREETING =
   "I'm a small language model running on Genova's laptop — ask me about his " +
@@ -14,6 +28,85 @@ const OPENERS = [
   'Walk me through the AFRL work',
   'Is he open to roles?',
 ];
+
+/* The server allows a longer message in JD mode; matching the cap here means
+   the paste is refused by the textarea rather than silently truncated. */
+const MAX_CHARS = { chat: 1000, jd: 8000 };
+
+/**
+ * Strips markdown the model emits despite being told not to.
+ *
+ * The prompt asks for plain text and an 8B model mostly complies — but "mostly"
+ * means a `[label](url)` lands in the bubble as punctuation soup every dozen
+ * replies. Formatting is cheap to enforce deterministically and expensive to
+ * keep arguing about in the prompt, so it is enforced here.
+ *
+ * Runs at render on the accumulated text, so a span still arriving mid-stream
+ * simply resolves on the next token rather than needing its own buffer.
+ */
+function plain(text: string) {
+  return text
+    .replace(/\[([^\]\n]+)\]\([^)\n]*\)/g, '$1') // [label](url) → label
+    /* Bare URLs. The prompt forbids them and the model writes them anyway —
+       and it is always a duplicate of the button sitting right underneath.
+       Swallow the connector in front ("at", "see", ":") so the sentence still
+       reads, and stop short of the sentence's own full stop so removing a
+       trailing URL does not take the period with it. */
+    .replace(
+      /\s*(?:\b(?:at|on|see|via|from|here)\b[:\s]*|:\s*)?\(?https?:\/\/[^\s)]*[^\s).,;:!?]\)?/gi,
+      '',
+    )
+    .replace(/\s+([.,;!?])/g, '$1') // tidy the gap a removal left behind
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/^[ \t]+/gm, '') // a stripped URL can leave the line indented
+    .replace(/(\*\*|__)(.+?)\1/g, '$2') // bold
+    .replace(/`([^`\n]+)`/g, '$1') // inline code
+    .replace(/^#{1,6}\s+/gm, '') // headers
+    .replace(/^\s*[-*+]\s+/gm, '• '); // list markers
+}
+
+/**
+ * Turns names the model mentioned into links to the card they came from.
+ *
+ * The prompt already requires every claim to name its source — that rule is
+ * there to make fabrication harder, since inventing a capability also means
+ * inventing a role it came from. This piggybacks on it: having been named,
+ * "AFRL" may as well be clickable, and matching a fixed alias table in code is
+ * work the model does not have to spend attention on.
+ *
+ * First mention of each entity only. A reply that says "ransomware research"
+ * three times should not turn into three identical links.
+ */
+function linkify(text: string, go: (href: string) => void) {
+  const nodes: ReactNode[] = [];
+  const linked = new Set<string>();
+  let cursor = 0;
+
+  for (const match of text.matchAll(ENTITY_PATTERN)) {
+    const entity = ENTITY_BY_ALIAS.get(match[0].toLowerCase());
+    if (!entity || linked.has(entity.href)) continue;
+
+    const at = match.index;
+    if (at > cursor) nodes.push(text.slice(cursor, at));
+    nodes.push(
+      <button
+        key={at}
+        type="button"
+        className="chat-inline-link"
+        onClick={() => go(entity.href)}
+        title={`Go to ${entity.label}`}
+      >
+        {match[0]}
+      </button>,
+    );
+
+    linked.add(entity.href);
+    cursor = at + match[0].length;
+  }
+
+  if (cursor < text.length) nodes.push(text.slice(cursor));
+  return { nodes, linked };
+}
 
 /**
  * Chat bubble for the local Ollama gateway (bot/server.mjs).
@@ -26,6 +119,8 @@ const OPENERS = [
 export function ChatWidget() {
   const { status, botUrl, markOffline } = useBotStatus();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { started, muted, toggleMute } = useAudio();
 
   const [open, setOpen] = useState(false);
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -33,9 +128,18 @@ export function ChatWidget() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /* Job-description mode is a per-message thing, not a conversation state: it
+     buys one long paste and a longer answer, then reverts. */
+  const [jdMode, setJdMode] = useState(false);
+
   const logRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  /* A [[MUSIC]] action can land several seconds into a stream, by which point
+     the closure that started it has stale audio state. */
+  const audioRef = useRef({ started, muted });
+  audioRef.current = { started, muted };
 
   /* Follow the stream, but only when the reader is already at the bottom —
      yanking the view down while someone scrolls back is worse than a missed
@@ -69,7 +173,10 @@ export function ChatWidget() {
       const message = text.trim();
       if (!message || busy) return;
 
+      const mode = jdMode ? 'jd' : 'chat';
+
       setDraft('');
+      setJdMode(false);
       setError(null);
       setBusy(true);
 
@@ -83,7 +190,14 @@ export function ChatWidget() {
         const res = await fetch(`${botUrl}/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: history, page: pathname }),
+          body: JSON.stringify({
+            /* Strip actions back out — the model wrote the words, not the
+               buttons, and re-feeding them wastes context. */
+            messages: history.map(({ role, content }) => ({ role, content })),
+            page: pathname,
+            music: !started ? 'silent' : muted ? 'muted' : 'playing',
+            mode,
+          }),
           signal: ctrl.signal,
         });
 
@@ -114,13 +228,15 @@ export function ChatWidget() {
 
           for (const line of lines) {
             if (!line.trim()) continue;
-            let event: { t?: string; done?: boolean; error?: string };
+            let event: { t?: string; a?: Action; done?: boolean; error?: string };
             try {
               event = JSON.parse(line);
             } catch {
               continue;
             }
+
             if (event.error) throw new Error(event.error);
+
             if (event.t) {
               received = true;
               setTurns((prev) => {
@@ -129,6 +245,24 @@ export function ChatWidget() {
                 next[next.length - 1] = { ...last, content: last.content + event.t };
                 return next;
               });
+            }
+
+            if (event.a) {
+              const action = event.a;
+              received = true;
+
+              /* Music applies itself; the rest wait for a click. */
+              if (action.type === 'music') {
+                const { started: on, muted: isMuted } = audioRef.current;
+                if (on && (action.state === 'off') !== isMuted) toggleMute();
+              } else {
+                setTurns((prev) => {
+                  const next = [...prev];
+                  const last = next[next.length - 1];
+                  next[next.length - 1] = { ...last, actions: [...(last.actions ?? []), action] };
+                  return next;
+                });
+              }
             }
           }
         }
@@ -162,10 +296,60 @@ export function ChatWidget() {
         abortRef.current = null;
       }
     },
-    [botUrl, busy, markOffline, pathname, turns],
+    [botUrl, busy, jdMode, markOffline, muted, pathname, started, toggleMute, turns],
   );
 
   if (status !== 'online') return null;
+
+  const renderActions = (turn: Turn, isLast: boolean, alreadyLinked: Set<string>) =>
+    turn.actions?.map((action, k) => {
+      if (action.type === 'link') {
+        /* The text already links this one inline; a button under it would be
+           the same destination twice. */
+        if (alreadyLinked.has(action.href)) return null;
+
+        if (action.kind === 'route') {
+          return (
+            <button
+              key={k}
+              type="button"
+              className="chat-chip solid"
+              onClick={() => {
+                navigate(action.href);
+                setOpen(false); // they asked to see the page; get out of the way
+              }}
+            >
+              {action.label} →
+            </button>
+          );
+        }
+        return (
+          <a
+            key={k}
+            className="chat-chip solid"
+            href={action.href}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {action.label} ↗
+          </a>
+        );
+      }
+
+      /* Follow-ups go stale the moment the conversation moves on. */
+      if (action.type === 'suggest' && isLast && !busy) {
+        return (
+          <Fragment key={k}>
+            {action.items.map((item) => (
+              <button key={item} type="button" className="chat-chip" onClick={() => send(item)}>
+                {item}
+              </button>
+            ))}
+          </Fragment>
+        );
+      }
+      return null;
+    });
 
   return (
     <>
@@ -196,29 +380,71 @@ export function ChatWidget() {
           <div className="chat-log" ref={logRef} role="log" aria-live="polite">
             <p className="chat-msg bot">{GREETING}</p>
 
-            {turns.map((turn, i) => (
-              <p key={i} className={`chat-msg ${turn.role === 'user' ? 'me' : 'bot'}`}>
-                {turn.content ||
-                  (busy && i === turns.length - 1 ? (
-                    <span className="chat-typing" aria-label="Thinking">
-                      <i /><i /><i />
-                    </span>
-                  ) : null)}
-              </p>
-            ))}
+            {turns.map((turn, i) => {
+              const isLast = i === turns.length - 1;
+              const body = plain(turn.content).trimEnd();
+
+              /* Only the bot's own words get linked. Echoing a visitor's
+                 message back to them with links in it would be strange. */
+              const { nodes, linked } =
+                turn.role === 'assistant'
+                  ? linkify(body, (href) => {
+                      navigate(href);
+                      setOpen(false);
+                    })
+                  : { nodes: [body] as ReactNode[], linked: new Set<string>() };
+
+              return (
+                <div key={i} className={`chat-row ${turn.role === 'user' ? 'me' : 'bot'}`}>
+                  <p className={`chat-msg ${turn.role === 'user' ? 'me' : 'bot'}`}>
+                    {body
+                      ? nodes
+                      : busy && isLast
+                        ? (
+                            <span className="chat-typing" aria-label="Thinking">
+                              <i /><i /><i />
+                            </span>
+                          )
+                        : null}
+                  </p>
+                  {turn.actions && (
+                    <div className="chat-chips">{renderActions(turn, isLast, linked)}</div>
+                  )}
+                </div>
+              );
+            })}
 
             {turns.length === 0 && (
-              <div className="chat-openers">
+              <div className="chat-chips">
                 {OPENERS.map((q) => (
-                  <button key={q} type="button" onClick={() => send(q)}>
+                  <button key={q} type="button" className="chat-chip" onClick={() => send(q)}>
                     {q}
                   </button>
                 ))}
+                <button
+                  type="button"
+                  className="chat-chip solid"
+                  onClick={() => {
+                    setJdMode(true);
+                    inputRef.current?.focus();
+                  }}
+                >
+                  Match a job description
+                </button>
               </div>
             )}
 
             {error && <p className="chat-error">{error}</p>}
           </div>
+
+          {jdMode && (
+            <p className="chat-jd-note">
+              Paste the posting — I&rsquo;ll map it against his experience, gaps included.
+              <button type="button" onClick={() => setJdMode(false)} aria-label="Cancel">
+                ×
+              </button>
+            </p>
+          )}
 
           <form
             className="chat-input"
@@ -227,17 +453,29 @@ export function ChatWidget() {
               send(draft);
             }}
           >
+            <button
+              type="button"
+              className={`chat-mode${jdMode ? ' active' : ''}`}
+              onClick={() => setJdMode((v) => !v)}
+              aria-pressed={jdMode}
+              title="Match a job description"
+              aria-label="Match a job description"
+            >
+              📋
+            </button>
             <textarea
               ref={inputRef}
-              rows={1}
+              rows={jdMode ? 5 : 1}
               value={draft}
-              maxLength={1000}
-              placeholder="Ask something…"
+              maxLength={jdMode ? MAX_CHARS.jd : MAX_CHARS.chat}
+              placeholder={jdMode ? 'Paste the job description…' : 'Ask something…'}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {
                 /* Enter sends, Shift+Enter breaks the line — chat convention,
-                   and the box is one row tall by default. */
-                if (e.key === 'Enter' && !e.shiftKey) {
+                   and the box is one row tall by default. Not in JD mode:
+                   postings are full of blank lines, and firing off half a
+                   paste is not a mistake worth allowing. */
+                if (e.key === 'Enter' && !e.shiftKey && !jdMode) {
                   e.preventDefault();
                   send(draft);
                 }

@@ -24,6 +24,7 @@ const { experience } = await import(src('experience.ts'));
 const { projects, research } = await import(src('projects.ts'));
 const { skills } = await import(src('skills.ts'));
 const { products } = await import(src('shop.ts'));
+const { anchors } = await import(src('anchors.ts'));
 
 const out = [];
 const w = (s = '') => out.push(s);
@@ -110,6 +111,88 @@ w();
 w('There is also a downloadable resume at /files/Resume.pdf.');
 w();
 
+/* ---------------------------------------------------------------------------
+ * Link menu.
+ *
+ * The model may attach a button to an answer, but it must never author a URL —
+ * a prompt-injected model that can emit arbitrary hrefs is a phishing-link
+ * generator. So it picks a key from this menu instead, and the gateway
+ * resolves the key to a href it already knows. Anything unrecognised is
+ * dropped.
+ *
+ * Both halves come from here: links.generated.json for the gateway to check
+ * against, and the markdown section below for the model to choose from. One
+ * source, so the menu the model sees and the menu the server accepts cannot
+ * disagree.
+ * ------------------------------------------------------------------------ */
+const used = new Set();
+const slug = (title) => {
+  const words = title.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean);
+  let key = words.slice(0, 2).join('-');
+  for (let n = 2; used.has(key); n++) key = [...words.slice(0, 2), n].join('-');
+  used.add(key);
+  return key;
+};
+
+const links = [
+  ...nav.map((n) => ({ key: n.path, kind: 'route', href: n.path, label: n.label })),
+  { key: 'resume-pdf', kind: 'file', href: '/files/Resume.pdf', label: 'Download the resume (PDF)' },
+  { key: 'github', kind: 'external', href: site.github, label: 'GitHub profile' },
+  { key: 'linkedin', kind: 'external', href: site.linkedin, label: 'LinkedIn' },
+  { key: 'email', kind: 'external', href: `mailto:${site.email}`, label: `Email ${site.name.split(' ')[0]}` },
+  ...[...research, ...projects]
+    .filter((p) => p.href) // coursework has no public repo to offer
+    .map((p) => ({
+      key: slug(p.title),
+      kind: 'external',
+      href: p.href,
+      label: `${p.title} — repo`,
+    })),
+
+  /* Deep links. Slugs come from src/data/anchors.ts, the same module the
+     pages use to write their `id=`, so a link the bot offers always lands on
+     a card that exists. */
+  ...experience.map((r) => ({
+    key: `/experience#${anchors.experience.get(r.org)}`,
+    kind: 'route',
+    href: `/experience#${anchors.experience.get(r.org)}`,
+    label: r.org.split(',')[0].trim(),
+  })),
+  ...research.map((p) => ({
+    key: `/research#${anchors.research.get(p.title)}`,
+    kind: 'route',
+    href: `/research#${anchors.research.get(p.title)}`,
+    label: p.title,
+  })),
+  ...projects.map((p) => ({
+    key: `/projects#${anchors.projects.get(p.title)}`,
+    kind: 'route',
+    href: `/projects#${anchors.projects.get(p.title)}`,
+    label: p.title,
+  })),
+];
+
+writeFileSync(join(here, 'links.generated.json'), JSON.stringify({ links }, null, 2));
+
+w('## Links you can attach');
+w();
+w('To put a button under your answer, print `[[LINK]] key` on its own line —');
+w('one per line, at most two per reply. Use the key exactly as written here.');
+w('Any other value is discarded, so inventing one just loses you the button.');
+w();
+for (const l of links) w(`- \`${l.key}\` — ${l.label}`);
+w();
+w('Attach one when it saves the visitor a hunt ("where is the resume?"), not');
+w('as decoration on every message.');
+w();
+w('A key with a `#` in it scrolls to one specific card and flashes it. Prefer');
+w('those whenever the question is about a particular role or project — sending');
+w('someone to `/experience` when they asked about AFRL makes them hunt through');
+w('five entries for the one you meant.');
+w();
+
 const dest = join(here, 'knowledge', '10-site-facts.md');
 writeFileSync(dest, out.join('\n'));
-console.log(`bot/build-context: wrote ${dest} (${out.join('\n').length} chars)`);
+console.log(
+  `bot/build-context: wrote ${dest} (${out.join('\n').length} chars) and links.generated.json (${links.length} links)`,
+);

@@ -1,0 +1,184 @@
+{
+  "links": [
+    {
+      "key": "/",
+      "kind": "route",
+      "href": "/",
+      "label": "Home"
+    },
+    {
+      "key": "/resume",
+      "kind": "route",
+      "href": "/resume",
+      "label": "Resume"
+    },
+    {
+      "key": "/education",
+      "kind": "route",
+      "href": "/education",
+      "label": "Education"
+    },
+    {
+      "key": "/skills",
+      "kind": "route",
+      "href": "/skills",
+      "label": "Skills"
+    },
+    {
+      "key": "/projects",
+      "kind": "route",
+      "href": "/projects",
+      "label": "Projects"
+    },
+    {
+      "key": "/research",
+      "kind": "route",
+      "href": "/research",
+      "label": "Research"
+    },
+    {
+      "key": "/experience",
+      "kind": "route",
+      "href": "/experience",
+      "label": "Experience"
+    },
+    {
+      "key": "/shop",
+      "kind": "route",
+      "href": "/shop",
+      "label": "Shop"
+    },
+    {
+      "key": "/contact",
+      "kind": "route",
+      "href": "/contact",
+      "label": "Contact"
+    },
+    {
+      "key": "resume-pdf",
+      "kind": "file",
+      "href": "/files/Resume.pdf",
+      "label": "Download the resume (PDF)"
+    },
+    {
+      "key": "github",
+      "kind": "external",
+      "href": "https://github.com/ShankyShako",
+      "label": "GitHub profile"
+    },
+    {
+      "key": "linkedin",
+      "kind": "external",
+      "href": "https://www.linkedin.com/in/gmongalo/",
+      "label": "LinkedIn"
+    },
+    {
+      "key": "email",
+      "kind": "external",
+      "href": "mailto:genova@gmango.dev",
+      "label": "Email Genova"
+    },
+    {
+      "key": "ransomware-detection",
+      "kind": "external",
+      "href": "https://github.com/ShankyShako/RansomWare-Detection-Models",
+      "label": "Ransomware Detection for Critical Infrastructures — repo"
+    },
+    {
+      "key": "federated-blockchain",
+      "kind": "external",
+      "href": "https://github.com/ShankyShako/Federated-BlockChain",
+      "label": "Federated Blockchain — Model Registry — repo"
+    },
+    {
+      "key": "racket-parser",
+      "kind": "external",
+      "href": "https://github.com/ShankyShako/Racket-Parser",
+      "label": "Racket Parser — repo"
+    },
+    {
+      "key": "phonebook-management",
+      "kind": "external",
+      "href": "https://github.com/ShankyShako/PhoneBook",
+      "label": "Phonebook Management System — repo"
+    },
+    {
+      "key": "sos-game",
+      "kind": "external",
+      "href": "https://github.com/ShankyShako/SOS-Game",
+      "label": "SOS Game Implementation — repo"
+    },
+    {
+      "key": "/experience#geometry-health-wellness",
+      "kind": "route",
+      "href": "/experience#geometry-health-wellness",
+      "label": "Geometry Health and Wellness"
+    },
+    {
+      "key": "/experience#afrl-sensors-directorate",
+      "kind": "route",
+      "href": "/experience#afrl-sensors-directorate",
+      "label": "AFRL Sensors Directorate Internship Program"
+    },
+    {
+      "key": "/experience#nsf-reu-ai",
+      "kind": "route",
+      "href": "/experience#nsf-reu-ai",
+      "label": "NSF REU AI-Empowered Cybersecurity"
+    },
+    {
+      "key": "/experience#nsf-reu-consumer",
+      "kind": "route",
+      "href": "/experience#nsf-reu-consumer",
+      "label": "NSF REU in Consumer Networking"
+    },
+    {
+      "key": "/experience#nasa-missouri-space",
+      "kind": "route",
+      "href": "/experience#nasa-missouri-space",
+      "label": "NASA Missouri Space Grant Consortium"
+    },
+    {
+      "key": "/experience#spcn-2020-ieee",
+      "kind": "route",
+      "href": "/experience#spcn-2020-ieee",
+      "label": "SPCN - 2020 and IEEE Brain Initiative BDBC Conference"
+    },
+    {
+      "key": "/research#ransomware-detection-critical",
+      "kind": "route",
+      "href": "/research#ransomware-detection-critical",
+      "label": "Ransomware Detection for Critical Infrastructures"
+    },
+    {
+      "key": "/projects#aws-deepracer-reward",
+      "kind": "route",
+      "href": "/projects#aws-deepracer-reward",
+      "label": "AWS DeepRacer — Reward Shaping"
+    },
+    {
+      "key": "/projects#federated-blockchain-model",
+      "kind": "route",
+      "href": "/projects#federated-blockchain-model",
+      "label": "Federated Blockchain — Model Registry"
+    },
+    {
+      "key": "/projects#racket-parser",
+      "kind": "route",
+      "href": "/projects#racket-parser",
+      "label": "Racket Parser"
+    },
+    {
+      "key": "/projects#phonebook-management-system",
+      "kind": "route",
+      "href": "/projects#phonebook-management-system",
+      "label": "Phonebook Management System"
+    },
+    {
+      "key": "/projects#sos-game-implementation",
+      "kind": "route",
+      "href": "/projects#sos-game-implementation",
+      "label": "SOS Game Implementation"
+    }
+  ]
+}

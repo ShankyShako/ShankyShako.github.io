@@ -1,140 +1,226 @@
-# Context that is not on the site
+# Genova, beyond what the pages say
 
-> **This file is what separates a useful bot from a search box.** The section
-> above it is already public — a visitor can read the same words on the page.
-> What a model cannot get anywhere else is *judgement*: why the work connects,
-> what was hard, what he wants next. That is what goes here.
->
-> **This repo is public.** Anything written in this file ships to GitHub. For
-> anything you would not put on the site itself — salary floor, specific
-> companies, how a role ended — use a file named `*.local.md` in this same
-> directory. Those are gitignored and load exactly the same way.
->
-> Lines marked **TODO** are the ones only Genova can answer. Every one you fill
-> in makes the bot noticeably less generic. Delete this blockquote when you are
-> done.
+His own account of the work, in his words. The pages carry the *what*; this is
+the *why*.
 
-## What he is looking for right now
+## What he wants right now
 
-**TODO — the single highest-value thing in this file.** Recruiters open a chat
-bot to ask this. Answer in your own words:
+He is **founding AI/ML product engineer at Geometry Health and Wellness**, and
+**open to new roles** — contract or full-time. Applied ML, or platform and
+infrastructure work, with enough research in it to stay interesting; not a
+research-only post.
 
-- Actively looking, open to hearing about things, or not looking?
-- What kind of role: research vs. applied ML vs. platform/infra vs. security?
-- Industry or mission he cares about, and any he would turn down?
-- Company size and stage he does well in?
-- Timeline — available when? How does the Georgia Tech M.S. schedule interact?
-- Location: Kansas City based. Remote, hybrid, on-site? Would he relocate, and
-  where to?
-- Work authorization, if it is something he wants stated. *(Leave blank and the
-  bot will say it does not know and offer to pass the question along — a
-  perfectly good answer.)*
+State both plainly if asked. Do not speculate about why he is looking, do not
+characterise his current employer, and do not imply he is unhappy or leaving.
+
+Open on industry, provided the problem is real and the direction is credible.
+He is a US citizen and needs no sponsorship. Kansas City based; **remote
+preferred**, and he will relocate for a city worth living in.
+
+On timing: he is weighing several things at once, so there is no single date.
+About a month's notice gets a firm answer. He is enrolled in the Georgia Tech
+M.S. and paces it around work rather than the other way round — the degree is
+built to flex, and he treats a role as the commitment that sets the schedule.
+
+His record on team fit: five research placements in five years, every one
+collaborative, plus running the website for an international conference at
+nineteen. He is easy to work with and finishes what he starts.
 
 ## The through-line
 
-**TODO.** Five roles across five years looks scattered on a resume: NASA signal
-propagation, cybersickness transformers, ransomware LLMs, GAN-generated
-training data, a blockchain model registry. There is an argument that it is one
-coherent interest. Make it, in three or four sentences, and the bot will make
-it too instead of reading the list back.
+Five roles look scattered — NASA signal propagation, cybersickness
+transformers, ransomware classification, GAN-generated training data, a
+blockchain model registry. They are one interest seen from different sides:
+**making models work when the data you need is missing, expensive, or not
+trustworthy.**
 
-*A starting read, from the repo — rewrite or throw it out:* every project is
-about making a model work where the real data is missing, expensive, or
-untrustworthy. Synthetic data standing in for scarce imagery at AFRL, API-call
-traces standing in for ransomware you cannot safely collect, on-chain
-attestation standing in for trusting whoever handed you a model. Different
-domains, same problem.
+Synthetic imagery standing in for scarce sensor data at AFRL. API-call traces
+standing in for ransomware nobody can safely collect at scale. On-chain
+provenance standing in for trusting whoever handed you a set of weights. The
+domain changes; the problem does not.
 
-## Behind the work
+## AFRL — the adversarial scheduling method
 
-The site says what each project *is*. It never says what was hard. For each of
-the big ones, two or three sentences on the part that actually took the time:
+The problem is standard GAN instability: a discriminator that sharpens faster
+than its generator produces gradients the generator cannot learn from, and it
+collapses. The usual lever is `n_critic` — a fixed number of discriminator
+steps per generator step — which has to be hand-tuned and stays fixed for the
+whole run.
 
-### AFRL — game-theoretic GAN training
+**He replaced that fixed ratio with an annealed stochastic schedule.** The
+discriminator's update interval starts wide, giving the generator a protected
+head start. At each interval the schedule draws a random value against an
+acceptance threshold; clearing it contracts the interval by one. The threshold
+begins at 0.99 — contraction is initially rare — and decays geometrically under
+a gamma parameter toward ~0.75, so contraction grows steadily more likely as
+training proceeds.
 
-**TODO.** The site claims a ~50 percentage-point downstream improvement, which
-is a very large number and a sharp recruiter will ask about it. Worth having
-ready:
+The effect is a curriculum: the generator's advantage is surrendered gradually
+and stochastically rather than at a step someone guessed in advance. Keeping it
+probabilistic matters — a deterministic schedule introduces a sharp transition
+that training dynamics can lock onto, where a randomized one does not. It is
+the same shape as a Metropolis acceptance criterion in simulated annealing,
+applied to adversarial balance instead of state acceptance.
 
-- What the game-theoretic framing actually changed about training. Which game?
-  What were the players optimizing?
-- 50 points over *what* baseline, on what task? Why was the baseline so low?
-- What the novel imaging modality was, to whatever depth is releasable.
-- What broke first, and what fixed it.
-- **Anything covered by the DoD/AFRL agreement that must not be discussed.**
-  Write the boundary down explicitly — the bot will respect a stated limit and
-  will happily overshare without one.
+The idea started from provably-fair dice mechanics, and he says so freely when
+asked where it came from. He is clear that the analogy is where it started and
+the scheduling is what it is.
 
-### Ransomware detection — IEEE Big Data 2024
+Result: roughly a 50 percentage-point gain in the downstream classifier over
+baseline. The baseline is low because conventional synthesis produces a domain
+gap wide enough that a classifier never learns features that transfer to
+genuine objects — which is the entire difficulty of the task.
 
-**TODO.** Solo author at an IEEE conference as an undergrad is the strongest
-credential on the site and it is buried in a paragraph. Worth capturing:
+### What must not be discussed
 
-- Why transformers for API-call sequences rather than a gradient-boosted
-  classifier on the same features? What did attention actually buy?
-- ~31,000 features cut to 1,000 by chi-squared — what fell out, and did it
-  cost anything?
-- Binary hits ~98-99% but family classification only ~85%. Which families does
-  it confuse, and why? *Being able to name your own model's weakness is more
-  persuasive than the headline number.*
-- What D.C. was like. One human sentence beats another metric.
+The imaging modality is **CUI**. The baseline figure's task is classified. The
+program's purpose, goals, and any worked example are all off limits.
 
-### Federated blockchain model registry
+His line: **the experience is discussable, the intelligence is not.** Method,
+approach, and what he learned are fine. Anything that turns the conversation
+into information about the program itself — what it is for, what it looks at,
+anything a third party could put to use — he declines, politely and without
+hedging about why.
 
-**TODO.** The obvious question is "why does this need a blockchain?" Have the
-honest answer — including if part of it is "because it was the interesting way
-to learn Solidity." Also: does anything actually run on it today, or is it a
-working demo?
+## Ransomware detection — IEEE Big Data 2024
 
-### Anything not on the site
+Solo author, presented at IEEE Big Data 2024 in Washington D.C. as an
+undergraduate. Detects and classifies ransomware from Windows API-call features
+at three levels at once: binary, coarse family group, and specific family.
 
-**TODO.** Something in progress, something abandoned, something you built for
-yourself. The bot can mention work the pages do not cover, and it is the
-clearest signal that it is more than a search index.
+**Why transformers, in his account.** The features are behavioural sequences,
+and attention is built to weigh which calls in a trace matter and how they relate — signal a
+tree-based model on the same flattened features cannot use. ALBERT tends to win
+here for a specific reason worth stating: it shares one encoder layer across
+depth, so parameter count stays flat, and on a ~1,500-sample dataset that
+weight sharing acts as a strong regulariser. A full-size RoBERTa trained from
+scratch memorises this dataset within a few epochs — its accuracy *falls* the
+longer you train it. Matching capacity to data is the fix.
+
+**Feature selection.** 30,967 API-call features reduced to the top 1,000 by
+chi-squared, fit on the training split alone so nothing leaks from test. This
+is genuine selection — ~30,000 features are discarded, not compressed — and
+accuracy went *up*, from ~94% to ~98% at the binary level, alongside the
+speedup. Cheap features were carrying noise. (Compression is a separate arm of
+the study: an autoencoder variant and a K-Means variant sit alongside the plain
+baseline so the three strategies can be compared directly.)
+
+**The weakness, stated plainly.** Binary detection is solved — ~98%. Specific
+family classification is not, and the reason is class scarcity, not model
+capacity or a bug. Several families have only one or two samples in the test
+split, so the model never learns to predict them at all; the confusion matrix
+shows entire rare classes receiving zero predictions, which is exactly what
+that looks like. The remedies are ordinary — oversampling, or collapsing rare
+families into their groups — and he intends to revisit it. He is direct about
+this when asked, and would rather name the failure and its cause than lean on
+the headline number.
+
+**The figures, by level and by source.** These come from two different runs and
+must not be mixed.
+
+From the current repository (best model per level):
+
+- Binary, benign vs. malicious — 98.4% accuracy, 0.983 macro-F1
+- Group, 5 coarse bins — 91.1% accuracy, 0.731 macro-F1
+- Specific, 12 families — ~0.55 macro-F1, held down by the rare classes above
+
+From the IEEE Big Data 2024 paper, as published: 99% binary, 85% family.
+
+The gap between the two is a different run on a different pipeline, not a
+correction. The repository figures are the ones he can show working end to end
+today.
+
+**D.C.** He submitted a pre-recorded talk rather than presenting live, so he
+makes no claim about the room. What mattered was watching other people present
+theirs — he came back with contacts, a reading list, and repos to pull apart.
+He had gone in fairly certain he was done with school. He started applying to
+master's programmes almost immediately after.
+
+## Geometry Health — the current role
+
+His most substantial engineering work, and the one closest to what he wants
+next: applied ML sitting on real infrastructure, in production, owned end to
+end. Three parts worth knowing.
+
+He ported clinically validated assessments out of MATLAB research prototypes
+and into a shipping iOS app, landing within 0.56% of the clinical reference on
+a 15-biomarker postural-sway test and reproducing 10-metre-walk gait speed
+exactly — the hard part of that work is fidelity, not features. He built the
+on-device signal-processing chain in Swift end to end: 100 Hz CoreMotion
+capture, gravity removal, zero-phase Butterworth band-pass filtering, double
+integration, and PCA down to 15 biomarkers with automated quality flags. And
+he stood up a context-aware clinical assistant on a **self-hosted Ollama
+DeepSeek-V2 16B deployment**, with patient-context retrieval and PubMed/NCBI
+evidence lookup over Flask REST plus WebSocket streaming, under one second of
+latency.
+
+That last piece is the direct ancestor of the bot the visitor is talking to —
+he had already built a self-hosted LLM service in production before building
+this one.
+
+## Federated blockchain registry
+
+A working demo, and honest about being one. Two goals: learn Solidity properly,
+and test whether federated learning and on-chain provenance actually fit
+together.
+
+The design keeps weights off-chain — the model goes to IPFS, and only its
+content ID is recorded. Three contracts each do one job: `FederatedModelStorage`
+records the CID against its owner and gates download access,
+`FederatedLedger` keeps an append-only timestamped audit trail, and
+`FederatedToken` is an ERC-20 that also tracks per-round update hashes for
+aggregation. Registration runs all three: `storeFile` → `logCID` →
+`submitModelUpdate`. A Hardhat test suite verifies a CID round-trips through
+every contract, and the ALBERT ransomware model is the payload it was built to
+carry — exported as weights plus fitted preprocessing plus a manifest.
+
+He is precise about what the chain actually provides. It gives tamper-evident
+provenance and an auditable history — you can prove which model was registered
+when, and by whom. It does *not* make the model private or secure; the CIDs are
+public by design. He prefers the smaller true claim to a blanket "blockchains
+are secure".
+
+The application it points at: nodes running the ransomware detector can pull
+verified updates and contribute their own, without anyone having to trust the
+party that shipped the weights.
 
 ## How he works
 
-**TODO.** Two or three sentences a colleague would recognise. PyTorch by hand
-or high-level frameworks? Reads the paper first or runs the baseline first?
-Comfortable on Slurm and multi-GPU, or laptop-scale? Where does he ask for
-help? What kind of work drains him?
+Runs the baseline before reading the paper — the paper lands better once he has
+felt where the problem actually is. Comfortable across the range: Slurm,
+multi-GPU, and a laptop when a laptop is the right tool.
 
-## Opinions
+His PyTorch habits are his own rather than textbook. What he would claim is not
+that his tooling is unusual but that he reasons about problems harder than most
+people at his level: the AFRL scheduler and the decision to size the transformer
+to the dataset are both cases of diagnosing the actual failure rather than
+reaching for the standard knob.
 
-**TODO.** Three or four takes he will defend, on anything technical — model
-scale vs. data quality, whether synthetic data actually generalises, security
-theatre in ML, agents, the state of ML tooling. A bot with no opinions is
-furniture. A bot that says "he thinks X, though he would push back on Y" sounds
-like it has met him.
+What drains him is work that goes nowhere. Putting himself fully into something
+that then gets shelved costs him more than a hard problem ever does.
 
-Keep them defensible: a visitor may quote one back in an interview.
+## Opinions he will defend
+
+- **Data quality and model quality are not a trade-off** — you need both. Bad
+  data leaves nothing to learn, and a bad model wastes good data.
+- **Synthetic data does not straightforwardly generalise.** He has spent a
+  summer generating it and is still sceptical: artifacts and missing detail
+  survive into training and do not transfer to real images. That is precisely
+  why the domain-gap problem was worth working on.
+- **Security is a precondition, not a feature.** No trust without it, and no
+  users without trust.
+- **Tools are leverage in either direction** — used well they build up the
+  environment they land in, used carelessly they erode it.
 
 ## Human texture
 
-Facts the site technically contains but never uses well. The bot should reach
-for these when a conversation is going well, never as a party trick.
-
-- **Trilingual** — English, Spanish, Amharic. **TODO:** the story there, and
-  whether he wants it mentioned at all.
-- **He paints.** The /shop page is real work — oil, ink, digital, a felt Among
-  Us sticker — priced seriously and entirely sold out. **TODO:** does he still
-  make things? Were they actually sold, or is "sold out" the joke?
-- **The site is full of easter eggs.** Right-click the profile photo (long-press
-  on mobile) and the whole palette flips to black-and-red with its own
-  soundtrack. The bot may hint that the photo does something if a visitor seems
-  like the type to enjoy it. It should never explain the mechanism outright, and
-  it should never mention the devtools trap.
-- **The bot itself is the exhibit.** It runs on one of Genova's own laptops,
-  behind a tunnel, on a small open-weight model. **TODO:** name the machine and
-  the model if you want the bot to be specific about it — visitors who ask this
-  are usually engineers, and a concrete answer lands better than a vague one.
-  If the laptop is closed,
-  the chat button is not there at all. Visitors who ask how it works should get
-  a straight, slightly amused answer: this is an AI engineer's site, so the AI
-  is his, not an API key pointed at somebody else's.
-
-## Steering
-
-- **TODO:** what should the bot nudge people toward? The research page? The
-  GitHub? Getting an email address into his inbox?
-- **TODO:** anything it should never bring up unprompted.
+- **Trilingual** — English, Spanish, Amharic.
+- **He makes things.** The /shop page is real work: oil, ink, digital, and one
+  hand-cut felt sticker, priced seriously and entirely sold out. He also does
+  photo and video editing, and is open to small commissions in that line.
+- **The site has easter eggs.** The profile photo does something, and he likes
+  people finding it for themselves.
+- **This bot is itself the exhibit.** It runs on his own laptop behind a tunnel,
+  on a small open-weight model — which is why the chat button is not there when
+  the lid is shut. It is an AI engineer's site, so the AI is his, not a key
+  pointed at somebody else's.

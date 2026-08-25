@@ -7,3 +7,5 @@ dist
 *.tsbuildinfo
 .claude/
 bot/knowledge/*.local.md
+bot/questions.jsonl
+bot/.log-salt

@@ -1,12 +1,20 @@
 export type Project = {
   title: string;
-  href: string;
+  /** Public repo. Absent for coursework, which must not be published. */
+  href?: string;
   years: string;
   blurb: string;
   tags: string[];
 };
 
 export const projects: Project[] = [
+  {
+    title: 'AWS DeepRacer — Reward Shaping',
+    years: '2026',
+    tags: ['Reinforcement Learning', 'TD3', 'Reward Shaping', 'Docker', 'Simulation'],
+    blurb:
+      "A reinforcement-learning agent for the AWS DeepRacer environment, a 1/18-scale autonomous vehicle on a simulated physics track. A TD3 policy trains in a containerised local stack (Docker/Apptainer, GPU-accelerated on Apple Silicon via Metal) rather than in the cloud. The substance of the work is the reward function: a hand-built shaping scheme that bands reward by distance from the centre line, aligns heading against the upcoming waypoints, trades speed against steering angle, and applies hard penalties for leaving the track or crashing. The learning algorithm is off the shelf; the incentives are not, and reward design is where the difficulty in DeepRacer actually lives — a poorly shaped reward produces an agent that drives beautifully and never finishes a lap. Graduate coursework for CS 7642, Reinforcement Learning & Decision Making, at Georgia Tech; the repository is private under the university's academic-honesty policy.",
+  },
   {
     title: 'Federated Blockchain — Model Registry',
     href: 'https://github.com/ShankyShako/Federated-BlockChain',

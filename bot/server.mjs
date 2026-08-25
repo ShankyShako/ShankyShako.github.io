@@ -25,7 +25,8 @@
  */
 
 import { createServer } from 'node:http';
-import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { appendFileSync, readFileSync, readdirSync, statSync, existsSync, writeFileSync } from 'node:fs';
+import { createHash, randomBytes } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -36,7 +37,13 @@ if (existsSync(join(here, '.env'))) process.loadEnvFile(join(here, '.env'));
 
 const PORT = Number(process.env.BOT_PORT ?? 8787);
 const OLLAMA = (process.env.OLLAMA_URL ?? 'http://127.0.0.1:11434').replace(/\/$/, '');
-const MODEL = process.env.BOT_MODEL ?? 'qwen3:4b';
+const MODEL = process.env.BOT_MODEL ?? 'qwen3:8b';
+
+/* Job-description matching is the one answer where being wrong is expensive —
+   a fabricated match sends someone into an interview to be asked about a tool
+   they have never opened. It is also rare, so it can afford a bigger, slower
+   model than the chat path. Unset means "same model as everything else". */
+const JD_MODEL = process.env.BOT_JD_MODEL || MODEL;
 
 /* Keeps the weights resident between visitors. A cold load is ~2s of dead air
    on the first message; 30m of idle residency costs nothing but RAM. */
@@ -46,6 +53,20 @@ const KEEP_ALIVE = process.env.BOT_KEEP_ALIVE ?? '30m';
    and generation time is linear in tokens produced. */
 const MAX_TOKENS = Number(process.env.BOT_MAX_TOKENS ?? 400);
 const NUM_CTX = Number(process.env.BOT_NUM_CTX ?? 8192);
+
+/* Job-description mode gets its own budget: a pasted posting is 1-2k tokens
+   before the model has written anything, and the answer it deserves is longer
+   than a chat reply. Both are separate knobs because this is the pair that
+   decides whether the bot fits in a 6 GB GPU. */
+const JD_NUM_CTX = Number(process.env.BOT_JD_NUM_CTX ?? 16384);
+const JD_MAX_TOKENS = Number(process.env.BOT_JD_MAX_TOKENS ?? 700);
+
+const LOG_QUESTIONS = process.env.BOT_LOG_QUESTIONS !== 'false';
+
+/* Lower than a chat model's usual 0.7. This bot's job is to be accurate about
+   a real person's resume, and sampling temperature is the single biggest dial
+   on how willing it is to invent a plausible-sounding detail. */
+const TEMPERATURE = Number(process.env.BOT_TEMPERATURE ?? 0.4);
 
 const ORIGINS = (
   process.env.BOT_ALLOWED_ORIGINS ??
@@ -76,6 +97,14 @@ const LIMITS = {
   leadPerHour: 20,
 };
 
+/* What each mode is allowed to cost. `maxMessage` is why JD mode exists as a
+   mode at all: a 6000-char paste has to be let through, and letting every
+   message be 6000 chars would hand anyone a cheap way to fill the context. */
+const PROFILES = {
+  chat: { model: MODEL, numCtx: NUM_CTX, maxTokens: MAX_TOKENS, maxMessage: 1000 },
+  jd: { model: JD_MODEL, numCtx: JD_NUM_CTX, maxTokens: JD_MAX_TOKENS, maxMessage: 8000 },
+};
+
 const chatHits = new Map();
 const leadLast = new Map();
 let leadHour = { start: Date.now(), count: 0 };
@@ -98,59 +127,106 @@ function rateLimited(ip) {
  * the next message — no restart, no redeploy.
  * ------------------------------------------------------------------------ */
 const KNOWLEDGE = join(here, 'knowledge');
-let promptCache = { key: '', text: '' };
+const MODES = join(here, 'modes');
 
-function systemPrompt() {
-  const files = readdirSync(KNOWLEDGE)
-    .filter((f) => f.endsWith('.md'))
-    .sort();
-  const key = files.map((f) => `${f}:${statSync(join(KNOWLEDGE, f)).mtimeMs}`).join('|');
-  if (key === promptCache.key) return promptCache.text;
+/** mtime-keyed cache so editing a prompt takes effect on the next message. */
+function cachedRead(dir, match, cache) {
+  const files = readdirSync(dir).filter(match).sort();
+  const key = files.map((f) => `${f}:${statSync(join(dir, f)).mtimeMs}`).join('|');
+  if (key === cache.key) return cache.text;
 
-  const text = files
-    .map((f) => readFileSync(join(KNOWLEDGE, f), 'utf8').trim())
+  cache.key = key;
+  cache.text = files
+    .map((f) => readFileSync(join(dir, f), 'utf8').trim())
     .filter(Boolean)
     .join('\n\n---\n\n');
+  return cache.text;
+}
 
-  promptCache = { key, text };
-  console.log(`[bot] loaded ${files.length} knowledge file(s), ${text.length} chars`);
-  return text;
+const knowledgeCache = { key: '', text: '' };
+const modeCaches = {};
+
+function systemPrompt() {
+  return cachedRead(KNOWLEDGE, (f) => f.endsWith('.md'), knowledgeCache);
+}
+
+/**
+ * Extra instructions for one mode, from ./modes/<name>.md. Loaded per request
+ * rather than folded into the base prompt: JD-mode guidance is ~600 tokens
+ * that a "where's the resume?" turn should not be paying for.
+ */
+function modePrompt(name) {
+  if (name === 'chat') return null;
+  modeCaches[name] ??= { key: '', text: '' };
+  const text = cachedRead(MODES, (f) => f === `${name}.md`, modeCaches[name]);
+  return text || null;
 }
 
 /* ---------------------------------------------------------------------------
- * Lead capture.
+ * Directives.
  *
  * Structured tool-calling is unreliable at 4B. A sentinel line is not: the
- * model is told to print one when it has a name, an email, and a reason, and
- * this strips it out of the stream before the browser ever sees it.
+ * model prints `[[NAME]] payload` on its own line and this strips it out of
+ * the stream before the browser ever sees it.
+ *
+ *   [[LEAD]]    {json}          — email Genova. Never reaches the browser.
+ *   [[LINK]]    key             — attach a button, resolved against the menu.
+ *   [[SUGGEST]] one | two       — follow-up chips.
+ *   [[MUSIC]]   on | off        — the site's background music.
+ *
+ * Note what a directive can NOT do. There is no key that writes anything, and
+ * LINK carries a menu key rather than a URL, so the worst a hijacked model can
+ * emit is a link to a page of Genova's own site. Giving it raw hrefs would
+ * make a successful prompt injection into a phishing-link generator.
  * ------------------------------------------------------------------------ */
-const TAG = '[[LEAD]]';
+const TAGS = ['[[LEAD]]', '[[LINK]]', '[[SUGGEST]]', '[[MUSIC]]'];
+const MAX_TAG = Math.max(...TAGS.map((t) => t.length));
+
+/* The link menu is written by build-context.mjs from src/data. Absent file
+   just means no buttons — the bot still answers. */
+let LINKS = new Map();
+try {
+  const raw = JSON.parse(readFileSync(join(here, 'links.generated.json'), 'utf8'));
+  LINKS = new Map(raw.links.map((l) => [l.key, l]));
+} catch {
+  console.warn('[bot] links.generated.json missing — run `node bot/build-context.mjs`');
+}
+
+function firstTag(buf) {
+  let at = -1;
+  let tag = null;
+  for (const t of TAGS) {
+    const i = buf.indexOf(t);
+    if (i !== -1 && (at === -1 || i < at)) [at, tag] = [i, t];
+  }
+  return { at, tag };
+}
 
 /**
  * Split a streaming buffer into text safe to forward and text to hold back.
- * Tokens arrive mid-word, so a chunk can end halfway through the sentinel;
- * anything that could still turn into one stays in `keep` until proven
- * otherwise.
+ * Tokens arrive mid-word, so a chunk can end halfway through a sentinel;
+ * anything that could still become one stays in `keep` until proven otherwise.
  */
-function drain(buf, leads) {
+function drain(buf, found) {
   let out = '';
   for (;;) {
-    const i = buf.indexOf(TAG);
-    if (i === -1) break;
-    const nl = buf.indexOf('\n', i);
+    const { at, tag } = firstTag(buf);
+    if (at === -1) break;
+    const nl = buf.indexOf('\n', at);
     if (nl === -1) {
       /* Sentinel started but its line has not closed yet. */
-      return { out: out + buf.slice(0, i), keep: buf.slice(i) };
+      return { out: out + buf.slice(0, at), keep: buf.slice(at) };
     }
-    out += buf.slice(0, i);
-    leads.push(buf.slice(i + TAG.length, nl).trim());
+    out += buf.slice(0, at);
+    found.push({ tag: tag.slice(2, -2), payload: buf.slice(at + tag.length, nl).trim() });
     buf = buf.slice(nl + 1);
   }
 
   /* No complete tag. Hold back a trailing partial prefix of one. */
   let hold = 0;
-  for (let n = Math.min(TAG.length - 1, buf.length); n > 0; n--) {
-    if (TAG.startsWith(buf.slice(buf.length - n))) {
+  for (let n = Math.min(MAX_TAG - 1, buf.length); n > 0; n--) {
+    const tail = buf.slice(buf.length - n);
+    if (TAGS.some((t) => t.startsWith(tail))) {
       hold = n;
       break;
     }
@@ -158,6 +234,51 @@ function drain(buf, leads) {
   return hold
     ? { out: out + buf.slice(0, buf.length - hold), keep: buf.slice(buf.length - hold) }
     : { out: out + buf, keep: '' };
+}
+
+/**
+ * Turn a directive into something the browser may act on, or null to drop it.
+ * Everything is validated here; the client trusts what it receives precisely
+ * because nothing model-authored reaches it unchecked.
+ */
+function resolve({ tag, payload }, state) {
+  switch (tag) {
+    case 'LEAD':
+      state.leads.push(payload);
+      return null;
+
+    case 'LINK': {
+      const link = LINKS.get(payload);
+      if (!link) {
+        console.warn(`[bot] dropped unknown link key: ${payload.slice(0, 60)}`);
+        return null;
+      }
+      /* Two buttons is a helpful answer; six is a link farm. */
+      if (state.links >= 2) return null;
+      state.links++;
+      return { type: 'link', href: link.href, label: link.label, kind: link.kind };
+    }
+
+    case 'SUGGEST': {
+      if (state.suggested) return null;
+      const items = payload
+        .split('|')
+        .map((s) => s.trim().slice(0, 70))
+        .filter(Boolean)
+        .slice(0, 3);
+      if (!items.length) return null;
+      state.suggested = true;
+      return { type: 'suggest', items };
+    }
+
+    case 'MUSIC': {
+      const want = payload.toLowerCase().trim();
+      return want === 'on' || want === 'off' ? { type: 'music', state: want } : null;
+    }
+
+    default:
+      return null;
+  }
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -278,6 +399,48 @@ async function sendLead(raw, { ip, transcript }) {
 }
 
 /* ---------------------------------------------------------------------------
+ * Question log.
+ *
+ * What visitors actually ask is the most useful thing this bot produces — it
+ * tells you what the site fails to answer. One JSON object per line in
+ * bot/questions.jsonl, gitignored, never leaves the laptop.
+ *
+ * Addresses are hashed rather than stored, against a salt generated once into
+ * bot/.log-salt. That still distinguishes visitors from each other, which is
+ * all the log is for, without keeping a file of who read what. Set
+ * BOT_LOG_QUESTIONS=false to turn the whole thing off.
+ * ------------------------------------------------------------------------ */
+const LOG_FILE = join(here, 'questions.jsonl');
+const SALT_FILE = join(here, '.log-salt');
+
+let salt = '';
+if (LOG_QUESTIONS) {
+  try {
+    salt = existsSync(SALT_FILE)
+      ? readFileSync(SALT_FILE, 'utf8').trim()
+      : (() => {
+          const s = randomBytes(32).toString('hex');
+          writeFileSync(SALT_FILE, s, { mode: 0o600 });
+          return s;
+        })();
+  } catch (err) {
+    console.warn('[bot] question log disabled — could not read/write salt:', err.message);
+  }
+}
+
+const visitorId = (ip) =>
+  createHash('sha256').update(salt + ip).digest('hex').slice(0, 12);
+
+function logQuestion(entry) {
+  if (!LOG_QUESTIONS || !salt) return;
+  try {
+    appendFileSync(LOG_FILE, JSON.stringify(entry) + '\n');
+  } catch (err) {
+    console.warn('[bot] could not write question log:', err.message);
+  }
+}
+
+/* ---------------------------------------------------------------------------
  * Ollama
  * ------------------------------------------------------------------------ */
 
@@ -285,17 +448,17 @@ async function sendLead(raw, { ip, transcript }) {
    flag outright, so the first rejection turns it off for good. */
 let sendThinkFlag = process.env.BOT_THINK !== 'true';
 
-async function ollamaChat(messages) {
+async function ollamaChat(messages, profile) {
   const body = {
-    model: MODEL,
+    model: profile.model,
     messages,
     stream: true,
     keep_alive: KEEP_ALIVE,
     options: {
-      temperature: 0.7,
+      temperature: TEMPERATURE,
       top_p: 0.9,
-      num_ctx: NUM_CTX,
-      num_predict: MAX_TOKENS,
+      num_ctx: profile.numCtx,
+      num_predict: profile.maxTokens,
     },
   };
   if (sendThinkFlag) body.think = false;
@@ -309,7 +472,7 @@ async function ollamaChat(messages) {
   if (!res.ok && sendThinkFlag) {
     const why = await res.text();
     if (/think/i.test(why)) {
-      console.log(`[bot] ${MODEL} has no thinking mode; dropping the flag`);
+      console.log(`[bot] ${profile.model} has no thinking mode; dropping the flag`);
       sendThinkFlag = false;
       delete body.think;
       res = await fetch(`${OLLAMA}/api/chat`, {
@@ -406,32 +569,73 @@ async function handleChat(req, res) {
     return json(res, 400, { error: 'Malformed request.' });
   }
 
+  /* The client picks a mode, but only from this set, and the mode only ever
+     selects a server-side profile — it never carries limits of its own. */
+  const mode = body.mode === 'jd' ? 'jd' : 'chat';
+  const profile = PROFILES[mode];
+
   /* Only conversation turns cross the wire. The client cannot choose the
      model, inject a system message, or raise any generation limit. */
   const incoming = Array.isArray(body.messages) ? body.messages : [];
-  const turns = incoming
+  const raw = incoming
     .filter((m) => m && (m.role === 'user' || m.role === 'assistant'))
-    .slice(-LIMITS.history)
-    .map((m) => ({ role: m.role, content: String(m.content ?? '').slice(0, LIMITS.message) }))
+    .slice(-LIMITS.history);
+
+  /* The long allowance applies to the paste being sent now, not to the whole
+     back-scroll: replaying a JD on every later turn would grow the context
+     without bound. */
+  const last = raw.length - 1;
+  const turns = raw
+    .map((m, i) => ({
+      role: m.role,
+      content: String(m.content ?? '').slice(0, i === last ? profile.maxMessage : LIMITS.message),
+    }))
     .filter((m) => m.content.trim());
 
   if (!turns.length || turns[turns.length - 1].role !== 'user') {
     return json(res, 400, { error: 'Nothing to answer.' });
   }
 
+  /* A little situational awareness, allowlisted rather than trusted. It is
+     what lets the bot answer "turn the music off" without guessing, and stops
+     it offering a link to the page the visitor is already reading. */
   const page = /^\/[a-z-]{0,24}$/.test(String(body.page ?? '')) ? body.page : null;
+  const MUSIC = {
+    playing: 'The background music is playing.',
+    muted: 'The background music is muted.',
+    silent: 'The background music has never started — the visitor has not found the easter egg that reveals it.',
+  };
+  const music = MUSIC[String(body.music ?? '')] ?? null;
+
+  const situation = [page && `The visitor is on the ${page} page.`, music]
+    .filter(Boolean)
+    .join(' ');
+
+  const extra = modePrompt(mode);
 
   const messages = [
     { role: 'system', content: systemPrompt() },
-    ...(page ? [{ role: 'system', content: `The visitor is currently on the ${page} page.` }] : []),
+    ...(extra ? [{ role: 'system', content: extra }] : []),
+    ...(situation ? [{ role: 'system', content: situation }] : []),
     ...turns,
   ];
+
+  const started = Date.now();
+  const question = turns[turns.length - 1].content;
 
   inFlight++;
   let upstream;
   try {
-    upstream = await ollamaChat(messages);
+    upstream = await ollamaChat(messages, profile);
   } catch (err) {
+    logQuestion({
+      ts: new Date().toISOString(),
+      visitor: visitorId(ip),
+      page,
+      mode,
+      q: question,
+      error: 'model-unreachable',
+    });
     inFlight--;
     console.error('[bot] ollama call failed:', err.message);
     return json(res, 502, { error: 'The model is not responding right now.' });
@@ -443,7 +647,7 @@ async function handleChat(req, res) {
     'X-Accel-Buffering': 'no',
   });
 
-  const leads = [];
+  const state = { leads: [], links: 0, suggested: false };
   let held = ''; // sentinel-safe tail
   let ndjson = ''; // partial line from upstream
   let full = '';
@@ -452,6 +656,17 @@ async function handleChat(req, res) {
      "71,101,110..." rather than text. TextDecoder also stitches back together
      any multi-byte character split across a chunk boundary. */
   const decoder = new TextDecoder();
+
+  const flush = (text) => {
+    const found = [];
+    const { out, keep } = drain(text, found);
+    if (out) res.write(JSON.stringify({ t: out }) + '\n');
+    for (const d of found) {
+      const action = resolve(d, state);
+      if (action) res.write(JSON.stringify({ a: action }) + '\n');
+    }
+    return keep;
+  };
 
   try {
     for await (const chunk of upstream.body) {
@@ -470,17 +685,15 @@ async function handleChat(req, res) {
         const piece = evt.message?.content ?? '';
         if (piece) {
           full += piece;
-          const { out, keep } = drain(held + piece, leads);
-          held = keep;
-          if (out) res.write(JSON.stringify({ t: out }) + '\n');
-        }
-        if (evt.done && held) {
-          /* Stream ended mid-sentinel — flush whatever is left as text. */
-          if (!held.startsWith(TAG)) res.write(JSON.stringify({ t: held }) + '\n');
-          held = '';
+          held = flush(held + piece);
         }
       }
     }
+
+    /* Models routinely end without a trailing newline, which would strand a
+       final directive in `held` forever. The synthetic newline closes it. */
+    if (held) flush(held + '\n');
+
     res.write(JSON.stringify({ done: true }) + '\n');
   } catch (err) {
     console.error('[bot] stream broke:', err.message);
@@ -490,10 +703,26 @@ async function handleChat(req, res) {
     res.end();
   }
 
-  for (const raw of leads) {
+  logQuestion({
+    ts: new Date().toISOString(),
+    visitor: visitorId(ip),
+    page,
+    mode,
+    q: question,
+    chars: question.length,
+    replyChars: full.length,
+    actions: state.links + (state.suggested ? 1 : 0),
+    lead: state.leads.length > 0,
+    ms: Date.now() - started,
+  });
+
+  for (const raw of state.leads) {
     await sendLead(raw, {
       ip,
-      transcript: [...turns, { role: 'assistant', content: full.replace(/\[\[LEAD\]\].*/g, '').trim() }],
+      transcript: [
+        ...turns,
+        { role: 'assistant', content: full.replace(/\[\[[A-Z]+\]\].*/g, '').trim() },
+      ],
     });
   }
 }
