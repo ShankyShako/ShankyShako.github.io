@@ -141,17 +141,28 @@ function rateLimited(ip) {
  * the next message — no restart, no redeploy.
  * ------------------------------------------------------------------------ */
 const KNOWLEDGE = join(here, 'knowledge');
+
+/* Compact overrides. With BOT_COMPACT=true any file in bot/compact/ replaces
+   the same-named file in bot/knowledge/. Small models deliberate in proportion
+   to how much they are told, so this trades detail for a reply that arrives. */
+const COMPACT = process.env.BOT_COMPACT === 'true';
+const COMPACT_DIR = join(here, 'compact');
 const MODES = join(here, 'modes');
 
 /** mtime-keyed cache so editing a prompt takes effect on the next message. */
 function cachedRead(dir, match, cache) {
   const files = readdirSync(dir).filter(match).sort();
-  const key = files.map((f) => `${f}:${statSync(join(dir, f)).mtimeMs}`).join('|');
+  const pick = (f) => {
+    const override = join(COMPACT_DIR, f);
+    return COMPACT && dir === KNOWLEDGE && existsSync(override) ? override : join(dir, f);
+  };
+
+  const key = files.map((f) => `${f}:${statSync(pick(f)).mtimeMs}`).join('|');
   if (key === cache.key) return cache.text;
 
   cache.key = key;
   cache.text = files
-    .map((f) => readFileSync(join(dir, f), 'utf8').trim())
+    .map((f) => readFileSync(pick(f), 'utf8').trim())
     .filter(Boolean)
     .join('\n\n---\n\n');
   return cache.text;
@@ -1213,6 +1224,7 @@ server.listen(PORT, '0.0.0.0', () => {
     `[bot] thinking ${THINK ? 'native — reasoning routed to its own channel and dropped' : 'OFF'}`,
   );
   console.log(`[bot] tokens   ${MAX_TOKENS} max, ctx ${NUM_CTX}, temperature ${TEMPERATURE}`);
+  if (COMPACT) console.log('[bot] compact  on — bot/compact/*.md overriding bot/knowledge/');
 
   /* bot/.env is a copy of the example, not a link to it, so a setting that was
      renamed or retired sits there looking authoritative and doing nothing.

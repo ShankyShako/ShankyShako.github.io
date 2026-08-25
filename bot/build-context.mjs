@@ -26,6 +26,13 @@ const { skills } = await import(src('skills.ts'));
 const { products } = await import(src('shop.ts'));
 const { anchors } = await import(src('anchors.ts'));
 
+/* Compact mode. A 4B model handed thousands of tokens of reference material
+   deliberates instead of answering — measured: 6,700 chars of reasoning and
+   zero chars of reply. This cuts the generated half to what a chat bubble
+   actually needs, without touching the hand-written context in 20-about.md. */
+const COMPACT = process.env.BOT_COMPACT === 'true';
+const clip = (t, n) => (COMPACT && t.length > n ? t.slice(0, t.lastIndexOf(' ', n)) + '…' : t);
+
 const out = [];
 const w = (s = '') => out.push(s);
 
@@ -69,13 +76,18 @@ w('## Education');
 w();
 for (const d of degrees) w(`- **${d.degree}** — ${d.school} (${d.date})`);
 w();
-w('Graduate coursework:');
-w();
-for (const c of graduateCoursework) w(`- ${c.name}: ${c.points.join('; ')}`);
-w();
-w('Core foundations:');
-w();
-for (const c of coreFoundations) w(`- ${c.name}: ${c.points.join('; ')}`);
+if (COMPACT) {
+  w(`Graduate coursework: ${graduateCoursework.map((c) => c.name).join(', ')}.`);
+  w(`Core foundations: ${coreFoundations.map((c) => c.name).join(', ')}.`);
+} else {
+  w('Graduate coursework:');
+  w();
+  for (const c of graduateCoursework) w(`- ${c.name}: ${c.points.join('; ')}`);
+  w();
+  w('Core foundations:');
+  w();
+  for (const c of coreFoundations) w(`- ${c.name}: ${c.points.join('; ')}`);
+}
 w();
 
 w('## Experience');
@@ -84,7 +96,7 @@ for (const r of experience) {
   w(`### ${r.title} — ${r.org}`);
   w(`*${r.date}*`);
   w();
-  w(r.blurb);
+  w(clip(r.blurb, 340));
   w();
 }
 
@@ -94,7 +106,7 @@ for (const p of research) {
   w(`### ${p.title} (${p.years})`);
   w(`Repo: ${p.href} — ${p.tags.join(', ')}`);
   w();
-  w(p.blurb);
+  w(clip(p.blurb, 340));
   w();
 }
 
@@ -104,7 +116,7 @@ for (const p of projects) {
   w(`### ${p.title} (${p.years})`);
   w(`Repo: ${p.href} — ${p.tags.join(', ')}`);
   w();
-  w(p.blurb);
+  w(clip(p.blurb, 340));
   w();
 }
 
@@ -115,10 +127,14 @@ w();
 
 w('## Shop');
 w();
-w('Original art and hand-made pieces. Every single one is sold out — that is');
-w('the joke and it is not going to change. Listed prices:');
-w();
-for (const p of products) w(`- ${p.title} — ${p.price}`);
+if (COMPACT) {
+  w(`Original art, ${products.length} pieces, ${products[0].price}–${products[products.length - 1].price}. Every one sold out — that is the joke.`);
+} else {
+  w('Original art and hand-made pieces. Every single one is sold out — that is');
+  w('the joke and it is not going to change. Listed prices:');
+  w();
+  for (const p of products) w(`- ${p.title} — ${p.price}`);
+}
 w();
 
 /* No page list here: the link menu below already names every route, and every
@@ -193,7 +209,13 @@ w('To put a button under your answer, print `[[LINK]] key` on its own line —')
 w('one per line, at most two per reply. Use the key exactly as written here.');
 w('Any other value is discarded, so inventing one just loses you the button.');
 w();
-for (const l of links) w(`- \`${l.key}\` — ${l.label}`);
+if (COMPACT) {
+  /* One line per link instead of a bulleted block — same information, a third
+     of the tokens. */
+  w(links.map((l) => `${l.key} = ${l.label}`).join(' | '));
+} else {
+  for (const l of links) w(`- \`${l.key}\` — ${l.label}`);
+}
 w();
 w('Attach one when it saves the visitor a hunt ("where is the resume?"), not');
 w('as decoration on every message.');

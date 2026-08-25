@@ -31,31 +31,20 @@ something he has, not something he lacks.
 - **Bachelor of Science in Computer Science, summa cum laude** — University of Missouri-Kansas City (UMKC) — Kansas City, MO (August 2021 – December 2024)
 - **Master's in Computer Science — Emphasis on Artificial Intelligence** — Georgia Tech — Atlanta, GA (August 2025 – expected 2027)
 
-Graduate coursework:
-
-- Deep Learning: Neural network architectures: CNNs, RNNs, and transformers; Training, optimization, and regularization of deep models at scale
-- Reinforcement Learning: Markov decision processes, value-based and policy-gradient methods; Reward design and sequential decision-making for autonomous agents
-- Machine Learning: Supervised and unsupervised learning algorithms and applications; Model training, evaluation, and generalization
-- Artificial Intelligence: Search, knowledge representation, planning, and reasoning; Foundational AI techniques underpinning modern ML systems
-- Computer Vision: Image formation, feature detection, and recognition pipelines; The perception techniques underpinning the classifier work at AFRL
-- Brain & Cognitive Science: Computational models of perception, memory, and learning; Neuroscience principles that inspire AI architectures
-
-Core foundations:
-
-- Algorithms & Complexity: Algorithm design and analysis of computational complexity
-- Data Structures: Efficient organization, storage, and access of data
+Graduate coursework: Deep Learning, Reinforcement Learning, Machine Learning, Artificial Intelligence, Computer Vision, Brain & Cognitive Science.
+Core foundations: Algorithms & Complexity, Data Structures.
 
 ## Experience
 
 ### Founding AI/ML Product Engineer — Geometry Health and Wellness
 *September 2025 – Present*
 
-Founding engineer on a clinical mobility platform, taken from MVP to production. Ported clinically validated mobility assessments from MATLAB research prototypes to a production iOS app, matching the clinical reference within 0.56% on a 15-biomarker postural-sway test and reproducing 10-meter-walk gait speed exactly. Built the on-device biomarker signal-processing pipeline in Swift — 100 Hz CoreMotion capture, gravity removal, zero-phase Butterworth band-pass filtering, double integration, and PCA into 15 biomarkers with automated quality flags — alongside the in-house data-collection app that exports each trial as timestamped JSON, building the labeled datasets the models are validated against. Implemented an end-to-end LLM workflow for a context-aware clinical assistant (data preparation, patient-context retrieval, and PubMed/NCBI evidence via Entrez) on a self-hosted Ollama DeepSeek-V2 16B deployment with Flask REST and WebSocket streaming under one second of latency. Owns the technical architecture, sprint cycles, and coordination across clinical, engineering, and product.
+Founding engineer on a clinical mobility platform, taken from MVP to production. Ported clinically validated mobility assessments from MATLAB research prototypes to a production iOS app, matching the clinical reference within 0.56% on a 15-biomarker postural-sway test and reproducing 10-meter-walk gait speed exactly. Built the on-device…
 
 ### Federal AI/ML Engineer Contractor — AFRL Sensors Directorate Internship Program, University of Dayton
 *May 2025 – August 2025*
 
-Pioneered the development of generative AI models enabling a CNN classifier to successfully recognize real objects when trained on generated data when utilized in transfer learning framework, addressing AFRL/DoD priorities. Using PyTorch, adapted state of the art classifiers to handle novel imaging modalities. Utilized Slurm to enable large batches of parallelized computation. Created an innovative game theory approach to GAN training, significantly improving the results of the generator's development. The generative model's output led to an increase of 50 percentage points in the downstream classifier compared to the baseline.
+Pioneered the development of generative AI models enabling a CNN classifier to successfully recognize real objects when trained on generated data when utilized in transfer learning framework, addressing AFRL/DoD priorities. Using PyTorch, adapted state of the art classifiers to handle novel imaging modalities. Utilized Slurm to enable…
 
 ### AI/ML Engineer Intern — NSF REU AI-Empowered Cybersecurity, University of Missouri Kansas City
 *June 2024 – December 2024*
@@ -70,7 +59,7 @@ Designed a model that detects/predicts cybersickness using a transformer machine
 ### Research Intern — NASA Missouri Space Grant Consortium
 *December 2021 – April 2022*
 
-Engineered an AI-driven simulation of space-bound transmissions as part of a NASA-funded initiative analyzing signal propagation and identifying optimal frequency bands under varying conditions. Developed an interactive interface to visualize transmission strength and provide adaptive frequency recommendations based on environmental parameters.
+Engineered an AI-driven simulation of space-bound transmissions as part of a NASA-funded initiative analyzing signal propagation and identifying optimal frequency bands under varying conditions. Developed an interactive interface to visualize transmission strength and provide adaptive frequency recommendations based on environmental…
 
 ### Web Master — SPCN - 2020 and IEEE Brain Initiative BDBC Conference, Taiwan
 *August 2020 – September 2020*
@@ -82,34 +71,34 @@ Set up conference website for the 5th International Symposium on Audio and Video
 ### Ransomware Detection for Critical Infrastructures (2024–2026)
 Repo: https://github.com/ShankyShako/RansomWare-Detection-Models — PyTorch, ALBERT, RoBERTa, CNN, Security
 
-A comparative study of deep-learning and transformer models for detecting and classifying ransomware from Windows API-call features, aimed at Industrial Control Systems. Each model predicts at three levels simultaneously — binary (benign vs. malicious), coarse family group, and specific family (12 classes) — and is evaluated under three feature-engineering setups (baseline, autoencoder, and K-Means clustering). The pipeline compares a DNN, a 1-D CNN, and RoBERTa- and ALBERT-style transformers against classical baselines, using chi-squared feature selection to reduce ~31,000 features to the most informative 1,000 and class-weighting to handle rare families. The reproducible PyTorch/scikit-learn pipeline reaches ~98% accuracy on binary detection, with early stopping and weight sharing (ALBERT) used to control overfitting on the small dataset. GPU-accelerated on Apple Silicon via Metal.
+A comparative study of deep-learning and transformer models for detecting and classifying ransomware from Windows API-call features, aimed at Industrial Control Systems. Each model predicts at three levels simultaneously — binary (benign vs. malicious), coarse family group, and specific family (12 classes) — and is evaluated under three…
 
 ## Projects
 
 ### AWS DeepRacer — Reward Shaping (2026)
 Repo: undefined — Reinforcement Learning, TD3, Reward Shaping, Docker, Simulation
 
-A reinforcement-learning agent for the AWS DeepRacer environment, a 1/18-scale autonomous vehicle on a simulated physics track. A TD3 policy trains in a containerised local stack (Docker/Apptainer, GPU-accelerated on Apple Silicon via Metal) rather than in the cloud. The substance of the work is the reward function: a hand-built shaping scheme that bands reward by distance from the centre line, aligns heading against the upcoming waypoints, trades speed against steering angle, and applies hard penalties for leaving the track or crashing. The learning algorithm is off the shelf; the incentives are not, and reward design is where the difficulty in DeepRacer actually lives — a poorly shaped reward produces an agent that drives beautifully and never finishes a lap. Graduate coursework for CS 7642, Reinforcement Learning & Decision Making, at Georgia Tech; the repository is private under the university's academic-honesty policy.
+A reinforcement-learning agent for the AWS DeepRacer environment, a 1/18-scale autonomous vehicle on a simulated physics track. A TD3 policy trains in a containerised local stack (Docker/Apptainer, GPU-accelerated on Apple Silicon via Metal) rather than in the cloud. The substance of the work is the reward function: a hand-built shaping…
 
 ### Federated Blockchain — Model Registry (2025–2026)
 Repo: https://github.com/ShankyShako/Federated-BlockChain — Solidity, React, IPFS, Hardhat, Web3
 
-A federated-learning model registry on Ethereum that lets nodes share and audit machine-learning models without putting large weights on-chain. Solidity smart contracts (FederatedModelStorage, FederatedLedger, and an ERC-20 FederatedToken), deployed with Hardhat and tested on Ganache, record each model's IPFS content ID on-chain. Trained models — including the ALBERT ransomware classifier from my research — are exported as self-describing bundles, uploaded to IPFS, and registered via either a Node.js script or a React/Vite frontend with MetaMask wallet integration. Includes an automated Hardhat test suite verifying a model CID round-trips through all three contracts.
+A federated-learning model registry on Ethereum that lets nodes share and audit machine-learning models without putting large weights on-chain. Solidity smart contracts (FederatedModelStorage, FederatedLedger, and an ERC-20 FederatedToken), deployed with Hardhat and tested on Ganache, record each model's IPFS content ID on-chain. Trained…
 
 ### Racket Parser (2024)
 Repo: https://github.com/ShankyShako/Racket-Parser — Racket, Compilers, Parsing
 
-A custom parser built in Racket for a small artificial programming language inspired by FORTRAN. It reads .txt source files, validates syntax based on a defined grammar, and reports precise error lines when invalid constructs are encountered. This project demonstrates understanding of language grammars, recursive parsing techniques, and working with DrRacket tools to implement language analysis.
+A custom parser built in Racket for a small artificial programming language inspired by FORTRAN. It reads .txt source files, validates syntax based on a defined grammar, and reports precise error lines when invalid constructs are encountered. This project demonstrates understanding of language grammars, recursive parsing techniques, and…
 
 ### Phonebook Management System (2024)
 Repo: https://github.com/ShankyShako/PhoneBook — Java, SQL, CRUD
 
-A Java-based phonebook management application that integrates with Dolphin SQL for persistent storage. It supports user registration with secure password handling, contact addition/update/deletion, search functionality, and CSV export. Developed using Eclipse, this project highlights practical database integration, user interaction design, and CRUD operation management in a desktop application.
+A Java-based phonebook management application that integrates with Dolphin SQL for persistent storage. It supports user registration with secure password handling, contact addition/update/deletion, search functionality, and CSV export. Developed using Eclipse, this project highlights practical database integration, user interaction…
 
 ### SOS Game Implementation (2023)
 Repo: https://github.com/ShankyShako/SOS-Game — Python, Scrum, Testing
 
-An implementation of the classic SOS paper-and-pencil game designed to explore software development workflows using Scrum methodology. Written in Python, this project reflects iterative development practices, automated testing, and simple game logic implementation. It's a great example of applying agile principles to deliver a functional interactive game while learning team processes.
+An implementation of the classic SOS paper-and-pencil game designed to explore software development workflows using Scrum methodology. Written in Python, this project reflects iterative development practices, automated testing, and simple game logic implementation. It's a great example of applying agile principles to deliver a functional…
 
 ## Skills
 
@@ -122,17 +111,7 @@ An implementation of the classic SOS paper-and-pencil game designed to explore s
 
 ## Shop
 
-Original art and hand-made pieces. Every single one is sold out — that is
-the joke and it is not going to change. Listed prices:
-
-- Smurfed — Handcut Felt Sticker — $14
-- Moyai (Original, 1 of 1) — $45
-- Portrait of a Frog (Oil Study) — $120
-- Strings — Ink Study — $90
-- Plumber, Abstracted (Original) — $140
-- FOOD (Digital Original) — $180
-- Paradise — Oil on Canvas — $750
-- The Whole Collection — $1,999
+Original art, 8 pieces, $14–$1,999. Every one sold out — that is the joke.
 
 ## Links you can attach
 
@@ -140,36 +119,7 @@ To put a button under your answer, print `[[LINK]] key` on its own line —
 one per line, at most two per reply. Use the key exactly as written here.
 Any other value is discarded, so inventing one just loses you the button.
 
-- `/` — Home
-- `/resume` — Resume
-- `/education` — Education
-- `/skills` — Skills
-- `/projects` — Projects
-- `/research` — Research
-- `/experience` — Experience
-- `/shop` — Shop
-- `/contact` — Contact
-- `resume-pdf` — Download the resume (PDF)
-- `github` — GitHub profile
-- `linkedin` — LinkedIn
-- `email` — Email Genova
-- `ransomware-detection` — Ransomware Detection for Critical Infrastructures — repo
-- `federated-blockchain` — Federated Blockchain — Model Registry — repo
-- `racket-parser` — Racket Parser — repo
-- `phonebook-management` — Phonebook Management System — repo
-- `sos-game` — SOS Game Implementation — repo
-- `/experience#geometry-health-wellness` — Geometry Health and Wellness
-- `/experience#afrl-sensors-directorate` — AFRL Sensors Directorate Internship Program
-- `/experience#nsf-reu-ai` — NSF REU AI-Empowered Cybersecurity
-- `/experience#nsf-reu-consumer` — NSF REU in Consumer Networking
-- `/experience#nasa-missouri-space` — NASA Missouri Space Grant Consortium
-- `/experience#spcn-2020-ieee` — SPCN - 2020 and IEEE Brain Initiative BDBC Conference
-- `/research#ransomware-detection-critical` — Ransomware Detection for Critical Infrastructures
-- `/projects#aws-deepracer-reward` — AWS DeepRacer — Reward Shaping
-- `/projects#federated-blockchain-model` — Federated Blockchain — Model Registry
-- `/projects#racket-parser` — Racket Parser
-- `/projects#phonebook-management-system` — Phonebook Management System
-- `/projects#sos-game-implementation` — SOS Game Implementation
+/ = Home | /resume = Resume | /education = Education | /skills = Skills | /projects = Projects | /research = Research | /experience = Experience | /shop = Shop | /contact = Contact | resume-pdf = Download the resume (PDF) | github = GitHub profile | linkedin = LinkedIn | email = Email Genova | ransomware-detection = Ransomware Detection for Critical Infrastructures — repo | federated-blockchain = Federated Blockchain — Model Registry — repo | racket-parser = Racket Parser — repo | phonebook-management = Phonebook Management System — repo | sos-game = SOS Game Implementation — repo | /experience#geometry-health-wellness = Geometry Health and Wellness | /experience#afrl-sensors-directorate = AFRL Sensors Directorate Internship Program | /experience#nsf-reu-ai = NSF REU AI-Empowered Cybersecurity | /experience#nsf-reu-consumer = NSF REU in Consumer Networking | /experience#nasa-missouri-space = NASA Missouri Space Grant Consortium | /experience#spcn-2020-ieee = SPCN - 2020 and IEEE Brain Initiative BDBC Conference | /research#ransomware-detection-critical = Ransomware Detection for Critical Infrastructures | /projects#aws-deepracer-reward = AWS DeepRacer — Reward Shaping | /projects#federated-blockchain-model = Federated Blockchain — Model Registry | /projects#racket-parser = Racket Parser | /projects#phonebook-management-system = Phonebook Management System | /projects#sos-game-implementation = SOS Game Implementation
 
 Attach one when it saves the visitor a hunt ("where is the resume?"), not
 as decoration on every message.
