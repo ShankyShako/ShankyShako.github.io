@@ -65,6 +65,60 @@ function plain(text: string) {
     .replace(/^\s*[-*+]\s+/gm, '• '); // list markers
 }
 
+/* ---------------------------------------------------------------------------
+ * Icons.
+ *
+ * SVG rather than emoji: 💬 and 📋 render as a different picture on every
+ * platform, ignore `color` so they never follow the theme, and cannot carry a
+ * badge. These inherit `currentColor`, so Elmo mode recolours them for free.
+ * ------------------------------------------------------------------------ */
+const svg = {
+  width: 22,
+  height: 22,
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 1.9,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+} as const;
+
+function ChatIcon() {
+  return (
+    <svg {...svg} aria-hidden="true">
+      <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5z" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg {...svg} aria-hidden="true">
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
+/* A posting, not a clipboard — the ruled lines are what make it read as a
+   document you paste rather than a list you tick. */
+function PostingIcon() {
+  return (
+    <svg {...svg} width={18} height={18} aria-hidden="true">
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <rect x="8" y="2" width="8" height="4" rx="1" />
+      <path d="M8.5 12h7M8.5 16h4.5" />
+    </svg>
+  );
+}
+
+function SendIcon() {
+  return (
+    <svg {...svg} width={18} height={18} aria-hidden="true">
+      <path d="M12 19V5M5 12l7-7 7 7" />
+    </svg>
+  );
+}
+
 /**
  * Turns names the model mentioned into links to the card they came from.
  *
@@ -132,6 +186,10 @@ export function ChatWidget() {
      buys one long paste and a longer answer, then reverts. */
   const [jdMode, setJdMode] = useState(false);
 
+  /* Badge state. Starts as an invitation ("+") and becomes a count once the
+     bot has answered something the visitor has not looked at. */
+  const [unread, setUnread] = useState(0);
+
   const logRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -152,8 +210,16 @@ export function ChatWidget() {
   }, [turns, open]);
 
   useEffect(() => {
-    if (open) inputRef.current?.focus();
+    if (open) {
+      inputRef.current?.focus();
+      setUnread(0);
+    }
   }, [open]);
+
+  /* A reply can land seconds after the panel was closed, by which point the
+     closure that started the request has a stale `open`. */
+  const openRef = useRef(open);
+  openRef.current = open;
 
   useEffect(() => {
     if (!open) return;
@@ -294,6 +360,7 @@ export function ChatWidget() {
       } finally {
         setBusy(false);
         abortRef.current = null;
+        if (!openRef.current) setUnread((n) => n + 1);
       }
     },
     [botUrl, busy, jdMode, markOffline, muted, pathname, started, toggleMute, turns],
@@ -359,9 +426,25 @@ export function ChatWidget() {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-controls="chat-panel"
-        aria-label={open ? 'Close chat' : 'Chat with the site bot'}
+        aria-label={
+          open
+            ? 'Close chat'
+            : unread > 0
+              ? `Chat with the site bot, ${unread} unread`
+              : 'Chat with the site bot'
+        }
       >
-        {open ? '×' : '💬'}
+        {open ? (
+          <CloseIcon />
+        ) : (
+          <>
+            <ChatIcon />
+            {/* The label lives on the button, so the badge is decoration. */}
+            <span className={`chat-badge${unread > 0 ? ' is-count' : ''}`} aria-hidden="true">
+              {unread > 0 ? unread : '+'}
+            </span>
+          </>
+        )}
       </button>
 
       {open && (
@@ -373,7 +456,7 @@ export function ChatWidget() {
               <small>Running locally. Answers may be imperfect.</small>
             </div>
             <button type="button" onClick={() => setOpen(false)} aria-label="Close chat">
-              ×
+              <CloseIcon />
             </button>
           </header>
 
@@ -441,7 +524,7 @@ export function ChatWidget() {
             <p className="chat-jd-note">
               Paste the posting — I&rsquo;ll map it against his experience, gaps included.
               <button type="button" onClick={() => setJdMode(false)} aria-label="Cancel">
-                ×
+                <CloseIcon />
               </button>
             </p>
           )}
@@ -461,7 +544,7 @@ export function ChatWidget() {
               title="Match a job description"
               aria-label="Match a job description"
             >
-              📋
+              <PostingIcon />
             </button>
             <textarea
               ref={inputRef}
@@ -482,7 +565,7 @@ export function ChatWidget() {
               }}
             />
             <button type="submit" disabled={busy || !draft.trim()} aria-label="Send">
-              ↑
+              <SendIcon />
             </button>
           </form>
         </section>
