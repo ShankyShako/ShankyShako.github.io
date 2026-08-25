@@ -266,9 +266,21 @@ function partialHold(buf, tags) {
   return 0;
 }
 
-/** Drop <think> blocks, keeping everything outside them. */
+/**
+ * Drop <think> blocks, keeping everything outside them.
+ *
+ * The hard case is an UNPAIRED closing tag. Qwen's chat template puts the
+ * opening `<think>` into the prompt itself, so the model only ever generates
+ * `</think>` — the block is already open before the first token arrives, and a
+ * machine that waits for `<think>` never engages at all. An orphan close is
+ * therefore not corruption: it means everything so far was reasoning.
+ *
+ * By then some of it has usually been streamed, so this reports `orphan` and
+ * the caller retracts it with a reset.
+ */
 function stripThink(buf, st) {
   let out = '';
+  let orphan = false;
   for (;;) {
     if (st.inside) {
       const { at, tag } = firstOf(buf, THINK_CLOSE);
@@ -276,19 +288,31 @@ function stripThink(buf, st) {
         /* Still reasoning. Discard it all, but keep anything that might be
            the start of the closing tag. */
         const hold = partialHold(buf, THINK_CLOSE);
-        return { out, keep: hold ? buf.slice(buf.length - hold) : '' };
+        return { out, keep: hold ? buf.slice(buf.length - hold) : '', orphan };
       }
       buf = buf.slice(at + tag.length);
       st.inside = false;
     } else {
-      const { at, tag } = firstOf(buf, THINK_OPEN);
-      if (at === -1) {
-        const hold = partialHold(buf, THINK_OPEN);
-        out += hold ? buf.slice(0, buf.length - hold) : buf;
-        return { out, keep: hold ? buf.slice(buf.length - hold) : '' };
+      const open = firstOf(buf, THINK_OPEN);
+      const close = firstOf(buf, THINK_CLOSE);
+
+      /* A close with no open in front of it: the block was opened by the
+         prompt template. Everything up to here was working. */
+      if (close.at !== -1 && (open.at === -1 || close.at < open.at)) {
+        orphan = true;
+        out = '';
+        buf = buf.slice(close.at + close.tag.length);
+        continue;
       }
-      out += buf.slice(0, at);
-      buf = buf.slice(at + tag.length);
+
+      if (open.at === -1) {
+        /* Hold back a tail that could still become either kind of tag. */
+        const hold = partialHold(buf, [...THINK_OPEN, ...THINK_CLOSE]);
+        out += hold ? buf.slice(0, buf.length - hold) : buf;
+        return { out, keep: hold ? buf.slice(buf.length - hold) : '', orphan };
+      }
+      out += buf.slice(0, open.at);
+      buf = buf.slice(open.at + open.tag.length);
       st.inside = true;
     }
   }
@@ -1016,6 +1040,16 @@ async function handleChat(req, res) {
   const flush = (text) => {
     /* Tagged reasoning first — whatever survives is candidate answer text. */
     const stripped = stripThink(text, think);
+
+    /* The prompt template had opened a think block we never saw. Anything
+       already on screen was reasoning; take it back. */
+    if (stripped.orphan) {
+      res.write(JSON.stringify({ reset: true }) + '\n');
+      shown = '';
+      swallowed = '';
+      spoke = false;
+      console.warn('[bot] retracted reasoning closed by an unpaired </think>');
+    }
     const found = [];
     const { out, keep } = drain(stripped.out, found);
 
