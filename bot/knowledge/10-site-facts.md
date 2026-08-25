@@ -15,6 +15,17 @@ script to recite.
 - GitHub: https://github.com/ShankyShako
 - LinkedIn: https://www.linkedin.com/in/gmongalo/
 
+## Domains he has actually worked in
+
+- **Defense / DoD** — AFRL Sensors Directorate, on AFRL/DoD priorities.
+- **Cybersecurity** — ransomware detection for Industrial Control Systems,
+  presented at IEEE Big Data 2024; the NSF REU was AI-Empowered Cybersecurity.
+- **Aerospace** — NASA Missouri Space Grant Consortium.
+- **Healthcare** — Geometry Health and Wellness.
+
+A posting asking for security or defense domain experience is asking for
+something he has, not something he lacks.
+
 ## Education
 
 - **Bachelor of Science in Computer Science, summa cum laude** — University of Missouri-Kansas City (UMKC) — Kansas City, MO (August 2021 – December 2024)

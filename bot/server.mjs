@@ -58,11 +58,11 @@ const MAX_TOKENS = Number(process.env.BOT_MAX_TOKENS ?? 400);
    grows linearly with it. */
 const NUM_CTX = Number(process.env.BOT_NUM_CTX ?? 12288);
 
-/* Job-description mode gets its own budget: a pasted posting is 1-2k tokens
-   before the model has written anything, and the answer it deserves is longer
-   than a chat reply. Both are separate knobs because this is the pair that
-   decides whether the bot fits in a 6 GB GPU. */
-const JD_NUM_CTX = Number(process.env.BOT_JD_NUM_CTX ?? 16384);
+/* Job-description mode gets a longer answer, but deliberately NOT its own
+   num_ctx. Ollama keys the loaded runner on num_ctx, so varying it per request
+   unloads and reloads the model and throws away the cached prompt prefix:
+   measured at 41.5s versus 0.7s for the identical request. One context size
+   for every mode, always. */
 const JD_MAX_TOKENS = Number(process.env.BOT_JD_MAX_TOKENS ?? 700);
 
 const LOG_QUESTIONS = process.env.BOT_LOG_QUESTIONS !== 'false';
@@ -112,7 +112,7 @@ const LIMITS = {
    message be 6000 chars would hand anyone a cheap way to fill the context. */
 const PROFILES = {
   chat: { model: MODEL, numCtx: NUM_CTX, maxTokens: MAX_TOKENS, maxMessage: 1000 },
-  jd: { model: JD_MODEL, numCtx: JD_NUM_CTX, maxTokens: JD_MAX_TOKENS, maxMessage: 8000 },
+  jd: { model: JD_MODEL, numCtx: NUM_CTX, maxTokens: JD_MAX_TOKENS, maxMessage: 6000 },
 };
 
 const chatHits = new Map();
@@ -594,6 +594,26 @@ async function warmup() {
       );
     }
 
+    /* ~4.4 chars per token, calibrated against the measured count above.
+       Estimated rather than measured because a second cold pass on a slow
+       machine costs more than the precision is worth. */
+    const jdChars = (() => {
+      try {
+        return readFileSync(join(MODES, 'jd.md'), 'utf8').length;
+      } catch {
+        return 0;
+      }
+    })();
+    const jdBudget = tokens + Math.round(jdChars / 4.4) + Math.round(6000 / 4.4) + JD_MAX_TOKENS;
+    if (jdBudget > NUM_CTX) {
+      console.warn(
+        `[bot] warning: a job-description match needs ~${jdBudget.toLocaleString()} tokens ` +
+          `(prompt + mode + a 6k-char posting + the answer)\n` +
+          `      but num_ctx is ${NUM_CTX.toLocaleString()}. That button will produce ` +
+          `truncated matches. Raise BOT_NUM_CTX to ${Math.ceil((jdBudget * 1.1) / 1024) * 1024}.`,
+      );
+    }
+
     if (secs > 30) {
       console.warn(
         `[bot] warning: the prompt pass took ${secs.toFixed(0)}s. That is the delay before ` +
@@ -603,8 +623,29 @@ async function warmup() {
       );
     }
   } catch (err) {
-    readiness = { ok: false, checked: true, promptTokens: 0, note: err.message };
-    console.error(`[bot] warmup failed: ${err.message}`);
+    const timedOut = err.name === 'TimeoutError' || /abort|timeout/i.test(err.message);
+    readiness = {
+      ok: false,
+      checked: true,
+      promptTokens: 0,
+      note: timedOut ? 'warmup timed out' : err.message,
+    };
+
+    if (timedOut) {
+      console.error(
+        `\n[bot] warmup TIMED OUT. The model could not process a ` +
+          `${(systemPrompt().length / 4.4).toFixed(0)}-token prompt in ` +
+          `${(Number(process.env.BOT_WARMUP_MS ?? 180_000) / 1000).toFixed(0)}s.\n` +
+          `      At that speed Ollama is almost certainly running on CPU, not the GPU. Check:\n` +
+          `        ollama ps                 → the PROCESSOR column should say GPU, not CPU\n` +
+          `        nvidia-smi                → confirms the driver is present and working\n` +
+          `        journalctl -u ollama | grep -i "gpu\\|cuda\\|library"\n` +
+          `      If it says CPU: install the CUDA driver, then restart Ollama.\n` +
+          `      If it says GPU but is still slow, lower BOT_NUM_CTX so the KV cache fits.\n`,
+      );
+    } else {
+      console.error(`[bot] warmup failed: ${err.message}`);
+    }
   }
 }
 
@@ -619,11 +660,17 @@ async function ollamaUp() {
     const res = await fetch(`${OLLAMA}/api/tags`, { signal: AbortSignal.timeout(2000) });
     if (!res.ok) throw new Error(String(res.status));
     const { models = [] } = await res.json();
-    const base = MODEL.includes(':') ? MODEL : `${MODEL}:latest`;
+    /* Every model a profile can select, not just the chat one — a missing
+       BOT_JD_MODEL would otherwise only surface when a visitor pastes a
+       posting and gets an error. */
+    const wanted = [...new Set(Object.values(PROFILES).map((p) => p.model))];
     healthCache = {
       at: now,
       ok: true,
-      installed: models.some((m) => m.name === base || m.model === base),
+      installed: wanted.every((want) => {
+        const tag = want.includes(':') ? want : `${want}:latest`;
+        return models.some((m) => m.name === tag || m.model === tag);
+      }),
     };
   } catch {
     healthCache = { at: now, ok: false, installed: false };
@@ -914,5 +961,19 @@ server.listen(PORT, '0.0.0.0', () => {
     `[bot] leads    ${RESEND_KEY && LEAD_TO && LEAD_FROM ? `on → ${LEAD_TO}` : 'off (RESEND_API_KEY / LEAD_TO / LEAD_FROM unset)'}`,
   );
   systemPrompt();
+
+  /* Swapping models mid-conversation is the same trap as swapping num_ctx, and
+     worse: Ollama unloads one set of weights and loads the other, so the first
+     job-description match pays a full cold start. Two models will not sit in
+     6 GB of VRAM together. Measured cost of a reload: 41.5s versus 0.7s. */
+  if (JD_MODEL !== MODEL) {
+    console.warn(
+      `[bot] note: BOT_JD_MODEL (${JD_MODEL}) differs from BOT_MODEL (${MODEL}).\n` +
+        `      Every switch between them unloads and reloads the weights, and only the\n` +
+        `      chat model is warmed at startup. Worth it on a machine with VRAM to spare;\n` +
+        `      on a 6 GB card, set them the same.`,
+    );
+  }
+
   warmup();
 });

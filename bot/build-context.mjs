@@ -48,6 +48,23 @@ w(`- GitHub: ${site.github}`);
 w(`- LinkedIn: ${site.linkedin}`);
 w();
 
+/* Hand-maintained, because mapping a role to a domain is judgement, not data.
+   It exists because postings ask for "security or defense domain experience"
+   and a model reading only job titles concludes he has none — while his record
+   is almost entirely defense and security. Stated as fact, it is matched;
+   stated as a rule in the JD prompt, it was ignored. */
+w('## Domains he has actually worked in');
+w();
+w('- **Defense / DoD** — AFRL Sensors Directorate, on AFRL/DoD priorities.');
+w('- **Cybersecurity** — ransomware detection for Industrial Control Systems,');
+w('  presented at IEEE Big Data 2024; the NSF REU was AI-Empowered Cybersecurity.');
+w('- **Aerospace** — NASA Missouri Space Grant Consortium.');
+w('- **Healthcare** — Geometry Health and Wellness.');
+w();
+w('A posting asking for security or defense domain experience is asking for');
+w('something he has, not something he lacks.');
+w();
+
 w('## Education');
 w();
 for (const d of degrees) w(`- **${d.degree}** — ${d.school} (${d.date})`);

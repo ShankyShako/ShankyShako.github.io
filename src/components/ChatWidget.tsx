@@ -31,7 +31,7 @@ const OPENERS = [
 
 /* The server allows a longer message in JD mode; matching the cap here means
    the paste is refused by the textarea rather than silently truncated. */
-const MAX_CHARS = { chat: 1000, jd: 8000 };
+const MAX_CHARS = { chat: 1000, jd: 6000 };
 
 /**
  * Strips markdown the model emits despite being told not to.
