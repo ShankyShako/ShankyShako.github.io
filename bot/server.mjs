@@ -190,6 +190,81 @@ function modePrompt(name) {
  * make a successful prompt injection into a phishing-link generator.
  * ------------------------------------------------------------------------ */
 const TAGS = ['[[LEAD]]', '[[LINK]]', '[[SUGGEST]]', '[[MUSIC]]'];
+
+/* ---------------------------------------------------------------------------
+ * Reasoning suppression.
+ *
+ * Small models narrate their own scratchpad, in two different ways, and both
+ * have to be caught here rather than asked away in the prompt.
+ *
+ *   1. Tagged. The model emits <think>...</think> around its working. Ollama's
+ *      `think: false` usually prevents this, but a template that does not
+ *      honour it lets the tags through as ordinary content.
+ *   2. Untagged. "Let me analyse this question... The response should be:"
+ *      followed by the real answer. No tags, nothing to strip — the only
+ *      signal is the handoff phrase, which arrives long after the rambling.
+ *
+ * Case 1 is filtered inline below. Case 2 cannot be detected until the handoff
+ * appears, so the stream sends a reset and the browser drops what it has.
+ * ------------------------------------------------------------------------ */
+const THINK_OPEN = ['<think>', '<thinking>', '<reasoning>'];
+const THINK_CLOSE = ['</think>', '</thinking>', '</reasoning>'];
+
+/* The phrase a model uses to hand off from working to answer. Anchored near a
+   line start so an answer that merely contains "final answer" is not eaten. */
+const HANDOFF =
+  /(?:^|\n)[^\n]{0,60}?(?:the response should be(?: something like)?|here'?s (?:my|the) (?:response|answer)|final (?:answer|response)|my response(?: would be)?)\s*[:\-—]*\s*\n*/i;
+
+const DEBUG = process.env.BOT_DEBUG === 'true';
+
+/** Earliest occurrence of any of `tags`, or {at:-1}. */
+function firstOf(buf, tags) {
+  let at = -1;
+  let tag = null;
+  for (const t of tags) {
+    const i = buf.indexOf(t);
+    if (i !== -1 && (at === -1 || i < at)) [at, tag] = [i, t];
+  }
+  return { at, tag };
+}
+
+/** How many trailing chars could still grow into one of `tags`. */
+function partialHold(buf, tags) {
+  const longest = Math.max(...tags.map((t) => t.length));
+  for (let n = Math.min(longest - 1, buf.length); n > 0; n--) {
+    const tail = buf.slice(buf.length - n);
+    if (tags.some((t) => t.startsWith(tail))) return n;
+  }
+  return 0;
+}
+
+/** Drop <think> blocks, keeping everything outside them. */
+function stripThink(buf, st) {
+  let out = '';
+  for (;;) {
+    if (st.inside) {
+      const { at, tag } = firstOf(buf, THINK_CLOSE);
+      if (at === -1) {
+        /* Still reasoning. Discard it all, but keep anything that might be
+           the start of the closing tag. */
+        const hold = partialHold(buf, THINK_CLOSE);
+        return { out, keep: hold ? buf.slice(buf.length - hold) : '' };
+      }
+      buf = buf.slice(at + tag.length);
+      st.inside = false;
+    } else {
+      const { at, tag } = firstOf(buf, THINK_OPEN);
+      if (at === -1) {
+        const hold = partialHold(buf, THINK_OPEN);
+        out += hold ? buf.slice(0, buf.length - hold) : buf;
+        return { out, keep: hold ? buf.slice(buf.length - hold) : '' };
+      }
+      out += buf.slice(0, at);
+      buf = buf.slice(at + tag.length);
+      st.inside = true;
+    }
+  }
+}
 const MAX_TAG = Math.max(...TAGS.map((t) => t.length));
 
 /* The link menu is written by build-context.mjs from src/data. Absent file
@@ -846,15 +921,42 @@ async function handleChat(req, res) {
      any multi-byte character split across a chunk boundary. */
   const decoder = new TextDecoder();
 
+  const think = { inside: false };
+  let shown = ''; // visible text sent so far, for handoff detection
+  let didReset = false;
+
   const flush = (text) => {
+    /* Tagged reasoning first — whatever survives is candidate answer text. */
+    const stripped = stripThink(text, think);
     const found = [];
-    const { out, keep } = drain(text, found);
-    if (out) res.write(JSON.stringify({ t: out }) + '\n');
+    const { out, keep } = drain(stripped.out, found);
+
+    if (out) {
+      shown += out;
+
+      /* Untagged reasoning: the model rambled, then announced its real answer.
+         Everything before the announcement was working, not speech. Tell the
+         browser to throw it away and start from the answer. */
+      const handoff = didReset ? null : shown.match(HANDOFF);
+      if (handoff) {
+        didReset = true;
+        const answer = shown.slice(handoff.index + handoff[0].length).trimStart();
+        shown = answer;
+        res.write(JSON.stringify({ reset: true }) + '\n');
+        if (answer) res.write(JSON.stringify({ t: answer }) + '\n');
+        if (DEBUG) console.log('[bot] dropped reasoning preamble before answer');
+      } else {
+        res.write(JSON.stringify({ t: out }) + '\n');
+      }
+    }
+
     for (const d of found) {
       const action = resolve(d, state);
       if (action) res.write(JSON.stringify({ a: action }) + '\n');
     }
-    return keep;
+    /* Both filters can hold text back; the think tail must come first so it is
+       re-examined as a tag next time. */
+    return stripped.keep + keep;
   };
 
   try {
@@ -871,6 +973,12 @@ async function handleChat(req, res) {
           evt = JSON.parse(line);
         } catch {
           continue;
+        }
+        /* Ollama returns native reasoning in its own field. Reading only
+           `content` is what keeps it off the wire — do not "fix" this by
+           merging them. */
+        if (DEBUG && evt.message?.thinking) {
+          console.log(`[bot] model returned ${evt.message.thinking.length} chars of thinking (dropped)`);
         }
         const piece = evt.message?.content ?? '';
         if (piece) {
@@ -896,6 +1004,8 @@ async function handleChat(req, res) {
     inFlight--;
     res.end();
   }
+
+  if (DEBUG) console.log('[bot] raw>', JSON.stringify(full.slice(0, 500)));
 
   logQuestion({
     ts: new Date().toISOString(),

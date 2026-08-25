@@ -62,7 +62,11 @@ function plain(text: string) {
     .replace(/(\*\*|__)(.+?)\1/g, '$2') // bold
     .replace(/`([^`\n]+)`/g, '$1') // inline code
     .replace(/^#{1,6}\s+/gm, '') // headers
-    .replace(/^\s*[-*+]\s+/gm, '• '); // list markers
+    .replace(/^\s*[-*+]\s+/gm, '• ')
+    /* A model that drafted its answer before speaking wraps the whole thing in
+       quotes. A reply that is nothing but one quoted block is that, not a
+       quotation. */
+    .replace(/^\s*["“]([\s\S]+)["”]\s*$/, '$1'); // list markers
 }
 
 /* ---------------------------------------------------------------------------
@@ -294,7 +298,7 @@ export function ChatWidget() {
 
           for (const line of lines) {
             if (!line.trim()) continue;
-            let event: { t?: string; a?: Action; done?: boolean; error?: string };
+            let event: { t?: string; a?: Action; reset?: boolean; done?: boolean; error?: string };
             try {
               event = JSON.parse(line);
             } catch {
@@ -302,6 +306,18 @@ export function ChatWidget() {
             }
 
             if (event.error) throw new Error(event.error);
+
+            /* The model narrated its reasoning before answering, and the
+               gateway spotted the handoff. Everything shown so far was
+               working, not speech — clear the bubble and take the answer. */
+            if (event.reset) {
+              setTurns((prev) => {
+                const next = [...prev];
+                next[next.length - 1] = { ...next[next.length - 1], content: '' };
+                return next;
+              });
+              continue;
+            }
 
             if (event.t) {
               received = true;
