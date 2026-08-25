@@ -550,9 +550,26 @@ function logQuestion(entry) {
  * Ollama
  * ------------------------------------------------------------------------ */
 
-/* qwen3 reasons out loud unless told not to. Non-thinking models reject the
-   flag outright, so the first rejection turns it off for good. */
-let sendThinkFlag = process.env.BOT_THINK !== 'true';
+/* Native reasoning, ON by default — the opposite of the obvious setting.
+ *
+ * A reasoning model reasons whether or not you allow it a channel for it. With
+ * `think: false` qwen3 still works the problem, but the only place left to put
+ * it is `content` — so "Okay, the user is asking..." lands in the chat bubble
+ * and no amount of pattern-matching reliably gets it out again.
+ *
+ * With `think: true` the model's own chat template routes reasoning into a
+ * separate `thinking` field. Measured on one reply: 2,218 chars of thinking,
+ * 851 chars of answer, cleanly split. This gateway reads only `content`, so
+ * the separation costs nothing and cannot be fooled by phrasing.
+ *
+ * The tokens are still generated either way — this buys correctness, not
+ * speed, which is why BOT_MAX_TOKENS has to cover reasoning as well.
+ */
+const THINK = process.env.BOT_THINK !== 'false';
+
+/* Models with no reasoning mode reject the flag outright rather than ignoring
+   it, so the first rejection turns it off for the life of the process. */
+let thinkSupported = true;
 
 async function ollamaChat(messages, profile, signal) {
   const body = {
@@ -567,7 +584,7 @@ async function ollamaChat(messages, profile, signal) {
       num_predict: profile.maxTokens,
     },
   };
-  if (sendThinkFlag) body.think = false;
+  if (thinkSupported) body.think = THINK;
 
   let res = await fetch(`${OLLAMA}/api/chat`, {
     method: 'POST',
@@ -576,11 +593,11 @@ async function ollamaChat(messages, profile, signal) {
     signal,
   });
 
-  if (!res.ok && sendThinkFlag) {
+  if (!res.ok && thinkSupported) {
     const why = await res.text();
     if (/think/i.test(why)) {
       console.log(`[bot] ${profile.model} has no thinking mode; dropping the flag`);
-      sendThinkFlag = false;
+      thinkSupported = false;
       delete body.think;
       res = await fetch(`${OLLAMA}/api/chat`, {
         method: 'POST',
@@ -630,7 +647,7 @@ async function warmup() {
       keep_alive: KEEP_ALIVE,
       options: { num_ctx: NUM_CTX, num_predict: 1 },
     };
-    if (sendThinkFlag) body.think = false;
+    if (thinkSupported) body.think = THINK;
 
     const res = await fetch(`${OLLAMA}/api/chat`, {
       method: 'POST',
@@ -643,8 +660,8 @@ async function warmup() {
       const why = (await res.text()).slice(0, 200);
       /* Same one-shot fallback as ollamaChat: a model with no thinking mode
          rejects the flag rather than ignoring it. */
-      if (sendThinkFlag && /think/i.test(why)) {
-        sendThinkFlag = false;
+      if (thinkSupported && /think/i.test(why)) {
+        thinkSupported = false;
         return warmup();
       }
       throw new Error(`ollama ${res.status}: ${why}`);
@@ -1163,6 +1180,42 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(
     `[bot] leads    ${RESEND_KEY && LEAD_TO && LEAD_FROM ? `on → ${LEAD_TO}` : 'off (RESEND_API_KEY / LEAD_TO / LEAD_FROM unset)'}`,
   );
+  console.log(
+    `[bot] thinking ${THINK ? 'native — reasoning routed to its own channel and dropped' : 'OFF'}`,
+  );
+  console.log(`[bot] tokens   ${MAX_TOKENS} max, ctx ${NUM_CTX}, temperature ${TEMPERATURE}`);
+
+  /* bot/.env is a copy of the example, not a link to it, so a setting that was
+     renamed or retired sits there looking authoritative and doing nothing.
+     Every one of these cost real debugging time; say them out loud. */
+  if (process.env.BOT_JD_NUM_CTX) {
+    console.warn(
+      `[bot] ignoring BOT_JD_NUM_CTX — a per-mode context size makes Ollama reload the\n` +
+        `      model between requests (measured 41.5s vs 0.7s). BOT_NUM_CTX covers every mode.`,
+    );
+  }
+  if (!THINK) {
+    console.warn(
+      `\n[bot] warning: BOT_THINK=false does NOT stop a reasoning model reasoning. It removes\n` +
+        `      the separate channel it reasons into, so the working ends up in the reply where\n` +
+        `      the visitor reads it. This is the cause of "thinking output in the chat".\n` +
+        `      Set BOT_THINK=true in bot/.env.\n`,
+    );
+  }
+  if (THINK && MAX_TOKENS < 1000) {
+    console.warn(
+      `[bot] warning: BOT_MAX_TOKENS is ${MAX_TOKENS}, but reasoning and the answer share one\n` +
+        `      budget — a few hundred tokens of thinking leaves nothing for the reply.\n` +
+        `      Set BOT_MAX_TOKENS=1500 in bot/.env.`,
+    );
+  }
+  if (MAX_TOKENS < 1000 && THINK) {
+    console.warn(
+      `[bot] warning: BOT_MAX_TOKENS is ${MAX_TOKENS}, but reasoning is generated from the same\n` +
+        `      budget as the answer — a few hundred tokens of thinking will leave nothing for\n` +
+        `      the reply. Set BOT_MAX_TOKENS=1500 in bot/.env.`,
+    );
+  }
   systemPrompt();
 
   /* Swapping models mid-conversation is the same trap as swapping num_ctx, and
