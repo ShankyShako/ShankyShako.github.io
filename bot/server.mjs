@@ -853,7 +853,20 @@ async function handleChat(req, res) {
       role: m.role,
       content: String(m.content ?? '').slice(0, i === last ? profile.maxMessage : LIMITS.message),
     }))
-    .filter((m) => m.content.trim());
+    .filter((m) => m.content.trim())
+    /* Put the marker back on the model's own past replies.
+     *
+     * The browser only ever held the cleaned text, so without this the model
+     * is told "every reply must contain [[SAY]]" and then shown a transcript
+     * of its own replies that all lack it. A small model resolves that
+     * contradiction in favour of the visible pattern, and quietly stops
+     * emitting the marker a few turns in — taking its scratchpad public with
+     * it. Restoring it makes the instruction and the evidence agree. */
+    .map((m) =>
+      m.role === 'assistant' && !m.content.includes('[[SAY]]')
+        ? { ...m, content: `[[SAY]]\n${m.content}` }
+        : m,
+    );
 
   if (!turns.length || turns[turns.length - 1].role !== 'user') {
     return json(res, 400, { error: 'Nothing to answer.' });
@@ -977,6 +990,10 @@ async function handleChat(req, res) {
     }
 
     if (!speaking) {
+      /* Still working, so the prose is a draft and goes nowhere. Directives
+         are not: a [[LEAD]] the model emits before the marker is still a real
+         person asking to be contacted, and dropping it loses them silently.
+         A stray button is a far cheaper mistake than a lost lead. */
       swallowed += out;
       for (const d of found) {
         const action = resolve(d, state);
@@ -1036,6 +1053,13 @@ async function handleChat(req, res) {
            merging them. */
         if (DEBUG && evt.message?.thinking) {
           console.log(`[bot] model returned ${evt.message.thinking.length} chars of thinking (dropped)`);
+        }
+        if (evt.done && evt.done_reason === 'length') {
+          console.warn(
+            `[bot] reply hit the ${profile.maxTokens}-token ceiling and was cut off. ` +
+              `If this is frequent, the model is padding — tighten the length rule in ` +
+              `00-persona.md rather than raising BOT_MAX_TOKENS.`,
+          );
         }
         const piece = evt.message?.content ?? '';
         if (piece) {
