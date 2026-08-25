@@ -5,6 +5,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { AudioProvider } from './context/AudioContext';
 import { Nav } from './components/Nav';
 import { AudioBar } from './components/AudioBar';
+import { ChatWidget } from './components/ChatWidget';
 
 import { useSeo } from './hooks/useSeo';
 import { useImageGuard } from './hooks/useImageGuard';
@@ -62,6 +63,7 @@ function Shell() {
         </main>
       </div>
       <AudioBar />
+      <ChatWidget />
     </>
   );
 }

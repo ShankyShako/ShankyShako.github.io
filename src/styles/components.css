@@ -335,10 +335,13 @@
 .modal-close:hover { color: var(--accent); }
 
 /* ===== Audio bar ===== */
+/* Bottom-LEFT since the chat bubble took the right corner. Two floating
+   controls in the same corner is one too many, and the music bar is the one
+   that only appears after an easter egg. */
 .audio-bar {
   position: fixed;
   bottom: 1.2rem;
-  right: 1.2rem;
+  left: 1.2rem;
   z-index: 600;
   display: flex;
   align-items: center;
@@ -424,4 +427,220 @@
   width: 1px;
   height: 1px;
   overflow: hidden;
+}
+
+/* ==========================================================================
+   Chat widget
+
+   Only ever in the DOM when the gateway on Genova's laptop answered /health,
+   so there is no offline/disabled state to style. Everything reads the theme
+   tokens, which means Elmo mode recolours it for free.
+   ========================================================================== */
+.chat-fab {
+  position: fixed;
+  bottom: 1.2rem;
+  right: 1.2rem;
+  z-index: 620;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 1px solid var(--accent-soft);
+  background: rgba(0, 0, 0, 0.55);
+  color: var(--accent);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 6px 20px var(--glow);
+  animation: fadeIn 0.4s ease;
+  transition: transform 0.2s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+}
+
+.chat-fab:hover { transform: scale(1.08); }
+.chat-fab.is-open { font-size: 1.9rem; }
+
+.chat-panel {
+  position: fixed;
+  bottom: 5.4rem;
+  right: 1.2rem;
+  z-index: 620;
+  display: flex;
+  flex-direction: column;
+  width: min(380px, calc(100vw - 2.4rem));
+  height: min(540px, calc(100vh - 8rem));
+  border: 1px solid var(--accent-soft);
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  animation: fadeIn 0.25s ease;
+}
+
+.chat-head {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.chat-head strong { display: block; font-size: 0.95rem; }
+.chat-head small { display: block; font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; }
+
+.chat-head > button {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.chat-head > button:hover { color: var(--accent); }
+
+/* Steady green rather than a pulse: the widget's presence already means it is
+   up, so an animated "live" light would be decoration pretending to be data. */
+.chat-dot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: #45d17a;
+  box-shadow: 0 0 8px rgba(69, 209, 122, 0.7);
+}
+
+.chat-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  scroll-behavior: smooth;
+}
+
+.chat-msg {
+  max-width: 85%;
+  padding: 0.6rem 0.85rem;
+  border-radius: 14px;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  white-space: pre-wrap; /* the model writes newlines; nothing renders markdown */
+  overflow-wrap: anywhere;
+}
+
+.chat-msg.bot {
+  align-self: flex-start;
+  background: var(--surface-solid);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+}
+
+.chat-msg.me {
+  align-self: flex-end;
+  background: var(--accent);
+  color: var(--on-accent);
+  border-bottom-right-radius: 4px;
+}
+
+.chat-typing { display: inline-flex; gap: 4px; padding: 0.15rem 0; }
+
+.chat-typing i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: chatBlink 1.2s infinite ease-in-out;
+}
+
+.chat-typing i:nth-child(2) { animation-delay: 0.18s; }
+.chat-typing i:nth-child(3) { animation-delay: 0.36s; }
+
+@keyframes chatBlink {
+  0%, 60%, 100% { opacity: 0.25; }
+  30% { opacity: 1; }
+}
+
+.chat-openers { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.25rem; }
+
+.chat-openers button {
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 20px;
+  padding: 0.35rem 0.8rem;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.chat-openers button:hover { color: var(--accent); border-color: var(--accent); }
+
+.chat-error { font-size: 0.82rem; color: #ff8a8a; align-self: center; text-align: center; }
+
+.chat-input {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  padding: 0.7rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.chat-input textarea {
+  flex: 1;
+  resize: none;
+  max-height: 120px;
+  padding: 0.55rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--text-light);
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.chat-input textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.chat-input button {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.chat-input button:hover:not(:disabled) { transform: scale(1.08); }
+.chat-input button:disabled { opacity: 0.35; cursor: default; }
+
+/* On a phone the panel is the screen. Anchoring it to the viewport instead of
+   the button keeps it clear of the keyboard when the input takes focus. */
+@media (max-width: 560px) {
+  .chat-panel {
+    inset: auto 0.6rem 5rem 0.6rem;
+    width: auto;
+    height: min(70vh, calc(100vh - 7rem));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-panel,
+  .chat-fab { animation: none; }
+  .chat-typing i { animation: none; opacity: 0.6; }
+  .chat-log { scroll-behavior: auto; }
 }

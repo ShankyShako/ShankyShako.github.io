@@ -32,6 +32,30 @@ environment variables in the Vercel dashboard:
 
 The form is protected by a hidden honeypot field and a per-instance rate limit.
 
+## Chat bot
+
+An optional chat bubble, bottom right, backed by a small Ollama model running
+on Genova's laptop behind a tunnel — not a hosted API. Because the laptop is
+usually asleep, the site probes the gateway's `/health` before rendering
+anything; when it does not answer, the widget does not exist. With
+`VITE_BOT_URL` unset it never renders and never probes at all, which is what
+previews and `npm run dev` get by default.
+
+```bash
+ollama pull qwen3:4b
+cp bot/.env.example bot/.env
+npm run bot
+```
+
+`bot/server.mjs` is a zero-dependency gateway: it holds the system prompt,
+rate-limits callers, and emails Genova when a visitor wants to be contacted.
+Ollama itself stays on `127.0.0.1` and is never exposed. What the bot knows
+lives in `bot/knowledge/` — `10-site-facts.md` is generated from `src/data/` so
+it cannot drift from the site, and `20-about.md` is where the context that
+isn't on any page goes.
+
+Full setup, model comparison, and tunnel options: [docs/CHATBOT.md](docs/CHATBOT.md).
+
 ## Easter eggs
 
 Preserved from the original site — don't "clean these up":
@@ -50,6 +74,8 @@ Preserved from the original site — don't "clean these up":
   the master; right-click/drag saving is deterred site-wide.
 - **Devtools trap** — `src/hooks/useDevtoolsTrap.ts`, production builds only so
   `npm run dev` stays usable.
+- **Volume bar sits bottom-left**, not bottom-right — the chat bubble has the
+  right corner. Don't move it back.
 
 ## Content
 

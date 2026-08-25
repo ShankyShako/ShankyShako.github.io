@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build && node scripts/prerender-meta.mjs",
     "preview": "vite preview",
-    "typecheck": "tsc -b --noEmit"
+    "typecheck": "tsc -b --noEmit",
+    "bot": "node bot/build-context.mjs && node bot/server.mjs",
+    "bot:context": "node bot/build-context.mjs"
   },
   "dependencies": {
     "react": "^19.2.0",
