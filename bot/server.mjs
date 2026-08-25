@@ -962,7 +962,7 @@ async function handleChat(req, res) {
     'X-Accel-Buffering': 'no',
   });
 
-  const state = { leads: [], links: 0, suggested: false };
+  const state = { leads: [], links: 0, suggested: false, acted: 0 };
   let held = ''; // sentinel-safe tail
   let ndjson = ''; // partial line from upstream
   let full = '';
@@ -991,6 +991,16 @@ async function handleChat(req, res) {
    * ------------------------------------------------------------------- */
   let speaking = false;
   let swallowed = '';
+  let spoke = false; // has any visible text actually reached the browser?
+  let thoughtChars = 0;
+
+  /* Single exit for visible text, so "did the visitor get anything?" is one
+     flag rather than three call sites that must all remember to set it. */
+  const say = (text) => {
+    if (!text) return;
+    spoke = true;
+    res.write(JSON.stringify({ t: text }) + '\n');
+  };
 
   const flush = (text) => {
     /* Tagged reasoning first — whatever survives is candidate answer text. */
@@ -1014,7 +1024,7 @@ async function handleChat(req, res) {
       swallowed += out;
       for (const d of found) {
         const action = resolve(d, state);
-        if (action) res.write(JSON.stringify({ a: action }) + '\n');
+        if (action) { state.acted++; res.write(JSON.stringify({ a: action }) + '\n'); }
       }
       return stripped.keep + keep;
     }
@@ -1034,16 +1044,19 @@ async function handleChat(req, res) {
         const answer = shown.slice(handoff.index + handoff[0].length).trimStart();
         shown = answer;
         res.write(JSON.stringify({ reset: true }) + '\n');
-        if (answer) res.write(JSON.stringify({ t: answer }) + '\n');
+        say(answer);
         if (DEBUG) console.log('[bot] dropped reasoning preamble before answer');
       } else {
-        res.write(JSON.stringify({ t: out }) + '\n');
+        say(out);
       }
     }
 
     for (const d of found) {
       const action = resolve(d, state);
-      if (action) res.write(JSON.stringify({ a: action }) + '\n');
+      if (action) {
+        state.acted++;
+        res.write(JSON.stringify({ a: action }) + '\n');
+      }
     }
     /* Both filters can hold text back; the think tail must come first so it is
        re-examined as a tag next time. */
@@ -1068,9 +1081,7 @@ async function handleChat(req, res) {
         /* Ollama returns native reasoning in its own field. Reading only
            `content` is what keeps it off the wire — do not "fix" this by
            merging them. */
-        if (DEBUG && evt.message?.thinking) {
-          console.log(`[bot] model returned ${evt.message.thinking.length} chars of thinking (dropped)`);
-        }
+        if (evt.message?.thinking) thoughtChars += evt.message.thinking.length;
         if (evt.done && evt.done_reason === 'length') {
           console.warn(
             `[bot] reply hit the ${profile.maxTokens}-token ceiling and was cut off. ` +
@@ -1090,16 +1101,34 @@ async function handleChat(req, res) {
        final directive in `held` forever. The synthetic newline closes it. */
     if (held) flush(held + '\n');
 
-    /* The model never opened the gate. Rather than show nothing, fall back to
-       the old handoff heuristic over everything it wrote, and failing that,
-       show the lot — a reply with visible working beats an empty bubble. */
-    if (!speaking && swallowed.trim()) {
+    /* Nothing reached the visitor. Two ways to get here, and the gate being
+       open is NOT a reason to stay silent: a model that answers first and
+       prints [[SAY]] afterwards leaves its whole reply sitting in `swallowed`.
+       Recover it either way — visible working beats an empty bubble, and an
+       empty bubble beats "I didn't manage an answer" on a reply that exists. */
+    if (!spoke && swallowed.trim()) {
       const handoff = [...swallowed.matchAll(new RegExp(HANDOFF.source, 'gi'))].pop();
       const answer = handoff
         ? swallowed.slice(handoff.index + handoff[0].length).trim()
         : swallowed.trim();
-      if (DEBUG) console.log(`[bot] no [[SAY]] — fell back to ${handoff ? 'handoff split' : 'raw text'}`);
-      if (answer) res.write(JSON.stringify({ t: answer }) + '\n');
+      console.warn(
+        `[bot] recovered a reply the gate swallowed (${speaking ? 'marker came after the answer' : 'no [[SAY]] at all'})`,
+      );
+      say(answer);
+    }
+
+    /* Genuinely empty. Usually means the model put its entire reply in the
+       reasoning channel, which is a model problem, not a parsing one — say so
+       rather than leaving the visitor with a shrug. */
+    if (!spoke && !state.acted) {
+      console.warn(
+        `[bot] EMPTY REPLY: ${thoughtChars} chars of reasoning, ${full.length} chars of content.` +
+          (thoughtChars > 0 && full.length < 20
+            ? `\n      The model answered inside its reasoning channel and returned nothing to say.` +
+              `\n      If this repeats, set BOT_THINK=false in bot/.env — the [[SAY]] gate handles` +
+              `\n      reasoning for models that cannot keep the two apart.`
+            : ''),
+      );
     }
 
     res.write(JSON.stringify({ done: true }) + '\n');
