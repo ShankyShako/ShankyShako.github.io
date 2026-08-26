@@ -3,7 +3,7 @@ export const site = {
   role: 'AI Engineer',
   url: 'https://gmango.dev',
   email: 'genova@gmango.dev',
-  phone: '(913) 260-8912',
+  phone: '(510) 274-1272',
   linkedin: 'https://www.linkedin.com/in/gmongalo/',
   github: 'https://github.com/ShankyShako',
   /* Social previews intentionally use the watermarked decoy, never the master. */
