@@ -40,6 +40,7 @@ const GROQ_API_KEY = process.env.GROQ_API_KEY ?? '';
 const USE_GROQ = !!GROQ_API_KEY;
 const OLLAMA = (process.env.OLLAMA_URL ?? 'http://127.0.0.1:11434').replace(/\/$/, '');
 const MODEL = process.env.BOT_MODEL ?? (USE_GROQ ? 'llama-3.1-8b-instant' : 'qwen3:8b');
+const OLLAMA_MODEL = process.env.BOT_OLLAMA_FALLBACK_MODEL ?? 'qwen3:4b';
 
 /* Job-description matching is the one answer where being wrong is expensive —
    a fabricated match sends someone into an interview to be asked about a tool
@@ -119,6 +120,12 @@ const LIMITS = {
 const PROFILES = {
   chat: { model: MODEL, numCtx: NUM_CTX, maxTokens: MAX_TOKENS, maxMessage: 1000 },
   jd: { model: JD_MODEL, numCtx: NUM_CTX, maxTokens: JD_MAX_TOKENS, maxMessage: 6000 },
+};
+
+/* Fallback profiles for Ollama when Groq fails */
+const OLLAMA_PROFILES = {
+  chat: { model: OLLAMA_MODEL, numCtx: NUM_CTX, maxTokens: MAX_TOKENS, maxMessage: 1000 },
+  jd: { model: OLLAMA_MODEL, numCtx: NUM_CTX, maxTokens: JD_MAX_TOKENS, maxMessage: 6000 },
 };
 
 const chatHits = new Map();
@@ -1065,10 +1072,11 @@ async function handleChat(req, res) {
     clearTimeout(stallTimer);
 
     // If Groq fails with rate limit (429) or other errors, try Ollama fallback
+    const fallbackProfile = OLLAMA_PROFILES[mode];
     if (USE_GROQ && err.message.includes('429')) {
-      console.warn('[bot] Groq rate limit hit, falling back to Ollama...');
+      console.warn(`[bot] Groq rate limit hit, falling back to Ollama (${OLLAMA_MODEL})...`);
       try {
-        upstream = await ollamaChat(messages, profile, ctrl.signal);
+        upstream = await ollamaChat(messages, fallbackProfile, ctrl.signal);
         usedFallback = true;
         console.log('[bot] successfully using Ollama fallback');
       } catch (fallbackErr) {
@@ -1078,9 +1086,9 @@ async function handleChat(req, res) {
       }
     } else if (USE_GROQ && !err.message.includes('groq')) {
       // Groq had a non-rate-limit error, try Ollama
-      console.warn('[bot] Groq error, attempting Ollama fallback:', err.message);
+      console.warn(`[bot] Groq error, attempting Ollama fallback (${OLLAMA_MODEL}):`, err.message);
       try {
-        upstream = await ollamaChat(messages, profile, ctrl.signal);
+        upstream = await ollamaChat(messages, fallbackProfile, ctrl.signal);
         usedFallback = true;
         console.log('[bot] successfully using Ollama fallback');
       } catch (fallbackErr) {
