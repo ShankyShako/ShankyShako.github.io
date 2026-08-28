@@ -591,6 +591,37 @@ function logQuestion(entry) {
 }
 
 /* ---------------------------------------------------------------------------
+ * Groq rate-limit tracking.
+ *
+ * Every request tries Groq first. There is no sticky "fallback mode" — the
+ * server does NOT need a restart after a rate limit. When Groq returns 429 it
+ * includes a `retry-after` header (seconds). This tracker skips the Groq call
+ * entirely while the cooldown is active, saving a round-trip and avoiding
+ * burning another 429 against the quota.
+ * ------------------------------------------------------------------------ */
+let groqCooldown = { until: 0, retryAfter: 0 };
+
+function groqAvailable() {
+  if (!groqCooldown.until) return true;
+  if (Date.now() >= groqCooldown.until) {
+    console.log('[bot] Groq cooldown expired — switching back to Groq');
+    groqCooldown = { until: 0, retryAfter: 0 };
+    return true;
+  }
+  return false;
+}
+
+function setGroqCooldown(err) {
+  /* Groq's 429 includes `retry-after` in seconds. Fall back to 60s. */
+  const retryAfter = Number(err.headers?.get?.('retry-after') ?? 60);
+  groqCooldown = { until: Date.now() + retryAfter * 1000, retryAfter };
+  const resumeAt = new Date(groqCooldown.until).toLocaleTimeString();
+  console.warn(
+    `[bot] Groq rate-limited for ${retryAfter}s — using Ollama until ${resumeAt}`,
+  );
+}
+
+/* ---------------------------------------------------------------------------
  * Groq
  * ------------------------------------------------------------------------ */
 async function groqChat(messages, profile, signal) {
@@ -615,7 +646,10 @@ async function groqChat(messages, profile, signal) {
 
   if (!res.ok) {
     const why = await res.text();
-    throw new Error(`groq ${res.status}: ${why.slice(0, 300)}`);
+    const err = new Error(`groq ${res.status}: ${why.slice(0, 300)}`);
+    err.status = res.status;
+    err.headers = res.headers;
+    throw err;
   }
 
   return {
@@ -1066,31 +1100,39 @@ async function handleChat(req, res) {
   inFlight++;
   let upstream;
   let usedFallback = false;
+
+  /* If Groq is in cooldown, skip it entirely — saves a round-trip and avoids
+     stacking another 429 against the quota. */
+  const tryGroq = USE_GROQ && groqAvailable();
+
   try {
-    upstream = await (USE_GROQ ? groqChat : ollamaChat)(messages, profile, ctrl.signal);
+    upstream = await (tryGroq ? groqChat : ollamaChat)(
+      messages,
+      tryGroq ? profile : OLLAMA_PROFILES[mode],
+      ctrl.signal,
+    );
+    if (!tryGroq && USE_GROQ) usedFallback = true;
   } catch (err) {
     clearTimeout(stallTimer);
 
     // If Groq fails with rate limit (429) or other errors, try Ollama fallback
     const fallbackProfile = OLLAMA_PROFILES[mode];
-    if (USE_GROQ && err.message.includes('429')) {
-      console.warn(`[bot] Groq rate limit hit, falling back to Ollama (${OLLAMA_MODEL})...`);
+    if (tryGroq && err.status === 429) {
+      setGroqCooldown(err);
       try {
         upstream = await ollamaChat(messages, fallbackProfile, ctrl.signal);
         usedFallback = true;
-        console.log('[bot] successfully using Ollama fallback');
       } catch (fallbackErr) {
         console.error('[bot] Ollama fallback also failed:', fallbackErr.message);
         inFlight--;
         return json(res, 503, { error: 'Both Groq and Ollama are unavailable. Try again shortly.' });
       }
-    } else if (USE_GROQ && !err.message.includes('groq')) {
+    } else if (tryGroq) {
       // Groq had a non-rate-limit error, try Ollama
       console.warn(`[bot] Groq error, attempting Ollama fallback (${OLLAMA_MODEL}):`, err.message);
       try {
         upstream = await ollamaChat(messages, fallbackProfile, ctrl.signal);
         usedFallback = true;
-        console.log('[bot] successfully using Ollama fallback');
       } catch (fallbackErr) {
         logQuestion({
           ts: new Date().toISOString(),
@@ -1366,6 +1408,7 @@ const server = createServer(async (req, res) => {
        not fit, so the site hides the button rather than showing one that
        answers with an error — or worse, one that hangs. */
     const healthy = ok && installed && readiness.ok;
+    const isCooldown = USE_GROQ && !groqAvailable();
     return json(res, healthy ? 200 : 503, {
       ok: healthy,
       backend: USE_GROQ ? 'groq' : 'ollama',
@@ -1374,6 +1417,8 @@ const server = createServer(async (req, res) => {
       promptTokens: readiness.promptTokens,
       numCtx: NUM_CTX,
       note: readiness.note,
+      usingFallback: isCooldown,
+      cooldownRemaining: USE_GROQ ? Math.max(0, Math.ceil((groqCooldown.until - Date.now()) / 1000)) : 0,
     });
   }
 
