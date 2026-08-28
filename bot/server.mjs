@@ -36,8 +36,10 @@ const here = dirname(fileURLToPath(import.meta.url));
 if (existsSync(join(here, '.env'))) process.loadEnvFile(join(here, '.env'));
 
 const PORT = Number(process.env.BOT_PORT ?? 8787);
+const GROQ_API_KEY = process.env.GROQ_API_KEY ?? '';
+const USE_GROQ = !!GROQ_API_KEY;
 const OLLAMA = (process.env.OLLAMA_URL ?? 'http://127.0.0.1:11434').replace(/\/$/, '');
-const MODEL = process.env.BOT_MODEL ?? 'qwen3:8b';
+const MODEL = process.env.BOT_MODEL ?? (USE_GROQ ? 'llama-3.1-8b-instant' : 'qwen3:8b');
 
 /* Job-description matching is the one answer where being wrong is expensive —
    a fabricated match sends someone into an interview to be asked about a tool
@@ -582,6 +584,78 @@ function logQuestion(entry) {
 }
 
 /* ---------------------------------------------------------------------------
+ * Groq
+ * ------------------------------------------------------------------------ */
+async function groqChat(messages, profile, signal) {
+  const body = {
+    model: profile.model,
+    messages,
+    stream: true,
+    temperature: TEMPERATURE,
+    max_tokens: profile.maxTokens,
+    top_p: 0.9,
+  };
+
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${GROQ_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+    signal,
+  });
+
+  if (!res.ok) {
+    const why = await res.text();
+    throw new Error(`groq ${res.status}: ${why.slice(0, 300)}`);
+  }
+
+  return {
+    body: groqStreamToOllamaFormat(res.body, signal),
+  };
+}
+
+async function* groqStreamToOllamaFormat(responseStream, signal) {
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  for await (const chunk of responseStream) {
+    if (signal?.aborted) break;
+    buffer += decoder.decode(chunk, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? '';
+
+    for (const line of lines) {
+      if (signal?.aborted) break;
+      const trimmed = line.trim();
+      if (!trimmed || trimmed === 'data: [DONE]') continue;
+      if (trimmed.startsWith('data: ')) {
+        try {
+          const data = JSON.parse(trimmed.slice(6));
+          const piece = data.choices?.[0]?.delta?.content ?? '';
+          const finishReason = data.choices?.[0]?.finish_reason;
+
+          if (piece) {
+            yield new TextEncoder().encode(
+              JSON.stringify({ message: { content: piece } }) + '\n'
+            );
+          }
+
+          if (finishReason === 'length') {
+            yield new TextEncoder().encode(
+              JSON.stringify({ done: true, done_reason: 'length' }) + '\n'
+            );
+          }
+        } catch (e) {
+          // ignore parsing errors for incomplete chunks
+        }
+      }
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
  * Ollama
  * ------------------------------------------------------------------------ */
 
@@ -669,6 +743,15 @@ let readiness = { ok: false, checked: false, promptTokens: 0, note: 'not checked
 
 async function warmup() {
   const prompt = systemPrompt();
+
+  if (USE_GROQ) {
+    // Groq is a remote API - no warmup needed, just estimate token count
+    const tokens = Math.round(prompt.length / 4.4);
+    readiness = { ok: true, checked: true, promptTokens: tokens, note: 'ready (Groq API)' };
+    console.log(`[bot] using Groq API with ~${tokens.toLocaleString()} estimated prompt tokens`);
+    return;
+  }
+
   const t0 = Date.now();
 
   try {
@@ -801,9 +884,17 @@ async function warmup() {
    not turn into a tag-listing storm. */
 let healthCache = { at: 0, ok: false, installed: false };
 
-async function ollamaUp() {
+async function backendUp() {
   const now = Date.now();
   if (now - healthCache.at < 10_000) return healthCache;
+
+  if (USE_GROQ) {
+    // For Groq, just verify the API key is configured
+    // Don't call the API here - would burn rate limits on health checks
+    healthCache = { at: now, ok: true, installed: true };
+    return healthCache;
+  }
+
   try {
     const res = await fetch(`${OLLAMA}/api/tags`, { signal: AbortSignal.timeout(2000) });
     if (!res.ok) throw new Error(String(res.status));
@@ -968,7 +1059,7 @@ async function handleChat(req, res) {
   inFlight++;
   let upstream;
   try {
-    upstream = await ollamaChat(messages, profile, ctrl.signal);
+    upstream = await (USE_GROQ ? groqChat : ollamaChat)(messages, profile, ctrl.signal);
   } catch (err) {
     clearTimeout(stallTimer);
     logQuestion({
@@ -1226,14 +1317,14 @@ const server = createServer(async (req, res) => {
   const path = new URL(req.url, 'http://localhost').pathname;
 
   if (req.method === 'GET' && (path === '/health' || path === '/')) {
-    const { ok, installed } = await ollamaUp();
+    const { ok, installed } = await backendUp();
     /* Non-200 when the model is missing OR when warmup found the prompt does
        not fit, so the site hides the button rather than showing one that
        answers with an error — or worse, one that hangs. */
     const healthy = ok && installed && readiness.ok;
     return json(res, healthy ? 200 : 503, {
       ok: healthy,
-      ollama: ok,
+      backend: USE_GROQ ? 'groq' : 'ollama',
       model: MODEL,
       modelInstalled: installed,
       promptTokens: readiness.promptTokens,
@@ -1249,7 +1340,7 @@ const server = createServer(async (req, res) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`[bot] listening on http://0.0.0.0:${PORT}`);
-  console.log(`[bot] ollama   ${OLLAMA}  model ${MODEL}`);
+  console.log(`[bot] backend   ${USE_GROQ ? 'Groq API' : `ollama ${OLLAMA}`}  model ${MODEL}`);
   console.log(`[bot] origins  ${ORIGINS.join(', ')}`);
   console.log(
     `[bot] leads    ${RESEND_KEY && LEAD_TO && LEAD_FROM ? `on → ${LEAD_TO}` : 'off (RESEND_API_KEY / LEAD_TO / LEAD_FROM unset)'}`,
@@ -1263,33 +1354,35 @@ server.listen(PORT, '0.0.0.0', () => {
   /* bot/.env is a copy of the example, not a link to it, so a setting that was
      renamed or retired sits there looking authoritative and doing nothing.
      Every one of these cost real debugging time; say them out loud. */
-  if (process.env.BOT_JD_NUM_CTX) {
-    console.warn(
-      `[bot] ignoring BOT_JD_NUM_CTX — a per-mode context size makes Ollama reload the\n` +
-        `      model between requests (measured 41.5s vs 0.7s). BOT_NUM_CTX covers every mode.`,
-    );
-  }
-  if (!THINK) {
-    console.warn(
-      `\n[bot] warning: BOT_THINK=false does NOT stop a reasoning model reasoning. It removes\n` +
-        `      the separate channel it reasons into, so the working ends up in the reply where\n` +
-        `      the visitor reads it. This is the cause of "thinking output in the chat".\n` +
-        `      Set BOT_THINK=true in bot/.env.\n`,
-    );
-  }
-  if (THINK && MAX_TOKENS < 1000) {
-    console.warn(
-      `[bot] warning: BOT_MAX_TOKENS is ${MAX_TOKENS}, but reasoning and the answer share one\n` +
-        `      budget — a few hundred tokens of thinking leaves nothing for the reply.\n` +
-        `      Set BOT_MAX_TOKENS=1500 in bot/.env.`,
-    );
-  }
-  if (MAX_TOKENS < 1000 && THINK) {
-    console.warn(
-      `[bot] warning: BOT_MAX_TOKENS is ${MAX_TOKENS}, but reasoning is generated from the same\n` +
-        `      budget as the answer — a few hundred tokens of thinking will leave nothing for\n` +
-        `      the reply. Set BOT_MAX_TOKENS=1500 in bot/.env.`,
-    );
+  if (!USE_GROQ) {
+    if (process.env.BOT_JD_NUM_CTX) {
+      console.warn(
+        `[bot] ignoring BOT_JD_NUM_CTX — a per-mode context size makes Ollama reload the\n` +
+          `      model between requests (measured 41.5s vs 0.7s). BOT_NUM_CTX covers every mode.`,
+      );
+    }
+    if (!THINK) {
+      console.warn(
+        `\n[bot] warning: BOT_THINK=false does NOT stop a reasoning model reasoning. It removes\n` +
+          `      the separate channel it reasons into, so the working ends up in the reply where\n` +
+          `      the visitor reads it. This is the cause of "thinking output in the chat".\n` +
+          `      Set BOT_THINK=true in bot/.env.\n`,
+      );
+    }
+    if (THINK && MAX_TOKENS < 1000) {
+      console.warn(
+        `[bot] warning: BOT_MAX_TOKENS is ${MAX_TOKENS}, but reasoning and the answer share one\n` +
+          `      budget — a few hundred tokens of thinking leaves nothing for the reply.\n` +
+          `      Set BOT_MAX_TOKENS=1500 in bot/.env.`,
+      );
+    }
+    if (MAX_TOKENS < 1000 && THINK) {
+      console.warn(
+        `[bot] warning: BOT_MAX_TOKENS is ${MAX_TOKENS}, but reasoning is generated from the same\n` +
+          `      budget as the answer — a few hundred tokens of thinking will leave nothing for\n` +
+          `      the reply. Set BOT_MAX_TOKENS=1500 in bot/.env.`,
+      );
+    }
   }
   systemPrompt();
 
@@ -1297,7 +1390,7 @@ server.listen(PORT, '0.0.0.0', () => {
      worse: Ollama unloads one set of weights and loads the other, so the first
      job-description match pays a full cold start. Two models will not sit in
      6 GB of VRAM together. Measured cost of a reload: 41.5s versus 0.7s. */
-  if (JD_MODEL !== MODEL) {
+  if (!USE_GROQ && JD_MODEL !== MODEL) {
     console.warn(
       `[bot] note: BOT_JD_MODEL (${JD_MODEL}) differs from BOT_MODEL (${MODEL}).\n` +
         `      Every switch between them unloads and reloads the weights, and only the\n` +
