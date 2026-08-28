@@ -174,11 +174,44 @@ This is useful for:
 ## Cost & Limits
 
 **Groq Free Tier:**
-- 30 requests per minute
-- 14,400 requests per day
-- 8,000-70,000 tokens per minute (model dependent)
+- 30 requests per minute (RPM)
+- 14,400 requests per day (RPD)
+- 8,000 tokens per minute (TPM) ← **usually the bottleneck**
 
-This is **more than enough** for a portfolio site! Even with 100 visitors/day asking 5 questions each, you're well under the limits.
+**With your ~6,237 token prompt:**
+- **First message**: ~7,237 tokens (prompt + user + response) = ~1 message/minute
+- **Cached messages**: ~1,000 tokens (user + response) = ~8 messages/minute
+- **Daily capacity**: ~1,500-11,500 messages/day (depending on cache efficiency)
+
+**Verdict**: For a portfolio site with <100 visitors/day having ~3-5 messages each (300-500 messages/day), you're **well under the limits**!
+
+### Smart Fallback to Ollama
+
+**Good news!** The bot now includes **automatic fallback** to local Ollama:
+
+1. **Groq hits rate limit (429)** → automatically falls back to Ollama/Qwen
+2. **Groq API error** → tries Ollama fallback
+3. **Ollama also fails** → returns error to user
+
+This gives you:
+- ✅ **Best quality first** (Groq/Llama 3.1)
+- ✅ **Seamless degradation** (Ollama/Qwen fallback)
+- ✅ **Zero downtime** during rate limit spikes
+
+**To enable fallback:**
+```bash
+# Make sure Ollama is installed and running
+ollama pull qwen3:4b
+
+# In bot/.env, optionally set:
+BOT_OLLAMA_FALLBACK_MODEL=qwen3:4b
+```
+
+The bot logs when fallback happens:
+```
+[bot] Groq rate limit hit, falling back to Ollama...
+[bot] successfully using Ollama fallback
+```
 
 ---
 

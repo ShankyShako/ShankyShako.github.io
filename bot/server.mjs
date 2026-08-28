@@ -1058,28 +1058,64 @@ async function handleChat(req, res) {
 
   inFlight++;
   let upstream;
+  let usedFallback = false;
   try {
     upstream = await (USE_GROQ ? groqChat : ollamaChat)(messages, profile, ctrl.signal);
   } catch (err) {
     clearTimeout(stallTimer);
-    logQuestion({
-      ts: new Date().toISOString(),
-      visitor: visitorId(ip),
-      page,
-      mode,
-      q: question,
-      error: 'model-unreachable',
-    });
-    inFlight--;
-    if (stalled) {
-      console.error(
-        `[bot] no first token in ${STALL_MS / 1000}s — the prompt pass is probably ` +
-          `spilling out of VRAM. Check BOT_NUM_CTX.`,
-      );
-      return json(res, 504, { error: 'The model is taking too long to start. Try again shortly.' });
+
+    // If Groq fails with rate limit (429) or other errors, try Ollama fallback
+    if (USE_GROQ && err.message.includes('429')) {
+      console.warn('[bot] Groq rate limit hit, falling back to Ollama...');
+      try {
+        upstream = await ollamaChat(messages, profile, ctrl.signal);
+        usedFallback = true;
+        console.log('[bot] successfully using Ollama fallback');
+      } catch (fallbackErr) {
+        console.error('[bot] Ollama fallback also failed:', fallbackErr.message);
+        inFlight--;
+        return json(res, 503, { error: 'Both Groq and Ollama are unavailable. Try again shortly.' });
+      }
+    } else if (USE_GROQ && !err.message.includes('groq')) {
+      // Groq had a non-rate-limit error, try Ollama
+      console.warn('[bot] Groq error, attempting Ollama fallback:', err.message);
+      try {
+        upstream = await ollamaChat(messages, profile, ctrl.signal);
+        usedFallback = true;
+        console.log('[bot] successfully using Ollama fallback');
+      } catch (fallbackErr) {
+        logQuestion({
+          ts: new Date().toISOString(),
+          visitor: visitorId(ip),
+          page,
+          mode,
+          q: question,
+          error: 'both-backends-failed',
+        });
+        inFlight--;
+        return json(res, 502, { error: 'The model is not responding right now.' });
+      }
+    } else {
+      logQuestion({
+        ts: new Date().toISOString(),
+        visitor: visitorId(ip),
+        page,
+        mode,
+        q: question,
+        error: 'model-unreachable',
+      });
+      inFlight--;
+      if (stalled) {
+        console.error(
+          `[bot] no first token in ${STALL_MS / 1000}s — the prompt pass is probably ` +
+            `spilling out of VRAM. Check BOT_NUM_CTX.`,
+        );
+        return json(res, 504, { error: 'The model is taking too long to start. Try again shortly.' });
+      }
+      const backend = USE_GROQ ? 'groq' : 'ollama';
+      console.error(`[bot] ${backend} call failed:`, err.message);
+      return json(res, 502, { error: 'The model is not responding right now.' });
     }
-    console.error('[bot] ollama call failed:', err.message);
-    return json(res, 502, { error: 'The model is not responding right now.' });
   }
 
   res.writeHead(200, {
