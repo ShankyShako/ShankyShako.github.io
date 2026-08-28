@@ -423,7 +423,11 @@ function resolve({ tag, payload }, state) {
 
     case 'MUSIC': {
       const want = payload.toLowerCase().trim();
-      return want === 'on' || want === 'off' ? { type: 'music', state: want } : null;
+      if (want === 'on' || want === 'off') {
+        state.earlyStop = true;
+        return { type: 'music', state: want };
+      }
+      return null;
     }
 
     default:
@@ -1174,7 +1178,7 @@ async function handleChat(req, res) {
     'X-Accel-Buffering': 'no',
   });
 
-  const state = { leads: [], links: 0, suggested: false, acted: 0 };
+  const state = { leads: [], links: 0, suggested: false, acted: 0, earlyStop: false };
   let held = ''; // sentinel-safe tail
   let ndjson = ''; // partial line from upstream
   let full = '';
@@ -1317,6 +1321,14 @@ async function handleChat(req, res) {
           held = flush(held + piece);
         }
       }
+
+      /* A directive like [[MUSIC]] is the entire answer — kill the stream
+         immediately so the model stops generating and we save tokens. */
+      if (state.earlyStop) {
+        ctrl.abort();
+        if (DEBUG) console.log('[bot] early-stopped stream after directive');
+        break;
+      }
     }
 
     /* Models routinely end without a trailing newline, which would strand a
@@ -1355,11 +1367,16 @@ async function handleChat(req, res) {
 
     res.write(JSON.stringify({ done: true }) + '\n');
   } catch (err) {
-    const why = stalled
-      ? `The model stopped responding after ${STALL_MS / 1000}s.`
-      : 'Connection interrupted.';
-    console.error('[bot] stream broke:', stalled ? 'stalled' : err.message);
-    res.write(JSON.stringify({ error: why }) + '\n');
+    if (state.earlyStop || ctrl.signal.aborted && !stalled) {
+      // Intentionally aborted for early stop (like music off) - close cleanly
+      res.write(JSON.stringify({ done: true }) + '\n');
+    } else {
+      const why = stalled
+        ? `The model stopped responding after ${STALL_MS / 1000}s.`
+        : 'Connection interrupted.';
+      console.error('[bot] stream broke:', stalled ? 'stalled' : err.message);
+      res.write(JSON.stringify({ error: why }) + '\n');
+    }
   } finally {
     clearTimeout(stallTimer);
     inFlight--;
