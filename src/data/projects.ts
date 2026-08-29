@@ -17,7 +17,6 @@ export const projects: Project[] = [
   },
   {
     title: 'Dysarthria Speech Understanding — Multi-Task Learning',
-    href: 'https://github.com/sosavle/dysarthia',
     years: '2026',
     tags: ['PyTorch', 'Whisper', 'wav2vec2', 'Multi-Task Learning', 'Speech'],
     blurb:
