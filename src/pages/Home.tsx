@@ -1,42 +1,61 @@
+import { Link } from 'react-router-dom';
 import { ProfilePhoto } from '../components/ProfilePhoto';
-import { Reveal } from '../components/Reveal';
+
+/* Three numbers that a recruiter can read in two seconds. Deliberately local
+   to this page rather than in src/data: bot/build-context.mjs mirrors
+   src/data into the chat model's prompt, and these are a restatement of facts
+   it already has from experience.ts — paying prompt tokens twice for the same
+   claim buys nothing. */
+const highlights = [
+  { stat: '+50 pts', label: 'downstream classifier lift over baseline at AFRL' },
+  { stat: 'IEEE Big Data 2024', label: 'solo-author paper, presented in Washington, D.C.' },
+  { stat: 'summa cum laude', label: 'B.S. Computer Science, UMKC' },
+];
 
 export function Home() {
   return (
-    <>
-      <h1>Genova Mongalo</h1>
-      <Reveal>
-        <div className="content-card">
-          <p className="intro-text">
-            My name is Genova Mongalo, I am a summa cum laude graduate with a Bachelor of Science in
-            Computer Science from the University of Missouri-Kansas City (UMKC). I am currently
-            pursuing a Master&rsquo;s degree in Computer Science with an emphasis on Artificial
-            Intelligence at Georgia Tech, beginning in August 2025. My primary focus is on AI/ML
-            Engineering and Cybersecurity applications.
-          </p>
-          <p className="intro-text">
-            During the summer of 2025, I worked as a Federal AI/ML Engineer Contractor with the AFRL
-            Sensors Directorate Internship Program at the University of Dayton. This role involves
-            pioneering the development of generative AI models that enable CNN classifiers to
-            recognize real objects when trained on generated data, utilizing transfer learning
-            frameworks to address AFRL/DoD priorities.
-          </p>
-          <p className="intro-text">
-            I am passionate about applying machine learning and artificial intelligence to solve
-            real-world problems, particularly in cybersecurity and defense applications. I believe my
-            strong foundation in AI/ML, coupled with my hands-on experience in cutting-edge research,
-            positions me to contribute effectively to innovative projects in the tech industry.
-          </p>
-        </div>
-      </Reveal>
+    <section className="hero">
+      <div className="hero-copy">
+        <span className="eyebrow">AI / ML Engineer</span>
+        <h1>Genova Mongalo</h1>
 
-      <Reveal delay={100}>
-        <div className="profile-section">
-          <div>
-            <ProfilePhoto />
-          </div>
+        <p className="hero-lede">
+          Summa cum laude B.S. in Computer Science from UMKC, now reading for an M.S. in Computer
+          Science with an AI emphasis at Georgia Tech. I build generative models, transformers, and
+          on-device ML for problems where being wrong is expensive.
+        </p>
+        <p className="hero-sub">
+          Most recently a Federal AI/ML engineer contractor with the AFRL Sensors Directorate, where
+          a game-theoretic approach to GAN training let a CNN classifier trained purely on generated
+          data recognise real objects. The through-line is machine learning applied to security,
+          defense, and clinical systems that ship.
+        </p>
+
+        <ul className="hero-stats">
+          {highlights.map((h) => (
+            <li key={h.stat}>
+              <strong>{h.stat}</strong>
+              <span>{h.label}</span>
+            </li>
+          ))}
+        </ul>
+
+        <div className="hero-actions">
+          <Link className="btn btn-solid" to="/resume">
+            View résumé
+          </Link>
+          <Link className="btn" to="/experience">
+            Experience
+          </Link>
+          <Link className="btn btn-quiet" to="/contact">
+            Get in touch
+          </Link>
         </div>
-      </Reveal>
-    </>
+      </div>
+
+      <div className="hero-portrait">
+        <ProfilePhoto />
+      </div>
+    </section>
   );
 }

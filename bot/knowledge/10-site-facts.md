@@ -31,20 +31,31 @@ something he has, not something he lacks.
 - **Bachelor of Science in Computer Science, summa cum laude** — University of Missouri-Kansas City (UMKC) — Kansas City, MO (August 2021 – December 2024)
 - **Master's in Computer Science — Emphasis on Artificial Intelligence** — Georgia Tech — Atlanta, GA (August 2025 – expected 2027)
 
-Graduate coursework: Deep Learning, Reinforcement Learning, Machine Learning, Artificial Intelligence, Computer Vision, Brain & Cognitive Science.
-Core foundations: Algorithms & Complexity, Data Structures.
+Graduate coursework:
+
+- Deep Learning: Neural network architectures: CNNs, RNNs, and transformers; Training, optimization, and regularization of deep models at scale
+- Reinforcement Learning: Markov decision processes, value-based and policy-gradient methods; Reward design and sequential decision-making for autonomous agents
+- Machine Learning: Supervised and unsupervised learning algorithms and applications; Model training, evaluation, and generalization
+- Artificial Intelligence: Search, knowledge representation, planning, and reasoning; Foundational AI techniques underpinning modern ML systems
+- Computer Vision: Image formation, feature detection, and recognition pipelines; The perception techniques underpinning the classifier work at AFRL
+- Brain & Cognitive Science: Computational models of perception, memory, and learning; Neuroscience principles that inspire AI architectures
+
+Core foundations:
+
+- Algorithms & Complexity: Algorithm design and analysis of computational complexity
+- Data Structures: Efficient organization, storage, and access of data
 
 ## Experience
 
 ### Founding AI/ML Product Engineer — Geometry Health and Wellness
 *September 2025 – Present*
 
-Founding engineer on a clinical mobility platform, taken from MVP to production. Ported clinically validated mobility assessments from MATLAB research prototypes to a production iOS app, matching the clinical reference within 0.56% on a 15-biomarker postural-sway test and reproducing 10-meter-walk gait speed exactly. Built the on-device…
+Founding engineer on a clinical mobility platform, taken from MVP to production. Ported clinically validated mobility assessments from research prototypes to a production iOS app, matching the clinical reference to within a fraction of a percent. Built the on-device biomarker signal-processing pipeline in Swift, alongside the in-house data-collection app that produces the labelled datasets the models are validated against. Implemented an end-to-end LLM workflow for a context-aware clinical assistant — data preparation, patient context retrieval, and peer-reviewed evidence lookup — on a self-hosted deployment with streaming responses under one second of latency. Owns the technical architecture, sprint cycles, and coordination across clinical, engineering, and product. Specifics of the methodology are withheld as proprietary.
 
 ### Federal AI/ML Engineer Contractor — AFRL Sensors Directorate Internship Program, University of Dayton
 *May 2025 – August 2025*
 
-Pioneered the development of generative AI models enabling a CNN classifier to successfully recognize real objects when trained on generated data when utilized in transfer learning framework, addressing AFRL/DoD priorities. Using PyTorch, adapted state of the art classifiers to handle novel imaging modalities. Utilized Slurm to enable…
+Pioneered the development of generative AI models enabling a CNN classifier to successfully recognize real objects when trained on generated data when utilized in transfer learning framework, addressing AFRL/DoD priorities. Using PyTorch, adapted state of the art classifiers to handle novel imaging modalities. Utilized Slurm to enable large batches of parallelized computation. Created an innovative game theory approach to GAN training, significantly improving the results of the generator's development. The generative model's output led to an increase of 50 percentage points in the downstream classifier compared to the baseline.
 
 ### AI/ML Engineer Intern — NSF REU AI-Empowered Cybersecurity, University of Missouri Kansas City
 *June 2024 – December 2024*
@@ -59,7 +70,7 @@ Designed a model that detects/predicts cybersickness using a transformer machine
 ### Research Intern — NASA Missouri Space Grant Consortium
 *December 2021 – April 2022*
 
-Engineered an AI-driven simulation of space-bound transmissions as part of a NASA-funded initiative analyzing signal propagation and identifying optimal frequency bands under varying conditions. Developed an interactive interface to visualize transmission strength and provide adaptive frequency recommendations based on environmental…
+Engineered an AI-driven simulation of space-bound transmissions as part of a NASA-funded initiative analyzing signal propagation and identifying optimal frequency bands under varying conditions. Developed an interactive interface to visualize transmission strength and provide adaptive frequency recommendations based on environmental parameters.
 
 ### Web Master — SPCN - 2020 and IEEE Brain Initiative BDBC Conference, Taiwan
 *August 2020 – September 2020*
@@ -71,47 +82,98 @@ Set up conference website for the 5th International Symposium on Audio and Video
 ### Ransomware Detection for Critical Infrastructures (2024–2026)
 Repo: https://github.com/ShankyShako/RansomWare-Detection-Models — PyTorch, ALBERT, RoBERTa, CNN, Security
 
-A comparative study of deep-learning and transformer models for detecting and classifying ransomware from Windows API-call features, aimed at Industrial Control Systems. Each model predicts at three levels simultaneously — binary (benign vs. malicious), coarse family group, and specific family (12 classes) — and is evaluated under three…
+A comparative study of deep-learning and transformer models for detecting and classifying ransomware from Windows API-call features, aimed at Industrial Control Systems. Each model predicts at three levels simultaneously — binary (benign vs. malicious), coarse family group, and specific family (12 classes) — and is evaluated under three feature-engineering setups (baseline, autoencoder, and K-Means clustering). The pipeline compares a DNN, a 1-D CNN, and RoBERTa- and ALBERT-style transformers against classical baselines, using chi-squared feature selection to reduce ~31,000 features to the most informative 1,000 and class-weighting to handle rare families. The reproducible PyTorch/scikit-learn pipeline reaches ~98% accuracy on binary detection, with early stopping and weight sharing (ALBERT) used to control overfitting on the small dataset. GPU-accelerated on Apple Silicon via Metal.
+
+### Cognitive-Load-Aware Conversational Design (2025)
+Repo: undefined — Cognitive Science, LLM, HCI, Design Analysis
+
+A design-only analysis of a deployed clinical conversational agent, mapping its interface and dialogue decisions against four cognitive-science frameworks: cognitive load theory, Baddeley's working-memory model, dual-process theory, and Levelt's model of speech production. No human subjects were involved and no participant data was collected — the findings are analytical rather than empirical. Georgia Tech CS 6795.
 
 ## Projects
 
 ### AWS DeepRacer — Reward Shaping (2026)
 Repo: undefined — Reinforcement Learning, TD3, Reward Shaping, Docker, Simulation
 
-A reinforcement-learning agent for the AWS DeepRacer environment, a 1/18-scale autonomous vehicle on a simulated physics track. A TD3 policy trains in a containerised local stack (Docker/Apptainer, GPU-accelerated on Apple Silicon via Metal) rather than in the cloud. The substance of the work is the reward function: a hand-built shaping…
+A reinforcement-learning agent for the AWS DeepRacer environment, a 1/18-scale autonomous vehicle on a simulated physics track. A TD3 policy trains in a containerised local stack (Docker/Apptainer, GPU-accelerated on Apple Silicon via Metal) rather than in the cloud. The substance of the work is the reward function: a hand-built shaping scheme that bands reward by distance from the centre line, aligns heading against the upcoming waypoints, trades speed against steering angle, and applies hard penalties for leaving the track or crashing. The learning algorithm is off the shelf; the incentives are not, and reward design is where the difficulty in DeepRacer actually lives — a poorly shaped reward produces an agent that drives beautifully and never finishes a lap. Graduate coursework for CS 7642, Reinforcement Learning & Decision Making, at Georgia Tech; the repository is private under the university's academic-honesty policy.
+
+### Dysarthria Speech Understanding — Multi-Task Learning (2026)
+Repo: https://github.com/sosavle/dysarthia — PyTorch, Whisper, wav2vec2, Multi-Task Learning, Speech
+
+A shared speech encoder with two heads — intelligibility regression and motor-severity scoring — trained by masked loss routing, so each clip only updates the head it actually has a label for. The question is whether Whisper's transcription-tuned encoder transfers to clinical scoring better than wav2vec2, answered under leave-one-speaker-out cross-validation. Georgia Tech CS 7643 final project, with Team LEGACY.
+
+### LunarLander — Continuous Control Study (2026)
+Repo: undefined — Reinforcement Learning, PyTorch, TD3, Gymnasium, Weights & Biases
+
+Five reinforcement-learning algorithms trained and compared on Gymnasium's LunarLanderContinuous, where two continuous thrusters have to trade landing stability against fuel. Includes a hyperparameter sweep, an architecture experiment on the TD3 actor-critic, and Weights & Biases run tracking. Graduate coursework for CS 7642; the repository is private under the university's academic-honesty policy.
+
+### Overcooked — Cooperative Multi-Agent RL (2026)
+Repo: undefined — Reinforcement Learning, PPO, Multi-Agent, Python
+
+PPO agents trained on the Overcooked-AI benchmark, where two cooks share a cramped kitchen and reward only arrives when a soup is delivered — so the hard part is coordination, not control. Covers self-play training, layout-by-layout evaluation, and how well a policy holds up against a partner it was not trained with. Graduate coursework for CS 7642; the repository is private under the university's academic-honesty policy.
+
+### Classical AI Algorithm Suite (2026)
+Repo: undefined — Python, Search, Bayesian Networks, HMM, Expectation Maximization
+
+Six graduate assignments implemented from first principles rather than from libraries: bidirectional and tridirectional A* over the Atlanta road network, alpha-beta adversarial search for a rook-isolation variant, Bayesian networks sampled with Gibbs and Metropolis-Hastings, decision trees and random forests, Gaussian-mixture image segmentation by expectation-maximisation, and hidden Markov models for sign recognition. Georgia Tech CS 6601; the repository is private under the university's academic-honesty policy.
+
+### ReviewRounds — Spaced-Review Planner (2026)
+Repo: https://github.com/yeabsira84-tech/LectureLoop — React, Next.js, TypeScript, Cloudflare Workers, Drizzle
+
+A mobile-first spaced-repetition planner for medical students. Each exam is its own study plan: its lectures are scheduled across several review passes, and the next interval adapts to the recall, understanding, and difficulty logged after each session. React 19 and Next.js on a Cloudflare Workers runtime, with Drizzle and a deliberately swappable data adapter.
+
+### Care Beyond — Homelessness Resource Map (2025)
+Repo: https://github.com/hsaranu5/resourcestracker — React, Leaflet, Node.js, Express, Geospatial
+
+A live map of food, shelter, clothing, and medical resources aggregated from local organisations, searchable by street address or ZIP with radius-based distance results and colour-coded markers by resource type. A community feed lets anyone read but only verified organisations publish, gated by a one-time email code rather than another password to lose.
+
+### Recursive Ray Tracer (2025)
+Repo: undefined — Java, Computer Graphics, Rendering
+
+A ray tracer built up from the intersection maths: ray-sphere, ray-triangle, and axis-aligned box tests, Phong shading with shadow rays, recursive reflection, instanced and moving surfaces, and a bounding-volume hierarchy so scenes render in something short of forever. Written in Java against a renderer interface, with per-part test suites. Graduate computer-graphics coursework; the repository is private under the university's academic-honesty policy.
 
 ### Federated Blockchain — Model Registry (2025–2026)
 Repo: https://github.com/ShankyShako/Federated-BlockChain — Solidity, React, IPFS, Hardhat, Web3
 
-A federated-learning model registry on Ethereum that lets nodes share and audit machine-learning models without putting large weights on-chain. Solidity smart contracts (FederatedModelStorage, FederatedLedger, and an ERC-20 FederatedToken), deployed with Hardhat and tested on Ganache, record each model's IPFS content ID on-chain. Trained…
+A federated-learning model registry on Ethereum that lets nodes share and audit machine-learning models without putting large weights on-chain. Solidity smart contracts (FederatedModelStorage, FederatedLedger, and an ERC-20 FederatedToken), deployed with Hardhat and tested on Ganache, record each model's IPFS content ID on-chain. Trained models — including the ALBERT ransomware classifier from my research — are exported as self-describing bundles, uploaded to IPFS, and registered via either a Node.js script or a React/Vite frontend with MetaMask wallet integration. Includes an automated Hardhat test suite verifying a model CID round-trips through all three contracts.
 
 ### Racket Parser (2024)
 Repo: https://github.com/ShankyShako/Racket-Parser — Racket, Compilers, Parsing
 
-A custom parser built in Racket for a small artificial programming language inspired by FORTRAN. It reads .txt source files, validates syntax based on a defined grammar, and reports precise error lines when invalid constructs are encountered. This project demonstrates understanding of language grammars, recursive parsing techniques, and…
+A custom parser built in Racket for a small artificial programming language inspired by FORTRAN. It reads .txt source files, validates syntax based on a defined grammar, and reports precise error lines when invalid constructs are encountered. This project demonstrates understanding of language grammars, recursive parsing techniques, and working with DrRacket tools to implement language analysis.
 
 ### Phonebook Management System (2024)
 Repo: https://github.com/ShankyShako/PhoneBook — Java, SQL, CRUD
 
-A Java-based phonebook management application that integrates with Dolphin SQL for persistent storage. It supports user registration with secure password handling, contact addition/update/deletion, search functionality, and CSV export. Developed using Eclipse, this project highlights practical database integration, user interaction…
+A Java-based phonebook management application that integrates with Dolphin SQL for persistent storage. It supports user registration with secure password handling, contact addition/update/deletion, search functionality, and CSV export. Developed using Eclipse, this project highlights practical database integration, user interaction design, and CRUD operation management in a desktop application.
 
 ### SOS Game Implementation (2023)
 Repo: https://github.com/ShankyShako/SOS-Game — Python, Scrum, Testing
 
-An implementation of the classic SOS paper-and-pencil game designed to explore software development workflows using Scrum methodology. Written in Python, this project reflects iterative development practices, automated testing, and simple game logic implementation. It's a great example of applying agile principles to deliver a functional…
+An implementation of the classic SOS paper-and-pencil game designed to explore software development workflows using Scrum methodology. Written in Python, this project reflects iterative development practices, automated testing, and simple game logic implementation. It's a great example of applying agile principles to deliver a functional interactive game while learning team processes.
 
 ## Skills
 
-- **Programming Languages:** Python, C / C++, Swift, Java / C#, SQL (Postgres), JavaScript, HTML/CSS, LISP
-- **Frameworks & Technologies:** PyTorch, scikit-learn, Flask, SwiftUI, Socket.IO, FastAPI, React, Node.js, WireShark
-- **Developer Tools:** Git, Xcode, AWS, Google Cloud Platform, VS Code, Visual Studio, PyCharm, Eclipse, Anaconda, Unity
-- **Libraries:** pandas, NumPy, Matplotlib, PyTorch, CoreMotion, tkinter
-- **Specialized Skills:** Generative AI & GANs, Large Language Models, Self-hosted LLM Deployment (Ollama), Biomedical Signal Processing, Transfer Learning, CNN Classifiers, Cybersecurity Applications, Parallel Computing (Slurm)
+- **Programming Languages:** Python, C / C++, Swift, Java / C#, TypeScript, SQL (Postgres), Solidity, Racket / LISP, HTML/CSS
+- **ML & Data:** PyTorch, scikit-learn, Hugging Face Transformers, pandas / NumPy, Matplotlib, Gymnasium, Weights & Biases
+- **Frameworks & Technologies:** SwiftUI & CoreMotion, Flask & FastAPI, React / Next.js, Node.js & Express, Socket.IO, Hardhat & IPFS, Leaflet, Wireshark
+- **Infrastructure:** Git, Docker / Apptainer, Slurm, AWS, Google Cloud Platform, Cloudflare Workers, Ollama, Metal (MPS)
+- **Developer Tools:** Xcode, VS Code, Visual Studio, PyCharm, Eclipse, Anaconda, Unity
+- **Specialized Skills:** Generative AI & GANs, Large Language Models, Self-hosted LLM Deployment, Reinforcement Learning & Reward Design, Speech & Biomedical Signal Processing, Transfer Learning, CNN Classifiers, Cybersecurity Applications, Parallel Computing (Slurm)
 - **Spoken Languages:** English, Spanish, Amharic
 
 ## Shop
 
-Original art, 8 pieces, $14–$1,999. Every one sold out — that is the joke.
+Original art and hand-made pieces. Every single one is sold out — that is
+the joke and it is not going to change. Listed prices:
+
+- Smurfed — Handcut Felt Sticker — $14
+- Moyai (Original, 1 of 1) — $45
+- Portrait of a Frog (Oil Study) — $120
+- Strings — Ink Study — $90
+- Plumber, Abstracted (Original) — $140
+- FOOD (Digital Original) — $180
+- Paradise — Oil on Canvas — $750
+- The Whole Collection — $1,999
 
 ## Links you can attach
 
@@ -119,7 +181,47 @@ To put a button under your answer, print `[[LINK]] key` on its own line —
 one per line, at most two per reply. Use the key exactly as written here.
 Any other value is discarded, so inventing one just loses you the button.
 
-/ = Home | /resume = Resume | /education = Education | /skills = Skills | /projects = Projects | /research = Research | /experience = Experience | /shop = Shop | /contact = Contact | resume-pdf = Download the resume (PDF) | github = GitHub profile | linkedin = LinkedIn | email = Email Genova | ransomware-detection = Ransomware Detection for Critical Infrastructures — repo | federated-blockchain = Federated Blockchain — Model Registry — repo | racket-parser = Racket Parser — repo | phonebook-management = Phonebook Management System — repo | sos-game = SOS Game Implementation — repo | /experience#geometry-health-wellness = Geometry Health and Wellness | /experience#afrl-sensors-directorate = AFRL Sensors Directorate Internship Program | /experience#nsf-reu-ai = NSF REU AI-Empowered Cybersecurity | /experience#nsf-reu-consumer = NSF REU in Consumer Networking | /experience#nasa-missouri-space = NASA Missouri Space Grant Consortium | /experience#spcn-2020-ieee = SPCN - 2020 and IEEE Brain Initiative BDBC Conference | /research#ransomware-detection-critical = Ransomware Detection for Critical Infrastructures | /projects#aws-deepracer-reward = AWS DeepRacer — Reward Shaping | /projects#federated-blockchain-model = Federated Blockchain — Model Registry | /projects#racket-parser = Racket Parser | /projects#phonebook-management-system = Phonebook Management System | /projects#sos-game-implementation = SOS Game Implementation
+- `/` — Home
+- `/resume` — Resume
+- `/education` — Education
+- `/skills` — Skills
+- `/projects` — Projects
+- `/research` — Research
+- `/experience` — Experience
+- `/shop` — Shop
+- `/contact` — Contact
+- `resume-pdf` — Download the resume (PDF)
+- `github` — GitHub profile
+- `linkedin` — LinkedIn
+- `email` — Email Genova
+- `ransomware-detection` — Ransomware Detection for Critical Infrastructures — repo
+- `dysarthria-speech` — Dysarthria Speech Understanding — Multi-Task Learning — repo
+- `reviewrounds-spaced` — ReviewRounds — Spaced-Review Planner — repo
+- `care-beyond` — Care Beyond — Homelessness Resource Map — repo
+- `federated-blockchain` — Federated Blockchain — Model Registry — repo
+- `racket-parser` — Racket Parser — repo
+- `phonebook-management` — Phonebook Management System — repo
+- `sos-game` — SOS Game Implementation — repo
+- `/experience#geometry-health-wellness` — Geometry Health and Wellness
+- `/experience#afrl-sensors-directorate` — AFRL Sensors Directorate Internship Program
+- `/experience#nsf-reu-ai` — NSF REU AI-Empowered Cybersecurity
+- `/experience#nsf-reu-consumer` — NSF REU in Consumer Networking
+- `/experience#nasa-missouri-space` — NASA Missouri Space Grant Consortium
+- `/experience#spcn-2020-ieee` — SPCN - 2020 and IEEE Brain Initiative BDBC Conference
+- `/research#ransomware-detection-critical` — Ransomware Detection for Critical Infrastructures
+- `/research#cognitive-load-aware` — Cognitive-Load-Aware Conversational Design
+- `/projects#aws-deepracer-reward` — AWS DeepRacer — Reward Shaping
+- `/projects#dysarthria-speech-understanding` — Dysarthria Speech Understanding — Multi-Task Learning
+- `/projects#lunarlander-continuous-control` — LunarLander — Continuous Control Study
+- `/projects#overcooked-cooperative-multi` — Overcooked — Cooperative Multi-Agent RL
+- `/projects#classical-ai-algorithm` — Classical AI Algorithm Suite
+- `/projects#reviewrounds-spaced-review` — ReviewRounds — Spaced-Review Planner
+- `/projects#care-beyond-homelessness` — Care Beyond — Homelessness Resource Map
+- `/projects#recursive-ray-tracer` — Recursive Ray Tracer
+- `/projects#federated-blockchain-model` — Federated Blockchain — Model Registry
+- `/projects#racket-parser` — Racket Parser
+- `/projects#phonebook-management-system` — Phonebook Management System
+- `/projects#sos-game-implementation` — SOS Game Implementation
 
 Attach one when it saves the visitor a hunt ("where is the resume?"), not
 as decoration on every message.

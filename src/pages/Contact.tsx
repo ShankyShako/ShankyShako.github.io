@@ -6,34 +6,41 @@ export function Contact() {
   return (
     <>
       <h1>Contact</h1>
+      <p className="page-intro">
+        Open to AI/ML engineering and research roles. The fastest route is email — the form goes to
+        the same inbox.
+      </p>
+
       <div className="contact-grid">
         <Reveal>
           <div className="content-card contact-info">
-            <h3 style={{ marginTop: 0 }}>Direct</h3>
-            <p>
-              <strong>Email:</strong> <a href={`mailto:${site.email}`}>{site.email}</a>
-            </p>
-            <p>
-              <strong>Phone:</strong> {site.phone}
-            </p>
-            <p>
-              <strong>LinkedIn:</strong>{' '}
-              <a href={site.linkedin} target="_blank" rel="noopener noreferrer">
-                linkedin.com/in/gmongalo
-              </a>
-            </p>
-            <p>
-              <strong>GitHub:</strong>{' '}
-              <a href={site.github} target="_blank" rel="noopener noreferrer">
-                github.com/ShankyShako
-              </a>
-            </p>
+            <p className="card-title">Direct</p>
+            <dl>
+              <dt>Email</dt>
+              <dd>
+                <a href={`mailto:${site.email}`}>{site.email}</a>
+              </dd>
+              <dt>Phone</dt>
+              <dd>{site.phone}</dd>
+              <dt>LinkedIn</dt>
+              <dd>
+                <a href={site.linkedin} target="_blank" rel="noopener noreferrer">
+                  linkedin.com/in/gmongalo
+                </a>
+              </dd>
+              <dt>GitHub</dt>
+              <dd>
+                <a href={site.github} target="_blank" rel="noopener noreferrer">
+                  github.com/ShankyShako
+                </a>
+              </dd>
+            </dl>
           </div>
         </Reveal>
 
-        <Reveal delay={100}>
+        <Reveal delay={80}>
           <div className="content-card">
-            <h3 style={{ marginTop: 0 }}>Send a message</h3>
+            <p className="card-title">Send a message</p>
             <ContactForm />
           </div>
         </Reveal>

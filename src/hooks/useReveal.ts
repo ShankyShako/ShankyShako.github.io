@@ -1,18 +1,27 @@
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 
 /**
- * Adds `.is-visible` the first time an element scrolls into view, driving the
- * staggered fade-up. Respects prefers-reduced-motion by revealing immediately.
+ * Adds `.is-visible` when an element scrolls into view, driving the staggered
+ * fade-up.
+ *
+ * Anything already on screen at mount is revealed synchronously in a layout
+ * effect, before the browser paints. An IntersectionObserver callback only
+ * fires *after* the first frame, so routing to a page whose whole content sits
+ * above the fold used to paint an empty page for a beat and then fade the
+ * content in — which is not a reveal, it is a loading state pretending to be
+ * one. The observer now only ever handles what you actually scroll to.
  */
 export function useReveal<T extends HTMLElement>() {
   const ref = useRef<T | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced || !('IntersectionObserver' in window)) {
+    const onScreen = el.getBoundingClientRect().top < window.innerHeight;
+
+    if (reduced || onScreen || !('IntersectionObserver' in window)) {
       el.classList.add('is-visible');
       return;
     }

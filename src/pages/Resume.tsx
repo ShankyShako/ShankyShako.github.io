@@ -5,7 +5,7 @@ const PDF = '/files/Resume.pdf';
 export function Resume() {
   return (
     <>
-      <h1>Resume</h1>
+      <h1>Résumé</h1>
       <Reveal>
         <div className="resume-actions">
           <a className="btn btn-solid" href={PDF} download="Genova-Mongalo-Resume.pdf">

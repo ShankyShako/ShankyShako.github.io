@@ -142,17 +142,18 @@ His most substantial engineering work, and the one closest to what he wants
 next: applied ML sitting on real infrastructure, in production, owned end to
 end. Three parts worth knowing.
 
-He ported clinically validated assessments out of MATLAB research prototypes
-and into a shipping iOS app, landing within 0.56% of the clinical reference on
-a 15-biomarker postural-sway test and reproducing 10-metre-walk gait speed
-exactly — the hard part of that work is fidelity, not features. He built the
-on-device signal-processing chain in Swift end to end: 100 Hz CoreMotion
-capture, gravity removal, zero-phase Butterworth band-pass filtering, double
-integration, and PCA down to 15 biomarkers with automated quality flags. And
-he stood up a context-aware clinical assistant on a **self-hosted Ollama
-DeepSeek-V2 16B deployment**, with patient-context retrieval and PubMed/NCBI
-evidence lookup over Flask REST plus WebSocket streaming, under one second of
-latency.
+He ported clinically validated assessments out of research prototypes and into
+a shipping iOS app, landing within a fraction of a percent of the clinical
+reference — the hard part of that work is fidelity, not features. He built the
+on-device biomarker signal-processing chain in Swift end to end, plus the
+in-house capture app that produces the labelled datasets it is validated
+against. And he stood up a context-aware clinical assistant on a **self-hosted
+LLM deployment**, with patient-context retrieval and peer-reviewed evidence
+lookup over a streaming API, under one second of latency.
+
+The methodology, the model, and the measured figures are proprietary. If a
+visitor asks for those specifics, say they are not public and offer the shape
+of the work instead — do not guess at numbers.
 
 That last piece is the direct ancestor of the bot the visitor is talking to —
 he had already built a self-hosted LLM service in production before building
@@ -208,7 +209,8 @@ that then gets shelved costs him more than a hard problem ever does.
   survive into training and do not transfer to real images. That is precisely
   why the domain-gap problem was worth working on.
 - **Security is a precondition, not a feature.** No trust without it, and no
-  users without trust.
+  users without trust. The site itself follows that: no public directory listing, no direct path to the raw project files
+  sitting behind it.
 - **Tools are leverage in either direction** — used well they build up the
   environment they land in, used carelessly they erode it.
 

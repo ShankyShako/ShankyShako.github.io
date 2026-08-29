@@ -16,18 +16,14 @@ export function Shop() {
   return (
     <>
       <h1>Shop</h1>
-      <div className="content-card">
-        <p className="intro-text" style={{ textAlign: 'center', marginBottom: 0 }}>
-          Hand-made originals. Limited runs. One of one.
-          <span className="shop-tagline">
-            Every piece is currently <strong>sold out</strong>. Restocking soon...
-          </span>
-        </p>
-      </div>
+      <p className="page-intro">
+        Hand-made originals. Limited runs. One of one.
+        <span className="shop-tagline">Every piece is sold out. Restocking soon.</span>
+      </p>
 
       <div className="shop-grid">
         {products.map((p, i) => (
-          <Reveal key={p.title} delay={i * 50}>
+          <Reveal key={p.title} delay={i * 40}>
             <button type="button" className="product" onClick={() => open(p.short)}>
               <div className="product-frame">
                 <img

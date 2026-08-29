@@ -85,6 +85,24 @@
       "label": "Ransomware Detection for Critical Infrastructures — repo"
     },
     {
+      "key": "dysarthria-speech",
+      "kind": "external",
+      "href": "https://github.com/sosavle/dysarthia",
+      "label": "Dysarthria Speech Understanding — Multi-Task Learning — repo"
+    },
+    {
+      "key": "reviewrounds-spaced",
+      "kind": "external",
+      "href": "https://github.com/yeabsira84-tech/LectureLoop",
+      "label": "ReviewRounds — Spaced-Review Planner — repo"
+    },
+    {
+      "key": "care-beyond",
+      "kind": "external",
+      "href": "https://github.com/hsaranu5/resourcestracker",
+      "label": "Care Beyond — Homelessness Resource Map — repo"
+    },
+    {
       "key": "federated-blockchain",
       "kind": "external",
       "href": "https://github.com/ShankyShako/Federated-BlockChain",
@@ -151,10 +169,58 @@
       "label": "Ransomware Detection for Critical Infrastructures"
     },
     {
+      "key": "/research#cognitive-load-aware",
+      "kind": "route",
+      "href": "/research#cognitive-load-aware",
+      "label": "Cognitive-Load-Aware Conversational Design"
+    },
+    {
       "key": "/projects#aws-deepracer-reward",
       "kind": "route",
       "href": "/projects#aws-deepracer-reward",
       "label": "AWS DeepRacer — Reward Shaping"
+    },
+    {
+      "key": "/projects#dysarthria-speech-understanding",
+      "kind": "route",
+      "href": "/projects#dysarthria-speech-understanding",
+      "label": "Dysarthria Speech Understanding — Multi-Task Learning"
+    },
+    {
+      "key": "/projects#lunarlander-continuous-control",
+      "kind": "route",
+      "href": "/projects#lunarlander-continuous-control",
+      "label": "LunarLander — Continuous Control Study"
+    },
+    {
+      "key": "/projects#overcooked-cooperative-multi",
+      "kind": "route",
+      "href": "/projects#overcooked-cooperative-multi",
+      "label": "Overcooked — Cooperative Multi-Agent RL"
+    },
+    {
+      "key": "/projects#classical-ai-algorithm",
+      "kind": "route",
+      "href": "/projects#classical-ai-algorithm",
+      "label": "Classical AI Algorithm Suite"
+    },
+    {
+      "key": "/projects#reviewrounds-spaced-review",
+      "kind": "route",
+      "href": "/projects#reviewrounds-spaced-review",
+      "label": "ReviewRounds — Spaced-Review Planner"
+    },
+    {
+      "key": "/projects#care-beyond-homelessness",
+      "kind": "route",
+      "href": "/projects#care-beyond-homelessness",
+      "label": "Care Beyond — Homelessness Resource Map"
+    },
+    {
+      "key": "/projects#recursive-ray-tracer",
+      "kind": "route",
+      "href": "/projects#recursive-ray-tracer",
+      "label": "Recursive Ray Tracer"
     },
     {
       "key": "/projects#federated-blockchain-model",
