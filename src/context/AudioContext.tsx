@@ -22,6 +22,14 @@ type AudioValue = {
   activate: () => void;
   /** Switch playlists, picking a random starting track in the new mode. */
   setMode: (mode: Mode) => void;
+  /**
+   * Fire-and-forget one-shot, for UI sounds. Deliberately independent of the
+   * music: it never consults `started`, so the desktop pet can chirp without
+   * revealing the audio bar or starting a playlist that belongs to a different
+   * easter egg. It does honour mute and the volume slider, because once that
+   * bar is on screen it is the only audio control the visitor has.
+   */
+  playSfx: (url: string, gain?: number) => void;
   deckRefs: [React.RefObject<HTMLAudioElement | null>, React.RefObject<HTMLAudioElement | null>];
 };
 
@@ -116,6 +124,48 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     [playTrack],
   );
 
+  /* One pool per URL. Three deep so a rapid combo does not cut itself off,
+     and pooled rather than per-call because Safari holds decoded buffers for
+     orphaned media elements far longer than you would like. These elements are
+     never handed to fadeTo/crossfadeTo — those only ever see the two decks —
+     so a one-shot cannot interrupt the music. */
+  const sfxPool = useRef<Map<string, HTMLAudioElement[]>>(new Map());
+
+  const playSfx = useCallback((url: string, gain = 1) => {
+    if (mutedRef.current) return;
+
+    let pool = sfxPool.current.get(url);
+    if (!pool) {
+      pool = Array.from({ length: 3 }, () => {
+        const a = new Audio(url);
+        a.preload = 'auto';
+        return a;
+      });
+      sfxPool.current.set(url, pool);
+    }
+
+    const a = pool.find((el) => el.paused || el.ended) ?? pool[0];
+    /* Multiplied, not floored: a slider at zero has to be truly silent. */
+    a.volume = Math.max(0, Math.min(1, volumeRef.current * gain));
+    try {
+      a.currentTime = 0;
+    } catch {
+      /* not seekable until enough has buffered */
+    }
+    void a.play().catch(() => {
+      /* missing file, or a browser still withholding autoplay — a silent
+         easter egg is the intended degradation either way */
+    });
+  }, []);
+
+  useEffect(() => {
+    const pools = sfxPool.current;
+    return () => {
+      pools.forEach((pool) => pool.forEach((a) => { a.pause(); a.src = ''; }));
+      pools.clear();
+    };
+  }, []);
+
   const activate = useCallback(() => {
     if (startedRef.current) return;
     startedRef.current = true;
@@ -176,10 +226,10 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
-      started, muted, volume, setVolume, toggleMute, activate, setMode,
+      started, muted, volume, setVolume, toggleMute, activate, setMode, playSfx,
       deckRefs: [deckA, deckB] as AudioValue['deckRefs'],
     }),
-    [started, muted, volume, setVolume, toggleMute, activate, setMode],
+    [started, muted, volume, setVolume, toggleMute, activate, setMode, playSfx],
   );
 
   return <AudioCtx.Provider value={value}>{children}</AudioCtx.Provider>;

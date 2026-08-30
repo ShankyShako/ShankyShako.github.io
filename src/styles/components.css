@@ -1272,3 +1272,122 @@
 }
 
 .tag-more:hover { border-style: dashed; color: var(--accent); border-color: var(--accent-soft); }
+
+/* ==========================================================================
+   Desktop pet
+
+   A cutout that hangs off the top-right corner until poked, then falls in and
+   walks the bottom of the window. Both elements are positioned entirely by the
+   rAF loop in usePetEngine — nothing here may animate `transform` on `.pet` or
+   `.pet-fx`, because a transition would chase the loop and rubber-band.
+
+   z-index 590 puts him under both floating controls — the music bar (600) and
+   the chat button and panel (620) — and under the sold-out modal (1000), while
+   still sitting above all page content (.container is 1) and the sticky nav
+   (100), which is what lets him hang over the top-right corner.
+
+   Under, not over, because he carries an invisible hit rectangle. Walking in
+   front of the mute button would look marginally better and would eat clicks
+   meant for it. Layering settles that; the engine does not have to.
+   ========================================================================== */
+.pet,
+.pet-fx {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  z-index: 590;
+  /* The origin is his feet, so mirroring and rotation both pivot on the floor. */
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.pet {
+  cursor: grab;
+  /* Required, or the browser claims the gesture for scrolling and cancels the
+     pointer stream mid-drag. Costs a small dead zone for finger-scrolling. */
+  touch-action: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+.pet:active { cursor: grabbing; }
+
+.pet-fx {
+  pointer-events: none;
+  /* Behind him: the katakana is scenery, not a hat. */
+  z-index: 589;
+}
+
+.pet-frame,
+.pet-fx img {
+  position: absolute;
+  display: block;
+  -webkit-user-drag: none;
+  /* Neither image is the hit target — .pet-hit is. */
+  pointer-events: none;
+}
+
+.pet-hit {
+  position: absolute;
+  display: block;
+  pointer-events: auto;
+}
+
+/* Whole-pixel rendering. He is a photo cutout blown up from a phone snap, and
+   smoothing him would be arguing with the aesthetic. */
+.pet-frame {
+  image-rendering: -webkit-optimize-contrast;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+}
+
+.pet-fx img { animation: petFxPop 0.28s var(--ease) both; }
+
+@keyframes petFxPop {
+  from { opacity: 0; transform: scale(0.6) rotate(-8deg); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* The corner wobble lives on the inner <img> precisely so it cannot collide
+   with the transform the loop writes on the wrapper. */
+/* While he is hanging off the corner he drops below the sticky nav (100).
+   On a wide screen the nav only spans the 1120px container and he is out in the
+   margin, so nothing changes. On a phone the nav is full width and his hit
+   rectangle lands on top of the tabs — under it, the nav keeps its taps and he
+   reads as peeking out from behind the header. */
+.pet.is-peek { z-index: 90; }
+
+.pet.is-peek .pet-frame { animation: petPeek 3.4s ease-in-out infinite; }
+
+@keyframes petPeek {
+  0%, 100% { transform: translate(0, 0) rotate(-3deg); }
+  50%      { transform: translate(-4px, 7px) rotate(3deg); }
+}
+
+/* The hole in the left wall. Half an ellipse bleeding off the edge, so it reads
+   as a gap rather than a decal stuck to the page. Appears only while he is held
+   or in flight, which is the only window in which it is any use. */
+.pet-hole {
+  position: fixed;
+  left: 0;
+  /* Above him (590), so he disappears *into* it on the way out rather than
+     sliding across a dark smudge. */
+  z-index: 591;
+  width: 30px;
+  border-radius: 0 100% 100% 0 / 0 50% 50% 0;
+  background:
+    radial-gradient(ellipse at left center,
+      rgba(0, 0, 0, 0.8) 0%,
+      rgba(0, 0, 0, 0.5) 55%,
+      transparent 100%);
+  box-shadow: inset -1px 0 0 var(--accent-soft);
+  pointer-events: none;
+  animation: fadeIn 0.3s var(--ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pet.is-peek .pet-frame { animation: none; }
+  .pet-fx img { animation: none; }
+  .pet-hole { animation: none; }
+}

@@ -6,6 +6,7 @@ import { AudioProvider } from './context/AudioContext';
 import { Nav } from './components/Nav';
 import { AudioBar } from './components/AudioBar';
 import { ChatWidget } from './components/ChatWidget';
+import { DesktopPet } from './components/DesktopPet';
 
 import { useSeo } from './hooks/useSeo';
 import { useImageGuard } from './hooks/useImageGuard';
@@ -69,6 +70,7 @@ function Shell() {
       </div>
       <AudioBar />
       <ChatWidget />
+      <DesktopPet />
     </>
   );
 }

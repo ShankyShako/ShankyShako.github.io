@@ -9,3 +9,7 @@ dist
 bot/knowledge/*.local.md
 bot/questions.jsonl
 bot/.log-salt
+
+# Pet sprite masters — the shipped set in public/image/pet/ is generated from
+# these by scripts/prep-pet.py. Kept locally, not committed.
+assets-src/
