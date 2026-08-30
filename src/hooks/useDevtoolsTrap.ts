@@ -58,7 +58,38 @@ export function useDevtoolsTrap(enabled = import.meta.env.PROD) {
       }
     };
 
-    const id = window.setInterval(checkSize, 1000);
+    /*
+     * The size gap only exists for *docked* panels. Devtools opened in a
+     * separate window - or opened before this page loaded - leaves the
+     * viewport untouched, which is how the trap could be walked past.
+     *
+     * This catches those: logging an object only formats it when a devtools
+     * console is actually rendering the entry, so the getter fires exactly
+     * when a panel is open. `console.table` keeps the noise out of the page.
+     */
+    const probe = document.createElement('pre');
+    let seen = false;
+    Object.defineProperty(probe, 'id', {
+      get() {
+        seen = true;
+        return '';
+      },
+    });
+
+    const checkConsole = () => {
+      seen = false;
+      console.table([probe]);
+      console.clear();
+      if (seen) trip();
+    };
+
+    const check = () => {
+      checkSize();
+      checkConsole();
+    };
+
+    check();
+    const id = window.setInterval(check, 1000);
     document.addEventListener('keydown', onKeyDown);
     window.addEventListener('resize', checkSize);
 
