@@ -1336,10 +1336,26 @@
 }
 
 /* Whole-pixel rendering. He is a photo cutout blown up from a phone snap, and
-   smoothing him would be arguing with the aesthetic. */
+   smoothing him would be arguing with the aesthetic.
+   -----------------------------------------------------------------------
+   The morph. Every frame is a different crop, so swapping one for
+   another changes the box too. Transitioning that box means the incoming pose arrives
+   wearing the outgoing pose's proportions and stretches into its own over a
+   few frames — a lying frame going to `idle` squashes wide and then pulls
+   upright, which reads as him hauling himself off the floor.
+
+   This started as a phone-only artefact: on a slow decode the browser kept
+   painting the previous bitmap into the already-updated box. Making it a real
+   transition turns an accident of timing into the same effect everywhere, at a
+   duration we choose. */
 .pet-frame {
   image-rendering: -webkit-optimize-contrast;
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+  transition:
+    width 190ms var(--ease),
+    height 190ms var(--ease),
+    left 190ms var(--ease),
+    top 190ms var(--ease);
 }
 
 .pet-fx img { animation: petFxPop 0.28s var(--ease) both; }
@@ -1347,6 +1363,23 @@
 @keyframes petFxPop {
   from { opacity: 0; transform: scale(0.6) rotate(-8deg); }
   to   { opacity: 1; transform: none; }
+}
+
+/* The shake gets its own element between the rAF-positioned wrapper and the
+   image's entrance animation. Three transforms, three elements — stacking two
+   of them on one node means the later rule silently wins. */
+.pet-fx-shake {
+  display: block;
+  animation: petFxQuake 0.13s steps(1, end) infinite;
+}
+
+/* Small and fast. Manga panels tremble; they do not wobble. */
+@keyframes petFxQuake {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(-1.5px, 1px); }
+  50%  { transform: translate(1.5px, -1.5px); }
+  75%  { transform: translate(-1px, -1px); }
+  100% { transform: translate(1px, 1.5px); }
 }
 
 /* The corner wobble lives on the inner <img> precisely so it cannot collide
@@ -1386,8 +1419,47 @@
   animation: fadeIn 0.3s var(--ease);
 }
 
+/* Motes drifting in off the page and disappearing down the throat of it. The
+   start offset is per-particle and static, so the keyframe only has to
+   interpolate between two transforms — no @property registration needed. */
+.pet-dust {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  width: var(--s);
+  height: var(--s);
+  margin: calc(var(--s) / -2);
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+  animation: petSuck var(--dur) linear var(--delay) infinite;
+}
+
+/* Closing: the mouth fades but the motes keep travelling, so the last few
+   arrive rather than blinking out halfway there. */
+.pet-hole.is-closing {
+  animation: petHoleClose 2.4s var(--ease) forwards;
+}
+
+@keyframes petHoleClose {
+  from { opacity: 1; }
+  70%  { opacity: 0.35; }
+  to   { opacity: 0; }
+}
+
+@keyframes petSuck {
+  0%   { transform: translate(var(--px), var(--py)) scale(1); opacity: 0; }
+  18%  { opacity: 0.9; }
+  85%  { opacity: 0.5; }
+  100% { transform: translate(0, 0) scale(0.1); opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pet.is-peek .pet-frame { animation: none; }
   .pet-fx img { animation: none; }
-  .pet-hole { animation: none; }
+  .pet-fx-shake { animation: none; }
+  .pet-hole,
+  .pet-hole.is-closing { animation: none; }
+  .pet-dust { animation: none; opacity: 0; }
+  .pet-frame { transition: none; }
 }

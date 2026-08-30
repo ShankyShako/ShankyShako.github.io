@@ -34,9 +34,21 @@ Frames, and where each is used:
   pose_2    kneeling, pointing  also aimed at the chat button when he passes it
   pose_3    kneeling, hands up  random pose / hover reaction
   pose_4    standing, one leg   random pose / hover reaction
+  pose_5    arched arm overhead random pose / hover reaction
+  pose_6    arm up, hip out     random pose / hover reaction
   effect_1  purple katakana     manga overlay, drawn behind a pose
   effect_2  outlined katakana
   effect_3  solid katakana
+  effect_4  outlined arc
+  effect_5  purple GO GO GO
+  effect_6  solid banner
+  effect_7  outlined burst
+
+Effects are picked at random and hung off the TOP of whichever body box is
+showing, normalised by their longest side - so one set works over a lying pose
+and a standing one without per-pair tuning. Add a new one by dropping it in
+assets-src/pet/, extending the range in scripts/prep-pet.py, and pasting its
+size into EFFECTS in src/components/petFrames.ts.
 
 Rules the code depends on:
 

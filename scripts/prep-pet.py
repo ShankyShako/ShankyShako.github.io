@@ -57,6 +57,8 @@ FRAMES = {
     'pose_2': ('pose_2_bag.png',  True),
     'pose_3': ('pose_3.png',      True),
     'pose_4': ('pose_4.png',      True),
+    'pose_5': ('pose_5.png',      True),
+    'pose_6': ('pose_6.png',      True),
 }
 
 meta = {}
@@ -103,7 +105,7 @@ crop = crop.resize((max(1, round(crop.width*s)), max(1, round(crop.height*s))), 
 crop.save(os.path.join(OUT, 'bag.png'), optimize=True)
 meta['bag'] = {'w': crop.width, 'h': crop.height}
 
-for i in (1, 2, 3):
+for i in (1, 2, 3, 4, 5, 6, 7):
     im, boxes = analyse(os.path.join(SRC, f'effect_{i}.png'))
     x0 = min(b[0] for b in boxes); y0 = min(b[1] for b in boxes)
     x1 = max(b[2] for b in boxes); y1 = max(b[3] for b in boxes)

@@ -31,7 +31,7 @@ export type FrameMeta = {
 export type FrameKey =
   | 'idle' | 'walk_l' | 'walk_r'
   | 'fall' | 'land' | 'drag' | 'fly'
-  | 'pose_1' | 'pose_2' | 'pose_3' | 'pose_4'
+  | 'pose_1' | 'pose_2' | 'pose_3' | 'pose_4' | 'pose_5' | 'pose_6'
   | 'bag';
 
 export const FRAMES: Record<FrameKey, FrameMeta> = {
@@ -54,6 +54,8 @@ export const FRAMES: Record<FrameKey, FrameMeta> = {
   pose_2: { w: 284, h: 260, bw: 212, bh: 260, ax: 178.4, ay: 260.0, k: 0.68 },
   pose_3: { w: 224, h: 260, bw: 224, bh: 260, ax: 112.0, ay: 260.0, k: 0.74 },
   pose_4: { w:  86, h: 260, bw:  86, bh: 260, ax:  43.0, ay: 260.0, k: 1.00 },
+  pose_5: { w: 135, h: 260, bw: 135, bh: 260, ax:  67.7, ay: 260.0, k: 1.00 },
+  pose_6: { w: 133, h: 260, bw: 133, bh: 260, ax:  66.5, ay: 260.0, k: 1.00 },
 
   /* The corner peek. Only his bag, and only a sliver of it — the invitation is
      meant to be noticed on a second look, not to announce itself. */
@@ -62,19 +64,34 @@ export const FRAMES: Record<FrameKey, FrameMeta> = {
 
 export const FRAME_SRC = (k: FrameKey | EffectKey) => `/image/pet/${k}.png`;
 
-export type EffectKey = 'effect_1' | 'effect_2' | 'effect_3';
+export type EffectKey =
+  | 'effect_1' | 'effect_2' | 'effect_3' | 'effect_4'
+  | 'effect_5' | 'effect_6' | 'effect_7';
 
-/** Manga onomatopoeia, drawn behind him while a pose holds. */
+/**
+ * Manga onomatopoeia, drawn behind him while a pose holds.
+ *
+ * Shapes vary a lot — effect_6 is a wide banner, effect_5 a tall column — so
+ * the renderer normalises each by its longest side and hangs it off the top of
+ * whatever body box is currently showing, rather than at a fixed height. That
+ * is what lets one set sit correctly over a lying pose and a standing one.
+ */
 export const EFFECTS: Record<EffectKey, { w: number; h: number }> = {
   effect_1: { w: 300, h: 282 },
   effect_2: { w: 300, h: 216 },
   effect_3: { w: 300, h: 124 },
+  effect_4: { w: 300, h: 252 },
+  effect_5: { w: 164, h: 300 },
+  effect_6: { w: 300, h: 144 },
+  effect_7: { w: 210, h: 300 },
 };
 
 export const EFFECT_KEYS = Object.keys(EFFECTS) as EffectKey[];
 
 /** Poses the scheduler and the hover reaction draw from. */
-export const POSE_FRAMES: FrameKey[] = ['pose_1', 'pose_2', 'pose_3', 'pose_4'];
+export const POSE_FRAMES: FrameKey[] = [
+  'pose_1', 'pose_2', 'pose_3', 'pose_4', 'pose_5', 'pose_6',
+];
 
 /** The one that points, used to aim at the chat button. Points right natively. */
 export const POINT_FRAME: FrameKey = 'pose_2';

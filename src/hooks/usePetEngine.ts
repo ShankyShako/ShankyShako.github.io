@@ -18,6 +18,14 @@ const SWAY_W = (2 * Math.PI) / SWAY_PER;
 const TILT = 14;          // degrees of lean at the extremes of a swing
 const AIR_DRAG = 1.2;     // 1/s, how fast a throw's sideways speed bleeds off
 
+/* Cumulative thresholds for what he does next. Poses are the punctuation, not
+   the sentence — he is mostly just wandering about, and a pet that strikes an
+   attitude every few seconds stops reading as a pet. Everything above ROLL_IDLE
+   is a pose, so these two numbers are the whole distribution:
+   55% walking, 32% idle, 13% pose. */
+const ROLL_WALK = 0.55;
+const ROLL_IDLE = 0.87;
+
 const WALK_SPEED = 58;    // px/s
 /* Two swaps a second — one full left-right cycle. Chosen off the travel, not
    by taste: he stands ~132px, so a stride is roughly 55px, and at 58px/s that
@@ -79,6 +87,10 @@ const POINT_S = 1.2;
  * before they landed. It also stops the chain talking over itself.
  * ----------------------------------------------------------------------- */
 const SFX = (n: number) => `/audio/pet/effect_${n}.mp3`;
+/* Going through the wall gets its own sound rather than the next chop — the
+   combo is the language of poses, and leaving is not a pose. */
+const SFX_WHOOSH = '/audio/pet/Whoosh.mp3';
+const WHOOSH_MS = 1123;
 /* Milliseconds, index 0 = effect_1. Measured with `afinfo public/audio/pet/*`;
    re-measure if the files are ever replaced. */
 const SFX_MS = [627, 731, 705, 705, 705, 627, 888, 1228];
@@ -311,13 +323,13 @@ export function usePetEngine() {
         return;
       }
 
-      if (parked || roll < 0.4) {
+      if (parked || roll < ROLL_WALK) {
         p.walkDir = parked
           ? (p.x < p.leftKeepOut ? 1 : -1)
           : (p.x < 160 ? 1 : p.x > p.vw - 160 ? -1 : (Math.random() < 0.5 ? 1 : -1));
         p.facing = p.walkDir;
         enter('walking', rand(1.2, 3), 'walk_l');
-      } else if (roll < 0.7) {
+      } else if (roll < ROLL_IDLE) {
         p.facing = Math.random() < 0.5 ? 1 : -1;
         enter('idle', rand(0.9, 2.2), 'idle');
       } else {
@@ -392,7 +404,9 @@ export function usePetEngine() {
             p.x = nx;
             p.y += p.vy * dt;
             setEffect(pick(EFFECT_KEYS));
-            comboSfx(ts);
+            sfxRef.current(SFX_WHOOSH, 2.0);
+            /* Hold the line so a pose chop cannot talk over the exit. */
+            p.sfxUntil = ts + WHOOSH_MS;
             enter('escaping', ESCAPE_S, 'fly');
             break;
           }
@@ -490,7 +504,7 @@ export function usePetEngine() {
       document.removeEventListener('visibilitychange', onVis);
       p.drag = null;
     };
-  }, [comboSfx, enter, groundY, halfW, holeTop, place, resetToCorner, setFrame, striking]);
+  }, [enter, groundY, halfW, holeTop, place, resetToCorner, setFrame, striking]);
 
   /* ---------------------------------------------------------------------- *
    * Pointer. HTML5 drag is dead here — useImageGuard preventDefaults

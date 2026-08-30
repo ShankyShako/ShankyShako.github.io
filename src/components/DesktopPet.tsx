@@ -1,19 +1,26 @@
-import { useLayoutEffect } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 
 import { usePetAssets } from '../hooks/usePetAssets';
 import { frameScale, usePetEngine } from '../hooks/usePetEngine';
 import { EFFECTS, FRAMES, FRAME_SRC, PET_IMAGES } from './petFrames';
 
+/** How many motes get pulled into the hole. */
+const DUST = 12;
+/** Longest a mote can be in flight — how long the hole lingers after closing. */
+const DUST_MAX_MS = 2400;
+
 /**
- * The second easter egg. A cutout of Genova hangs off the top-right corner
- * until someone pokes it, then falls in, gets up, and pootles along the bottom
- * of the window striking poses.
+ * The second easter egg. A bag hangs off the top-right corner until someone
+ * pokes it, then Genova falls in, gets up, and pootles along the bottom of the
+ * window striking JoJo poses. Throwing him through the hole in the left wall
+ * ends it and puts the bag back.
  *
- * Two elements rather than one. The sprite's wrapper carries `scaleX(±1)` so
- * he can face either way; the manga overlay has to sit outside that or the
- * katakana renders mirrored every time he turns around. Both are placed by the
- * same rAF pass in usePetEngine, which owns every transform on this page —
- * React only ever hears about which frame is showing.
+ * Three stacked elements rather than one, because three different things want
+ * to write `transform` and they must not collide: the wrapper carries the rAF
+ * loop's position and `scaleX(±1)` facing, the effect's own wrapper carries the
+ * shake, and each <img> carries its own entrance. The manga overlay also has to
+ * live outside the mirrored wrapper or the katakana renders backwards whenever
+ * he turns around.
  */
 export function DesktopPet() {
   const assets = usePetAssets(PET_IMAGES);
@@ -26,40 +33,102 @@ export function DesktopPet() {
      rAF loop does not get to write its transform until the following frame. */
   useLayoutEffect(place, [place, effect, assets]);
 
+  /* The hole outlives its own dismissal. Unmounting the moment he stops being
+     held would cut every mote off mid-flight, which reads as a rendering
+     glitch rather than an ending — so it stays mounted and fades while the
+     motes finish the trip they were already on. */
+  const [holeMounted, setHoleMounted] = useState(false);
+
+  useEffect(() => {
+    if (holeShown) {
+      setHoleMounted(true);
+      return;
+    }
+    const t = window.setTimeout(() => setHoleMounted(false), DUST_MAX_MS);
+    return () => window.clearTimeout(t);
+  }, [holeShown]);
+
+  /* Fixed per mount: re-rolling these every render would make the dust jump. */
+  const dust = useMemo(
+    () =>
+      Array.from({ length: DUST }, (_, i) => ({
+        px: 55 + Math.random() * 150,
+        py: (Math.random() - 0.5) * 150,
+        size: 2 + Math.random() * 3,
+        dur: 1.1 + Math.random() * 1.1,
+        delay: (i / DUST) * 1.6 + Math.random() * 0.2,
+      })),
+    [],
+  );
+
   /* All or nothing: a half-loaded set is a broken-image glyph in the corner. */
   if (assets !== 'ready') return null;
 
   const stand = window.innerWidth <= 620 ? 92 : 132;
+  const f = FRAMES[frame];
+  const s = frameScale(frame, stand);
+
   /* The peek shows a sliver of bag, but it is still the only way into the whole
      easter egg — so the target stays the size the pet used to be rather than
      the size of what is drawn. Deliberately larger than its own artwork. */
   const PEEK_HIT_W = stand * 0.72;
   const PEEK_HIT_H = stand * 0.85;
-  const f = FRAMES[frame];
-  const s = frameScale(frame, stand);
+
+  /* The walk swaps frames four times a second; morphing between them turns a
+     gait into pudding. Every other transition gets the stretch. */
+  const isWalk = frame === 'walk_l' || frame === 'walk_r';
+
   const fx = effect ? EFFECTS[effect] : null;
-  const fxScale = fx ? (stand * 0.85) / Math.max(fx.w, fx.h) : 1;
+  /* Normalised by the longest side so a wide banner and a tall column carry the
+     same visual weight. */
+  const fxScale = fx ? (stand * 1.2) / Math.max(fx.w, fx.h) : 1;
+  const fxW = fx ? fx.w * fxScale : 0;
+  const fxH = fx ? fx.h * fxScale : 0;
 
   return (
     <>
-      {/* The way out. Only drawn while he is held or airborne — the rest of the
-          time the page has no business carrying a smudge in its margin. */}
-      {holeShown && <div className="pet-hole" style={holeStyle} aria-hidden="true" />}
+      {holeMounted && (
+        <div
+          className={`pet-hole${holeShown ? '' : ' is-closing'}`}
+          style={holeStyle}
+          aria-hidden="true"
+        >
+          {dust.map((d, i) => (
+            <span
+              key={i}
+              className="pet-dust"
+              style={
+                {
+                  '--px': `${d.px}px`,
+                  '--py': `${d.py}px`,
+                  '--s': `${d.size}px`,
+                  '--dur': `${d.dur}s`,
+                  '--delay': `${d.delay}s`,
+                } as React.CSSProperties
+              }
+            />
+          ))}
+        </div>
+      )}
 
       {effect && fx && (
         <div className="pet-fx" ref={fxRef} aria-hidden="true">
-          <img
-            src={FRAME_SRC(effect)}
-            alt=""
-            width={fx.w * fxScale}
-            height={fx.h * fxScale}
-            style={{
-              /* Up and behind his head, in his own coordinate space — the
-                 wrapper's origin is his feet. */
-              left: -(fx.w * fxScale) / 2,
-              top: -stand * 1.15,
-            }}
-          />
+          <span className="pet-fx-shake">
+            <img
+              src={FRAME_SRC(effect)}
+              alt=""
+              style={{
+                width: fxW,
+                height: fxH,
+                /* Hung off the top of whichever body box is showing, not at a
+                   fixed height — that is what makes one set of effects sit
+                   correctly over a lying pose and a standing one. The overlap
+                   is deliberate: manga sound effects crowd the figure. */
+                left: -fxW / 2,
+                top: -f.bh * s - fxH * 0.65,
+              }}
+            />
+          </span>
         </div>
       )}
 
@@ -74,14 +143,14 @@ export function DesktopPet() {
           src={FRAME_SRC(frame)}
           alt=""
           draggable={false}
-          width={f.w * s}
-          height={f.h * s}
-          /* Offset so his ground-contact point lands on the wrapper's origin.
-             Every frame is a different crop, so this is per-frame data, not a
-             constant. */
           style={{
+            /* Geometry in CSS rather than width/height attributes so it can be
+               transitioned — see the morph note in components.css. */
+            width: f.w * s,
+            height: f.h * s,
             left: -f.ax * s,
             top: -f.ay * s,
+            transitionDuration: isWalk ? '0ms' : undefined,
             /* About the image's own centre, so the box the engine positions is
                untouched — this turns the picture over, not the sprite's
                footprint. */
