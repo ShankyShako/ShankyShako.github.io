@@ -44,6 +44,10 @@ Frames, and where each is used:
   effect_6  solid banner
   effect_7  outlined burst
 
+Neither a pose nor an effect can follow itself - 1-2-1 is fine, 1-1 never
+happens. The pool is filtered rather than re-rolled, so it is a guarantee and
+not a probability.
+
 Effects are picked at random and hung off the TOP of whichever body box is
 showing, normalised by their longest side - so one set works over a lying pose
 and a standing one without per-pair tuning. Add a new one by dropping it in

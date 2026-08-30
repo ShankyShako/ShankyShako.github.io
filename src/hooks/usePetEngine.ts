@@ -111,6 +111,19 @@ type Phase =
 
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 const pick = <T,>(xs: readonly T[]) => xs[Math.floor(Math.random() * xs.length)];
+
+/**
+ * Like `pick`, but never returns what came out last time.
+ *
+ * Filtering the pool rather than re-rolling and hoping: a re-roll still repeats
+ * one time in six, and back-to-back identical poses are the one thing that
+ * makes a random loop read as broken rather than random. 1-2-1 is fine, 1-1 is
+ * not.
+ */
+const pickFresh = <T,>(xs: readonly T[], last: T | null): T => {
+  if (last == null || xs.length < 2) return pick(xs);
+  return pick(xs.filter((x) => x !== last));
+};
 const clamp = (v: number, lo: number, hi: number) => (v < lo ? lo : v > hi ? hi : v);
 
 /** How tall he stands, in CSS px. */
@@ -150,6 +163,8 @@ export function usePetEngine() {
     leftKeepOut: 0, rightKeepOut: Number.POSITIVE_INFINITY,
     fabCooldown: 0,
     combo: 0, comboMaxed: false, lastPoseAt: -Infinity,
+    lastPose: null as FrameKey | null,
+    lastEffect: null as EffectKey | null,
     sfxUntil: 0,
     frame: PEEK_FRAME,
     drag: null as null | {
@@ -261,6 +276,14 @@ export function usePetEngine() {
     setFrame(PEEK_FRAME);
   }, [setFrame]);
 
+  /** A different overlay from the one before it, recorded for next time. */
+  const nextEffect = useCallback(() => {
+    const p = s.current;
+    const e = pickFresh(EFFECT_KEYS, p.lastEffect);
+    p.lastEffect = e;
+    setEffect(e);
+  }, []);
+
   /** Strike a pose: frame, a manga overlay behind him, and the next chop. */
   const striking = useCallback(
     (now: number, f: FrameKey, dur: number, withSound: boolean) => {
@@ -269,9 +292,12 @@ export function usePetEngine() {
          chops at the top of the combo outlive the frame that triggered them and
          he is back to walking while his own hit is still ringing. */
       enter('posing', Math.max(dur, ms / 1000), f);
-      setEffect(pick(EFFECT_KEYS));
+      /* Recorded here rather than at each call site, so the pose the chat-button
+         rule forces counts towards the no-repeat rule too. */
+      s.current.lastPose = f;
+      nextEffect();
     },
-    [comboSfx, enter],
+    [comboSfx, enter, nextEffect],
   );
 
   /* ---------------------------------------------------------------------- */
@@ -319,7 +345,8 @@ export function usePetEngine() {
 
       if (p.reduced) {
         /* Motion the visitor did not ask for is out; he still changes pose. */
-        striking(performance.now(), pick(POSE_FRAMES), rand(2.5, 5), SFX_ON_IDLE_POSES);
+        striking(performance.now(), pickFresh(POSE_FRAMES, p.lastPose), rand(2.5, 5),
+          SFX_ON_IDLE_POSES);
         return;
       }
 
@@ -333,7 +360,8 @@ export function usePetEngine() {
         p.facing = Math.random() < 0.5 ? 1 : -1;
         enter('idle', rand(0.9, 2.2), 'idle');
       } else {
-        striking(performance.now(), pick(POSE_FRAMES), rand(1.2, 2.4), SFX_ON_IDLE_POSES);
+        striking(performance.now(), pickFresh(POSE_FRAMES, p.lastPose), rand(1.2, 2.4),
+          SFX_ON_IDLE_POSES);
       }
     };
 
@@ -403,7 +431,7 @@ export function usePetEngine() {
           ) {
             p.x = nx;
             p.y += p.vy * dt;
-            setEffect(pick(EFFECT_KEYS));
+            nextEffect();
             sfxRef.current(SFX_WHOOSH, 2.0);
             /* Hold the line so a pose chop cannot talk over the exit. */
             p.sfxUntil = ts + WHOOSH_MS;
@@ -504,7 +532,7 @@ export function usePetEngine() {
       document.removeEventListener('visibilitychange', onVis);
       p.drag = null;
     };
-  }, [enter, groundY, halfW, holeTop, place, resetToCorner, setFrame, striking]);
+  }, [enter, groundY, halfW, holeTop, nextEffect, place, resetToCorner, setFrame, striking]);
 
   /* ---------------------------------------------------------------------- *
    * Pointer. HTML5 drag is dead here — useImageGuard preventDefaults
@@ -573,7 +601,7 @@ export function usePetEngine() {
       /* The clip length is the throttle — comboSfx refuses to retrigger over
          itself, so there is no second cooldown to keep in step with it. */
       if (now < p.sfxUntil) return;
-      striking(now, pick(POSE_FRAMES), rand(1.2, 2), true);
+      striking(now, pickFresh(POSE_FRAMES, p.lastPose), rand(1.2, 2), true);
     },
     [striking],
   );
