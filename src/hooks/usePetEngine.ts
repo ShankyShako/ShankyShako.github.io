@@ -5,6 +5,7 @@ import {
   EFFECT_KEYS, FRAMES, PEEK_FRAME, POINT_FRAME, POSE_FRAMES,
 } from '../components/petFrames';
 import type { EffectKey, FrameKey } from '../components/petFrames';
+import { bump } from '../lib/stats';
 
 /* --------------------------------------------------------------------------
  * Tuning. Everything is px/second or degrees/second and gets multiplied by a
@@ -286,8 +287,14 @@ export function usePetEngine() {
 
   /** Strike a pose: frame, a manga overlay behind him, and the next chop. */
   const striking = useCallback(
-    (now: number, f: FrameKey, dur: number, withSound: boolean) => {
+    (now: number, f: FrameKey, dur: number, withSound: boolean,
+      source: 'user' | 'idle' = 'idle') => {
       const ms = withSound ? comboSfx(now) : 0;
+      /* Counted here because every pose in the whole engine comes through this
+         one call. The two sources are kept apart deliberately: he poses to
+         himself every few seconds whether anyone is watching or not, and a
+         public number that climbs on its own means nothing. */
+      bump(source === 'user' ? 'pose' : 'pose_idle');
       /* Hold the pose for at least as long as its sound. Otherwise the long
          chops at the top of the combo outlive the frame that triggered them and
          he is back to walking while his own hit is still ringing. */
@@ -435,6 +442,7 @@ export function usePetEngine() {
             sfxRef.current(SFX_WHOOSH, 2.0);
             /* Hold the line so a pose chop cannot talk over the exit. */
             p.sfxUntil = ts + WHOOSH_MS;
+            bump('escape');
             enter('escaping', ESCAPE_S, 'fly');
             break;
           }
@@ -601,7 +609,7 @@ export function usePetEngine() {
       /* The clip length is the throttle — comboSfx refuses to retrigger over
          itself, so there is no second cooldown to keep in step with it. */
       if (now < p.sfxUntil) return;
-      striking(now, pickFresh(POSE_FRAMES, p.lastPose), rand(1.2, 2), true);
+      striking(now, pickFresh(POSE_FRAMES, p.lastPose), rand(1.2, 2), true, 'user');
     },
     [striking],
   );
@@ -634,6 +642,7 @@ export function usePetEngine() {
              noise — they poked a bag in the corner, not a sound button. The
              click still counts as the gesture that unlocks audio, so the first
              pose they trigger afterwards plays normally. */
+          bump('activate');
           if (p.reduced) { p.y = groundY(); enter('landing', LAND_S, 'land'); }
           else enter('falling', Infinity, 'fall');
         } else {
@@ -650,6 +659,7 @@ export function usePetEngine() {
       if (p.reduced) { p.y = groundY(); enter('landing', LAND_S, 'land'); return; }
       /* A deliberate throw flies; letting go of a stationary pet just drops it. */
       const thrown = Math.hypot(p.vx, p.vy) > 90;
+      if (thrown) bump('throw');
       enter(thrown ? 'flying' : 'falling', Infinity, thrown ? 'fly' : 'fall');
     },
     [enter, groundY, react],

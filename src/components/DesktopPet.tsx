@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 
+import { PetCounter } from './PetCounter';
 import { usePetAssets } from '../hooks/usePetAssets';
 import { frameScale, usePetEngine } from '../hooks/usePetEngine';
 import { EFFECTS, FRAMES, FRAME_SRC, PET_IMAGES } from './petFrames';
@@ -38,6 +39,13 @@ export function DesktopPet() {
      glitch rather than an ending — so it stays mounted and fades while the
      motes finish the trip they were already on. */
   const [holeMounted, setHoleMounted] = useState(false);
+
+  /* The counter would give the easter egg away if it sat there on a fresh load,
+     so it waits for someone to poke the bag. Latched rather than tied to
+     `peeking`: he goes back in the corner when he escapes through the wall, and
+     the number blinking out on the way would read as a bug. */
+  const [found, setFound] = useState(false);
+  useEffect(() => { if (!peeking) setFound(true); }, [peeking]);
 
   useEffect(() => {
     if (holeShown) {
@@ -131,6 +139,8 @@ export function DesktopPet() {
           </span>
         </div>
       )}
+
+      {found && <PetCounter />}
 
       <div
         ref={wrapRef}

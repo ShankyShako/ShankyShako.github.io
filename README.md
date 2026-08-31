@@ -32,6 +32,32 @@ environment variables in the Vercel dashboard:
 
 The form is protected by a hidden honeypot field and a per-instance rate limit.
 
+## Pose counter
+
+`api/stats.ts` counts how many poses the desktop pet has struck for everyone
+who has ever found him, and prints the total under his feet. Storage is
+Upstash Redis over its REST API — no driver, no connection to keep warm.
+
+| Variable                  | Notes                                            |
+| ------------------------- | ------------------------------------------------ |
+| `UPSTASH_REDIS_REST_URL`  | from the Upstash console                          |
+| `UPSTASH_REDIS_REST_TOKEN`| the same database's REST token                    |
+| `ADMIN_STATS_KEY`         | any long random string; unlocks the full breakdown |
+
+Without them the endpoint answers `204` and no counter is drawn — the pet is
+otherwise unaffected. Only the pose count is ever public. Activations, throws,
+escapes, idle poses, Elmo toggles, and chat usage are recorded too, and read
+back only with the key:
+
+```
+curl 'https://gmango.dev/api/stats?key=<ADMIN_STATS_KEY>'
+```
+
+A wrong key gets the ordinary public answer rather than a 401, so the endpoint
+does not advertise that there is anything behind it. Counts are batched in the
+browser and flushed every ten seconds (and on tab close via `sendBeacon`), and
+`DNT: 1` visitors read the number without contributing to it.
+
 ## Chat bot
 
 An optional chat bubble, bottom right, backed by a small Ollama model running

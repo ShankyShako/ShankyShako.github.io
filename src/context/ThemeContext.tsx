@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
+import { bump } from '../lib/stats';
+
 export type Mode = 'light' | 'elmo';
 
 type ThemeValue = {
@@ -25,7 +27,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.documentElement.dataset.theme = elmo ? 'elmo' : 'light';
   }, [elmo]);
 
-  const toggleElmo = useCallback(() => setElmo((v) => !v), []);
+  const toggleElmo = useCallback(() => setElmo((v) => {
+    /* Counted, never shown. How often anyone finds this is the owner's
+       curiosity, not the visitor's. */
+    bump(v ? 'elmo_off' : 'elmo_on');
+    return !v;
+  }), []);
 
   const value = useMemo(
     () => ({ mode: (elmo ? 'elmo' : 'light') as Mode, elmo, toggleElmo }),

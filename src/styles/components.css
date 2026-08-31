@@ -1286,6 +1286,9 @@
    still sitting above all page content (.container is 1) and the sticky nav
    (100), which is what lets him hang over the top-right corner.
 
+   The pose counter is 588, under the effects (589) and under him (590): it is
+   a footnote to the easter egg and he should walk over the top of it.
+
    Under, not over, because he carries an invisible hit rectangle. Walking in
    front of the mute button would look marginally better and would eat clicks
    meant for it. Layering settles that; the engine does not have to.
@@ -1454,7 +1457,52 @@
   100% { transform: translate(0, 0) scale(0.1); opacity: 0; }
 }
 
+/* --------------------------------------------------------------------------
+   Pose counter
+
+   Every pose anyone has ever pulled out of him, globally. Bottom-centre,
+   behind him, and faint enough to read as part of the furniture — it appears
+   only once someone has actually found the pet.
+   ----------------------------------------------------------------------- */
+.pet-counter {
+  position: fixed;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  z-index: 588;
+  /* Never eat a click meant for the page underneath — this thing sits across
+     the full width of the bottom of the window. */
+  pointer-events: none;
+  user-select: none;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  white-space: nowrap;
+  color: var(--text-light);
+  opacity: 0.18;
+  animation: petCounterIn 1.2s var(--ease) both;
+}
+
+.pet-counter-n {
+  font-weight: 600;
+  /* Digits of equal width, or the whole line twitches sideways every time the
+     count rolls over. */
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-theme='elmo'] .pet-counter {
+  color: var(--accent);
+  /* Red on black reads dimmer than dark on light at the same alpha. */
+  opacity: 0.28;
+}
+
+@keyframes petCounterIn {
+  from { opacity: 0; }
+  to   { opacity: 0.18; }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .pet-counter { animation: none; }
   .pet.is-peek .pet-frame { animation: none; }
   .pet-fx img { animation: none; }
   .pet-fx-shake { animation: none; }

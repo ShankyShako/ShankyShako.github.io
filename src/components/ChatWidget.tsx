@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useBotStatus } from '../hooks/useBotStatus';
 import { useAudio } from '../context/AudioContext';
 import { ENTITY_BY_ALIAS, ENTITY_PATTERN } from '../data/entities';
+import { bump } from '../lib/stats';
 
 /**
  * Actions the gateway is willing to hand the browser. Every field has already
@@ -250,6 +251,10 @@ export function ChatWidget() {
       setError(null);
       setBusy(true);
 
+      /* That a message was sent, and nothing about it. No text ever leaves
+         here — the transcript is between the visitor and the bot. */
+      bump('chat_message');
+
       const history: Turn[] = [...turns, { role: 'user', content: message }];
       setTurns([...history, { role: 'assistant', content: '' }]);
 
@@ -439,7 +444,10 @@ export function ChatWidget() {
       <button
         type="button"
         className={`chat-fab${open ? ' is-open' : ''}`}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setOpen((v) => {
+          if (!v) bump('chat_open');
+          return !v;
+        })}
         aria-expanded={open}
         aria-controls="chat-panel"
         aria-label={
