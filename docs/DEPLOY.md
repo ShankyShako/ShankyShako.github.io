@@ -90,6 +90,11 @@ has to be on the verified domain.
 
    If these are missing the form returns "Mail is not configured yet."
 
+   Optional, for the pet's pose counter — `UPSTASH_REDIS_REST_URL`,
+   `UPSTASH_REDIS_REST_TOKEN` (create a free database at upstash.com) and
+   `ADMIN_STATS_KEY` (any long random string). Without them the counter simply
+   does not appear. See the README for what it records.
+
 5. Deploy. You get a `*.vercel.app` URL. **Test it there before touching DNS:**
    - right-click the profile photo → Elmo mode flips and music starts
    - navigate to another tab → music keeps playing without a gap

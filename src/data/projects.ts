@@ -43,14 +43,14 @@ export const projects: Project[] = [
     blurb:
       "Six graduate assignments implemented from first principles rather than from libraries: bidirectional and tridirectional A* over the Atlanta road network, alpha-beta adversarial search for a rook-isolation variant, Bayesian networks sampled with Gibbs and Metropolis-Hastings, decision trees and random forests, Gaussian-mixture image segmentation by expectation-maximisation, and hidden Markov models for sign recognition. Georgia Tech CS 6601; the repository is private under the university's academic-honesty policy.",
   },
-  {
-    title: 'ReviewRounds — Spaced-Review Planner',
-    href: 'https://github.com/yeabsira84-tech/LectureLoop',
-    years: '2026',
-    tags: ['React', 'Next.js', 'TypeScript', 'Cloudflare Workers', 'Drizzle'],
-    blurb:
-      'A mobile-first spaced-repetition planner for medical students. Each exam is its own study plan: its lectures are scheduled across several review passes, and the next interval adapts to the recall, understanding, and difficulty logged after each session. React 19 and Next.js on a Cloudflare Workers runtime, with Drizzle and a deliberately swappable data adapter.',
-  },
+  // {
+  //   title: 'ReviewRounds — Spaced-Review Planner',
+  //   href: 'https://github.com/yeabsira84-tech/LectureLoop',
+  //   years: '2026',
+  //   tags: ['React', 'Next.js', 'TypeScript', 'Cloudflare Workers', 'Drizzle'],
+  //   blurb:
+  //     'A mobile-first spaced-repetition planner for medical students. Each exam is its own study plan: its lectures are scheduled across several review passes, and the next interval adapts to the recall, understanding, and difficulty logged after each session. React 19 and Next.js on a Cloudflare Workers runtime, with Drizzle and a deliberately swappable data adapter.',
+  // },
   {
     title: 'Care Beyond — Homelessness Resource Map',
     href: 'https://github.com/hsaranu5/resourcestracker',
