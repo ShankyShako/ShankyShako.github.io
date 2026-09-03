@@ -82,6 +82,52 @@ into information about the program itself — what it is for, what it looks at,
 anything a third party could put to use — he declines, politely and without
 hedging about why.
 
+## Dysarthria speech understanding — CS 7643, Team LEGACY
+
+A four-person Georgia Tech deep-learning project, not a publication and with no
+public repo — course policy. Genova's share of the work, from the paper's own
+contribution table: the ASR evaluation harness, the FDA severity parser, the
+Whisper multi-task grid search, the full 43-fold multi-task LOSO run, and the
+wav2vec2 UA-Speech LOSO. If asked, credit the team; the other three are Ani
+Shenai, Luis Sosa, and Yaoxiong Yang.
+
+**The point of it.** A stroke patient who cannot type is left with speech, and
+speech recognition trained on healthy speakers is worst exactly there — 4.2%
+word error on control speakers against 53.9% on impaired ones, same prompts,
+same microphone, same room. The model scores intelligibility and severity off
+the same recording it transcribes, so the audio doubles as a recovery
+biomarker with no extra work asked of the patient.
+
+**The result he would defend.** The MFCC+SVM baseline reached a quadratic
+weighted kappa of exactly 0.000 — it emits the class prior and nothing else —
+while frozen Whisper features reached 0.757 under the identical protocol. The
+pretrained representation is doing the work, not the head on top of it. And
+the two encoders fail in opposite directions: Whisper writes fluent English
+that is wrong, wav2vec2 writes visible gibberish. For a patient message to a
+nurse, the failure a reader can spot is the safer failure.
+
+## Cybersickness attacks — IEEE TDSC 2025
+
+Third of five authors on "Securing Virtual Reality Experiences: Unveiling and
+Tackling Cybersickness Attacks With Explainable AI", IEEE Transactions on
+Dependable and Secure Computing, vol. 22, no. 6, pp. 6040–6057, 2025.
+doi 10.1109/TDSC.2025.3579969. Open preprint: arxiv.org/abs/2503.13419.
+It came out of the lab he worked in during the 2023 NSF REU in Consumer
+Networking at the University of Missouri, where he built the transformer that
+scores cybersickness severity on a 1–10 scale.
+
+**The idea worth stating.** In VR, cybersickness mitigation is triggered by a
+deep-learning detector — which makes the detector a control surface. An
+adversarial perturbation too small for the wearer to notice can suppress
+detection, so mitigation never fires and the user stays sick. The paper names
+that a *cybersickness attack* and proposes an XAI-guided framework that detects
+it and lets the correct mitigation run. Evaluated on the Simulation 2021 and
+Gameplay datasets, then on a purpose-built VR roller-coaster testbed with an
+HTC Vive Pro Eye and a user study.
+
+If a visitor asks what specifically he contributed, say the paper is
+co-authored and point them at it rather than guessing at the division of work.
+
 ## Ransomware detection — IEEE Big Data 2024
 
 Solo author, presented at IEEE Big Data 2024 in Washington D.C. as an

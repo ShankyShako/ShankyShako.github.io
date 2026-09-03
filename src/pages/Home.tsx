@@ -8,7 +8,7 @@ import { ProfilePhoto } from '../components/ProfilePhoto';
    claim buys nothing. */
 const highlights = [
   { stat: '+50 pts', label: 'downstream classifier lift over baseline at AFRL' },
-  { stat: 'IEEE Big Data 2024', label: 'solo-author paper, presented in Washington, D.C.' },
+  { stat: '2 IEEE papers', label: 'TDSC journal 2025, and solo-author IEEE Big Data 2024' },
   { stat: 'summa cum laude', label: 'B.S. Computer Science, UMKC' },
 ];
 

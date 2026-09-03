@@ -16,13 +16,6 @@ export const projects: Project[] = [
       "A reinforcement-learning agent for the AWS DeepRacer environment, a 1/18-scale autonomous vehicle on a simulated physics track. A TD3 policy trains in a containerised local stack (Docker/Apptainer, GPU-accelerated on Apple Silicon via Metal) rather than in the cloud. The substance of the work is the reward function: a hand-built shaping scheme that bands reward by distance from the centre line, aligns heading against the upcoming waypoints, trades speed against steering angle, and applies hard penalties for leaving the track or crashing. The learning algorithm is off the shelf; the incentives are not, and reward design is where the difficulty in DeepRacer actually lives — a poorly shaped reward produces an agent that drives beautifully and never finishes a lap. Graduate coursework for CS 7642, Reinforcement Learning & Decision Making, at Georgia Tech; the repository is private under the university's academic-honesty policy.",
   },
   {
-    title: 'Dysarthria Speech Understanding — Multi-Task Learning',
-    years: '2026',
-    tags: ['PyTorch', 'Whisper', 'wav2vec2', 'Multi-Task Learning', 'Speech'],
-    blurb:
-      "A shared speech encoder with two heads — intelligibility regression and motor-severity scoring — trained by masked loss routing, so each clip only updates the head it actually has a label for. The question is whether Whisper's transcription-tuned encoder transfers to clinical scoring better than wav2vec2, answered under leave-one-speaker-out cross-validation. Georgia Tech CS 7643 final project, with Team LEGACY.",
-  },
-  {
     title: 'LunarLander — Continuous Control Study',
     years: '2026',
     tags: ['Reinforcement Learning', 'PyTorch', 'TD3', 'Gymnasium', 'Weights & Biases'],
@@ -108,6 +101,14 @@ export const research: Project[] = [
     tags: ['PyTorch', 'ALBERT', 'RoBERTa', 'CNN', 'Security'],
     blurb:
       'A comparative study of deep-learning and transformer models for detecting and classifying ransomware from Windows API-call features, aimed at Industrial Control Systems. Each model predicts at three levels simultaneously — binary (benign vs. malicious), coarse family group, and specific family (12 classes) — and is evaluated under three feature-engineering setups (baseline, autoencoder, and K-Means clustering). The pipeline compares a DNN, a 1-D CNN, and RoBERTa- and ALBERT-style transformers against classical baselines, using chi-squared feature selection to reduce ~31,000 features to the most informative 1,000 and class-weighting to handle rare families. The reproducible PyTorch/scikit-learn pipeline reaches ~98% accuracy on binary detection, with early stopping and weight sharing (ALBERT) used to control overfitting on the small dataset. GPU-accelerated on Apple Silicon via Metal.',
+  },
+  {
+    title: 'Dysarthria Speech Understanding — Heterogeneous Multi-Task Learning',
+    years: '2026',
+    tags: ['PyTorch', 'Whisper', 'wav2vec2', 'Multi-Task Learning', 'Speech', 'Clinical ML'],
+    blurb:
+      "Speech recognition trained on healthy speakers collapses on dysarthric speech — exactly the population that most needs it, since post-stroke motor impairment tends to rule out typing as well. The system transcribes a patient's speech for their care team while scoring the same recording on two clinical axes, so one recording is both communication and a passive biomarker of recovery. A frozen pretrained encoder feeds two task-specific heads: intelligibility regression on UA-Speech, four-class severity classification on TORGO. Because those corpora label disjoint things, the heads train by masked loss routing — each clip contributes gradient only to the head it actually has a label for — evaluated leave-one-speaker-out across all 43 speakers. Whisper's encoder beats wav2vec2 on both tasks: 10.44 MAE on intelligibility, and 46.7% raw severity accuracy against a 0.809 quadratic weighted kappa, so it lands adjacent when it is wrong. The MFCC+SVM baseline scores a kappa of exactly 0.000 — it tracks the class prior and nothing else — which is the clearest evidence that the pretrained representation, not the head, is doing the work. Two findings were worth the trouble: transcription degrades roughly thirteen-fold from control to impaired speakers on identical prompts and hardware, and the two encoders fail in opposite directions — Whisper invents fluent English that is wrong, wav2vec2 produces visibly broken text. When the output is a patient's request to a nurse, the failure a reader can see is the safer one. Georgia Tech CS 7643 with Team LEGACY; my part was the ASR evaluation harness, the FDA severity parser, the Whisper multi-task grid, and the full 43-fold multi-task LOSO run.",
+
   },
   {
     title: 'Cognitive-Load-Aware Conversational Design',

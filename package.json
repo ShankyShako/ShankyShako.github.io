@@ -10,7 +10,8 @@
     "typecheck": "tsc -b --noEmit",
     "bot": "node bot/build-context.mjs && node bot/server.mjs",
     "bot:context": "node bot/build-context.mjs",
-    "bot:questions": "node bot/questions.mjs"
+    "bot:questions": "node bot/questions.mjs",
+    "logos": "node scripts/optimize-logos.mjs"
   },
   "dependencies": {
     "react": "^19.2.0",

@@ -4,6 +4,7 @@
    on, so Vite and tsc are equally happy either way. */
 import { experience } from './experience.ts';
 import { projects, research } from './projects.ts';
+import { publications } from './publications.ts';
 
 /* Words that carry no identity, so a slug built from them tells you nothing. */
 const NOISE = new Set([
@@ -44,4 +45,5 @@ export const anchors = {
   experience: slugsFor(experience.map((r) => r.org)),
   projects: slugsFor(projects.map((p) => p.title)),
   research: slugsFor(research.map((p) => p.title)),
+  publications: slugsFor(publications.map((p) => p.title)),
 };

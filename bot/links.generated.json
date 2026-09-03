@@ -85,24 +85,6 @@
       "label": "Ransomware Detection for Critical Infrastructures — repo"
     },
     {
-      "key": "dysarthria-speech",
-      "kind": "external",
-      "href": "https://github.com/sosavle/dysarthia",
-      "label": "Dysarthria Speech Understanding — Multi-Task Learning — repo"
-    },
-    {
-      "key": "reviewrounds-spaced",
-      "kind": "external",
-      "href": "https://github.com/yeabsira84-tech/LectureLoop",
-      "label": "ReviewRounds — Spaced-Review Planner — repo"
-    },
-    {
-      "key": "care-beyond",
-      "kind": "external",
-      "href": "https://github.com/hsaranu5/resourcestracker",
-      "label": "Care Beyond — Homelessness Resource Map — repo"
-    },
-    {
       "key": "federated-blockchain",
       "kind": "external",
       "href": "https://github.com/ShankyShako/Federated-BlockChain",
@@ -125,6 +107,12 @@
       "kind": "external",
       "href": "https://github.com/ShankyShako/SOS-Game",
       "label": "SOS Game Implementation — repo"
+    },
+    {
+      "key": "securing-virtual",
+      "kind": "external",
+      "href": "https://doi.org/10.1109/TDSC.2025.3579969",
+      "label": "Securing Virtual Reality Experiences: Unveiling and Tackling Cybersickness Attacks With Explainable AI — paper (DOI)"
     },
     {
       "key": "/experience#geometry-health-wellness",
@@ -163,10 +151,22 @@
       "label": "SPCN - 2020 and IEEE Brain Initiative BDBC Conference"
     },
     {
+      "key": "/research#securing-virtual-reality",
+      "kind": "route",
+      "href": "/research#securing-virtual-reality",
+      "label": "Securing Virtual Reality Experiences: Unveiling and Tackling Cybersickness Attacks With Explainable AI"
+    },
+    {
       "key": "/research#ransomware-detection-critical",
       "kind": "route",
       "href": "/research#ransomware-detection-critical",
       "label": "Ransomware Detection for Critical Infrastructures"
+    },
+    {
+      "key": "/research#dysarthria-speech-understanding",
+      "kind": "route",
+      "href": "/research#dysarthria-speech-understanding",
+      "label": "Dysarthria Speech Understanding — Heterogeneous Multi-Task Learning"
     },
     {
       "key": "/research#cognitive-load-aware",
@@ -179,12 +179,6 @@
       "kind": "route",
       "href": "/projects#aws-deepracer-reward",
       "label": "AWS DeepRacer — Reward Shaping"
-    },
-    {
-      "key": "/projects#dysarthria-speech-understanding",
-      "kind": "route",
-      "href": "/projects#dysarthria-speech-understanding",
-      "label": "Dysarthria Speech Understanding — Multi-Task Learning"
     },
     {
       "key": "/projects#lunarlander-continuous-control",
@@ -203,12 +197,6 @@
       "kind": "route",
       "href": "/projects#classical-ai-algorithm",
       "label": "Classical AI Algorithm Suite"
-    },
-    {
-      "key": "/projects#reviewrounds-spaced-review",
-      "kind": "route",
-      "href": "/projects#reviewrounds-spaced-review",
-      "label": "ReviewRounds — Spaced-Review Planner"
     },
     {
       "key": "/projects#care-beyond-homelessness",

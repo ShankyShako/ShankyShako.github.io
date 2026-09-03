@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { projects, research as researchItems } from '../data/projects';
+import { publications, cite } from '../data/publications';
 import { anchors } from '../data/anchors';
 import { Reveal } from '../components/Reveal';
 import type { Project } from '../data/projects';
+import type { Publication } from '../data/publications';
 
 export function ProjectCard({ project, anchor }: { project: Project; anchor?: string }) {
   return (
@@ -22,6 +24,74 @@ export function ProjectCard({ project, anchor }: { project: Project; anchor?: st
       <p>{project.blurb}</p>
       <div className="project-tags">
         {project.tags.map((t) => (
+          <span key={t} className="tag tag-static">
+            {t}
+          </span>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+/* A paper is a citation before it is a description, so the card leads with the
+   author line and the venue — the two things a reader checks first — and only
+   then explains what the work does. The name is bolded in place rather than
+   pulled out: the position in the author list is the information. */
+function PublicationCard({ pub, anchor }: { pub: Publication; anchor?: string }) {
+  const [copied, setCopied] = useState(false);
+
+  /* A copy button that changes nothing on screen leaves you pressing it twice
+     to find out whether the first press worked. */
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(cite(pub));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* Clipboard denied or unavailable — the citation is still readable in
+         the card above, so there is nothing useful to say about it. */
+    }
+  };
+
+  return (
+    <article className="project-item pub-item" id={anchor}>
+      <div className="project-head">
+        <a href={`https://doi.org/${pub.doi}`} target="_blank" rel="noopener noreferrer">
+          {pub.title}
+        </a>
+        <span className="project-years">{pub.year}</span>
+      </div>
+
+      <p className="pub-authors">
+        {pub.authors.map((a, i) => (
+          <span key={a}>
+            {i > 0 && ', '}
+            {a === 'Genova Mongalo' ? <strong>{a}</strong> : a}
+          </span>
+        ))}
+      </p>
+      <p className="pub-venue">
+        {pub.venue}, {pub.where}
+      </p>
+
+      <p>{pub.blurb}</p>
+
+      <div className="pub-links">
+        <a href={`https://doi.org/${pub.doi}`} target="_blank" rel="noopener noreferrer">
+          DOI
+        </a>
+        {pub.preprint && (
+          <a href={pub.preprint} target="_blank" rel="noopener noreferrer">
+            Preprint (arXiv)
+          </a>
+        )}
+        <button type="button" onClick={copy}>
+          {copied ? 'Copied' : 'Copy citation'}
+        </button>
+      </div>
+
+      <div className="project-tags">
+        {pub.tags.map((t) => (
           <span key={t} className="tag tag-static">
             {t}
           </span>
@@ -124,6 +194,16 @@ export function Research() {
       </p>
 
       <Reveal>
+        <h2 className="section-heading">Publications</h2>
+        <div className="project-grid">
+          {publications.map((p) => (
+            <PublicationCard key={p.title} pub={p} anchor={anchors.publications.get(p.title)} />
+          ))}
+        </div>
+      </Reveal>
+
+      <Reveal>
+        <h2 className="section-heading">Research projects</h2>
         <div className="project-grid">
           {researchItems.map((p) => (
             <ProjectCard key={p.title} project={p} anchor={anchors.research.get(p.title)} />

@@ -65,7 +65,7 @@ Engineered a robust Large Language Model to detect ransomware threats within Ind
 ### Research Intern — NSF REU in Consumer Networking, University of Missouri Columbia
 *May 2023 – July 2023*
 
-Designed a model that detects/predicts cybersickness using a transformer machine learning model. Succeeded with an accuracy of 85% from a 1-10 cybersickness severity scale.
+Designed a model that detects/predicts cybersickness using a transformer machine learning model. Succeeded with an accuracy of 85% from a 1-10 cybersickness severity scale. Work from this lab carried into a co-authored paper in IEEE Transactions on Dependable and Secure Computing (2025) on adversarial attacks against cybersickness detection models, and an explainable-AI defence against them.
 
 ### Research Intern — NASA Missouri Space Grant Consortium
 *December 2021 – April 2022*
@@ -77,6 +77,14 @@ Engineered an AI-driven simulation of space-bound transmissions as part of a NAS
 
 Set up conference website for the 5th International Symposium on Audio and Video Signal Processing in the Context of Neurotechnology, with reliable communication and updates to the website's needs. The conference was conducted remotely through multiple worldwide locations.
 
+## Publications
+
+### Securing Virtual Reality Experiences: Unveiling and Tackling Cybersickness Attacks With Explainable AI (2025)
+R. K. Kundu, M. Denton, G. Mongalo, P. Calyam and K. A. Hoque, "Securing Virtual Reality Experiences: Unveiling and Tackling Cybersickness Attacks With Explainable AI," IEEE Transactions on Dependable and Secure Computing, vol. 22, no. 6, pp. 6040–6057, 2025, doi: 10.1109/TDSC.2025.3579969.
+Tags: Adversarial ML, Explainable AI, Virtual Reality, Security, Deep Learning
+
+In modern VR, a deep-learning model is what decides when cybersickness mitigation fires — so fooling that model is enough to break the experience. The paper introduces the cybersickness attack: a perturbation of the input small enough to be invisible to the person wearing the headset, but sufficient to suppress detection, so mitigation never triggers and the user stays sick. It then proposes an explainable-AI-guided framework that detects the attack and restores the correct mitigation. Evaluated on two open-source cybersickness datasets, Simulation 2021 and Gameplay, then confirmed on a custom VR roller-coaster testbed running on an HTC Vive Pro Eye, with a user study measuring the damage to immersive experience and the recovery. The work grew out of the NSF REU in Consumer Networking at the University of Missouri.
+
 ## Research
 
 ### Ransomware Detection for Critical Infrastructures (2024–2026)
@@ -84,50 +92,45 @@ Repo: https://github.com/ShankyShako/RansomWare-Detection-Models — PyTorch, AL
 
 A comparative study of deep-learning and transformer models for detecting and classifying ransomware from Windows API-call features, aimed at Industrial Control Systems. Each model predicts at three levels simultaneously — binary (benign vs. malicious), coarse family group, and specific family (12 classes) — and is evaluated under three feature-engineering setups (baseline, autoencoder, and K-Means clustering). The pipeline compares a DNN, a 1-D CNN, and RoBERTa- and ALBERT-style transformers against classical baselines, using chi-squared feature selection to reduce ~31,000 features to the most informative 1,000 and class-weighting to handle rare families. The reproducible PyTorch/scikit-learn pipeline reaches ~98% accuracy on binary detection, with early stopping and weight sharing (ALBERT) used to control overfitting on the small dataset. GPU-accelerated on Apple Silicon via Metal.
 
+### Dysarthria Speech Understanding — Heterogeneous Multi-Task Learning (2026)
+Tags: PyTorch, Whisper, wav2vec2, Multi-Task Learning, Speech, Clinical ML
+
+Speech recognition trained on healthy speakers collapses on dysarthric speech — exactly the population that most needs it, since post-stroke motor impairment tends to rule out typing as well. The system transcribes a patient's speech for their care team while scoring the same recording on two clinical axes, so one recording is both communication and a passive biomarker of recovery. A frozen pretrained encoder feeds two task-specific heads: intelligibility regression on UA-Speech, four-class severity classification on TORGO. Because those corpora label disjoint things, the heads train by masked loss routing — each clip contributes gradient only to the head it actually has a label for — evaluated leave-one-speaker-out across all 43 speakers. Whisper's encoder beats wav2vec2 on both tasks: 10.44 MAE on intelligibility, and 46.7% raw severity accuracy against a 0.809 quadratic weighted kappa, so it lands adjacent when it is wrong. The MFCC+SVM baseline scores a kappa of exactly 0.000 — it tracks the class prior and nothing else — which is the clearest evidence that the pretrained representation, not the head, is doing the work. Two findings were worth the trouble: transcription degrades roughly thirteen-fold from control to impaired speakers on identical prompts and hardware, and the two encoders fail in opposite directions — Whisper invents fluent English that is wrong, wav2vec2 produces visibly broken text. When the output is a patient's request to a nurse, the failure a reader can see is the safer one. Georgia Tech CS 7643 with Team LEGACY; my part was the ASR evaluation harness, the FDA severity parser, the Whisper multi-task grid, and the full 43-fold multi-task LOSO run.
+
 ### Cognitive-Load-Aware Conversational Design (2025)
-Repo: undefined — Cognitive Science, LLM, HCI, Design Analysis
+Tags: Cognitive Science, LLM, HCI, Design Analysis
 
 A design-only analysis of a deployed clinical conversational agent, mapping its interface and dialogue decisions against four cognitive-science frameworks: cognitive load theory, Baddeley's working-memory model, dual-process theory, and Levelt's model of speech production. No human subjects were involved and no participant data was collected — the findings are analytical rather than empirical. Georgia Tech CS 6795.
 
 ## Projects
 
 ### AWS DeepRacer — Reward Shaping (2026)
-Repo: undefined — Reinforcement Learning, TD3, Reward Shaping, Docker, Simulation
+Tags: Reinforcement Learning, TD3, Reward Shaping, Docker, Simulation
 
 A reinforcement-learning agent for the AWS DeepRacer environment, a 1/18-scale autonomous vehicle on a simulated physics track. A TD3 policy trains in a containerised local stack (Docker/Apptainer, GPU-accelerated on Apple Silicon via Metal) rather than in the cloud. The substance of the work is the reward function: a hand-built shaping scheme that bands reward by distance from the centre line, aligns heading against the upcoming waypoints, trades speed against steering angle, and applies hard penalties for leaving the track or crashing. The learning algorithm is off the shelf; the incentives are not, and reward design is where the difficulty in DeepRacer actually lives — a poorly shaped reward produces an agent that drives beautifully and never finishes a lap. Graduate coursework for CS 7642, Reinforcement Learning & Decision Making, at Georgia Tech; the repository is private under the university's academic-honesty policy.
 
-### Dysarthria Speech Understanding — Multi-Task Learning (2026)
-Repo: https://github.com/sosavle/dysarthia — PyTorch, Whisper, wav2vec2, Multi-Task Learning, Speech
-
-A shared speech encoder with two heads — intelligibility regression and motor-severity scoring — trained by masked loss routing, so each clip only updates the head it actually has a label for. The question is whether Whisper's transcription-tuned encoder transfers to clinical scoring better than wav2vec2, answered under leave-one-speaker-out cross-validation. Georgia Tech CS 7643 final project, with Team LEGACY.
-
 ### LunarLander — Continuous Control Study (2026)
-Repo: undefined — Reinforcement Learning, PyTorch, TD3, Gymnasium, Weights & Biases
+Tags: Reinforcement Learning, PyTorch, TD3, Gymnasium, Weights & Biases
 
 Five reinforcement-learning algorithms trained and compared on Gymnasium's LunarLanderContinuous, where two continuous thrusters have to trade landing stability against fuel. Includes a hyperparameter sweep, an architecture experiment on the TD3 actor-critic, and Weights & Biases run tracking. Graduate coursework for CS 7642; the repository is private under the university's academic-honesty policy.
 
 ### Overcooked — Cooperative Multi-Agent RL (2026)
-Repo: undefined — Reinforcement Learning, PPO, Multi-Agent, Python
+Tags: Reinforcement Learning, PPO, Multi-Agent, Python
 
 PPO agents trained on the Overcooked-AI benchmark, where two cooks share a cramped kitchen and reward only arrives when a soup is delivered — so the hard part is coordination, not control. Covers self-play training, layout-by-layout evaluation, and how well a policy holds up against a partner it was not trained with. Graduate coursework for CS 7642; the repository is private under the university's academic-honesty policy.
 
 ### Classical AI Algorithm Suite (2026)
-Repo: undefined — Python, Search, Bayesian Networks, HMM, Expectation Maximization
+Tags: Python, Search, Bayesian Networks, HMM, Expectation Maximization
 
 Six graduate assignments implemented from first principles rather than from libraries: bidirectional and tridirectional A* over the Atlanta road network, alpha-beta adversarial search for a rook-isolation variant, Bayesian networks sampled with Gibbs and Metropolis-Hastings, decision trees and random forests, Gaussian-mixture image segmentation by expectation-maximisation, and hidden Markov models for sign recognition. Georgia Tech CS 6601; the repository is private under the university's academic-honesty policy.
 
-<!--### ReviewRounds — Spaced-Review Planner (2026)-->
-<!--Repo: https://github.com/yeabsira84-tech/LectureLoop — React, Next.js, TypeScript, Cloudflare Workers, Drizzle-->
-<!---->
-<!--A mobile-first spaced-repetition planner for medical students. Each exam is its own study plan: its lectures are scheduled across several review passes, and the next interval adapts to the recall, understanding, and difficulty logged after each session. React 19 and Next.js on a Cloudflare Workers runtime, with Drizzle and a deliberately swappable data adapter.-->
-
 ### Care Beyond — Homelessness Resource Map (2025)
-Repo: undefined — React, Leaflet, Node.js, Express, Geospatial
+Tags: React, Leaflet, Node.js, Express, Geospatial
 
 A live map of food, shelter, clothing, and medical resources aggregated from local organisations, searchable by street address or ZIP with radius-based distance results and colour-coded markers by resource type. A community feed lets anyone read but only verified organisations publish, gated by a one-time email code rather than another password to lose.
 
 ### Recursive Ray Tracer (2025)
-Repo: undefined — Java, Computer Graphics, Rendering
+Tags: Java, Computer Graphics, Rendering
 
 A ray tracer built up from the intersection maths: ray-sphere, ray-triangle, and axis-aligned box tests, Phong shading with shadow rays, recursive reflection, instanced and moving surfaces, and a bounding-volume hierarchy so scenes render in something short of forever. Written in Java against a renderer interface, with per-part test suites. Graduate computer-graphics coursework; the repository is private under the university's academic-honesty policy.
 
@@ -195,27 +198,25 @@ Any other value is discarded, so inventing one just loses you the button.
 - `linkedin` — LinkedIn
 - `email` — Email Genova
 - `ransomware-detection` — Ransomware Detection for Critical Infrastructures — repo
-- `dysarthria-speech` — Dysarthria Speech Understanding — Multi-Task Learning — repo
-- `reviewrounds-spaced` — ReviewRounds — Spaced-Review Planner — repo
-- `care-beyond` — Care Beyond — Homelessness Resource Map — repo
 - `federated-blockchain` — Federated Blockchain — Model Registry — repo
 - `racket-parser` — Racket Parser — repo
 - `phonebook-management` — Phonebook Management System — repo
 - `sos-game` — SOS Game Implementation — repo
+- `securing-virtual` — Securing Virtual Reality Experiences: Unveiling and Tackling Cybersickness Attacks With Explainable AI — paper (DOI)
 - `/experience#geometry-health-wellness` — Geometry Health and Wellness
 - `/experience#afrl-sensors-directorate` — AFRL Sensors Directorate Internship Program
 - `/experience#nsf-reu-ai` — NSF REU AI-Empowered Cybersecurity
 - `/experience#nsf-reu-consumer` — NSF REU in Consumer Networking
 - `/experience#nasa-missouri-space` — NASA Missouri Space Grant Consortium
 - `/experience#spcn-2020-ieee` — SPCN - 2020 and IEEE Brain Initiative BDBC Conference
+- `/research#securing-virtual-reality` — Securing Virtual Reality Experiences: Unveiling and Tackling Cybersickness Attacks With Explainable AI
 - `/research#ransomware-detection-critical` — Ransomware Detection for Critical Infrastructures
+- `/research#dysarthria-speech-understanding` — Dysarthria Speech Understanding — Heterogeneous Multi-Task Learning
 - `/research#cognitive-load-aware` — Cognitive-Load-Aware Conversational Design
 - `/projects#aws-deepracer-reward` — AWS DeepRacer — Reward Shaping
-- `/projects#dysarthria-speech-understanding` — Dysarthria Speech Understanding — Multi-Task Learning
 - `/projects#lunarlander-continuous-control` — LunarLander — Continuous Control Study
 - `/projects#overcooked-cooperative-multi` — Overcooked — Cooperative Multi-Agent RL
 - `/projects#classical-ai-algorithm` — Classical AI Algorithm Suite
-- `/projects#reviewrounds-spaced-review` — ReviewRounds — Spaced-Review Planner
 - `/projects#care-beyond-homelessness` — Care Beyond — Homelessness Resource Map
 - `/projects#recursive-ray-tracer` — Recursive Ray Tracer
 - `/projects#federated-blockchain-model` — Federated Blockchain — Model Registry

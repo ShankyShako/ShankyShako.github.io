@@ -22,6 +22,7 @@ const { site, nav } = await import(src('site.ts'));
 const { degrees, graduateCoursework, coreFoundations } = await import(src('education.ts'));
 const { experience } = await import(src('experience.ts'));
 const { projects, research } = await import(src('projects.ts'));
+const { publications, cite } = await import(src('publications.ts'));
 const { skills } = await import(src('skills.ts'));
 const { products } = await import(src('shop.ts'));
 const { anchors } = await import(src('anchors.ts'));
@@ -100,11 +101,22 @@ for (const r of experience) {
   w();
 }
 
+w('## Publications');
+w();
+for (const p of publications) {
+  w(`### ${p.title} (${p.year})`);
+  w(cite(p));
+  w(`Tags: ${p.tags.join(', ')}`);
+  w();
+  w(clip(p.blurb, 340));
+  w();
+}
+
 w('## Research');
 w();
 for (const p of research) {
   w(`### ${p.title} (${p.years})`);
-  w(`Repo: ${p.href} — ${p.tags.join(', ')}`);
+  w(p.href ? `Repo: ${p.href} — ${p.tags.join(', ')}` : `Tags: ${p.tags.join(', ')}`);
   w();
   w(clip(p.blurb, 340));
   w();
@@ -114,7 +126,7 @@ w('## Projects');
 w();
 for (const p of projects) {
   w(`### ${p.title} (${p.years})`);
-  w(`Repo: ${p.href} — ${p.tags.join(', ')}`);
+  w(p.href ? `Repo: ${p.href} — ${p.tags.join(', ')}` : `Tags: ${p.tags.join(', ')}`);
   w();
   w(clip(p.blurb, 340));
   w();
@@ -181,11 +193,24 @@ const links = [
   /* Deep links. Slugs come from src/data/anchors.ts, the same module the
      pages use to write their `id=`, so a link the bot offers always lands on
      a card that exists. */
+  ...publications.map((p) => ({
+    key: slug(p.title),
+    kind: 'external',
+    href: `https://doi.org/${p.doi}`,
+    label: `${p.title} — paper (DOI)`,
+  })),
+
   ...experience.map((r) => ({
     key: `/experience#${anchors.experience.get(r.org)}`,
     kind: 'route',
     href: `/experience#${anchors.experience.get(r.org)}`,
     label: r.org.split(',')[0].trim(),
+  })),
+  ...publications.map((p) => ({
+    key: `/research#${anchors.publications.get(p.title)}`,
+    kind: 'route',
+    href: `/research#${anchors.publications.get(p.title)}`,
+    label: p.title,
   })),
   ...research.map((p) => ({
     key: `/research#${anchors.research.get(p.title)}`,

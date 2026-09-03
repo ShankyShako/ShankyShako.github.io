@@ -1,6 +1,7 @@
 import { anchors } from './anchors.ts';
 import { experience } from './experience.ts';
 import { projects, research } from './projects.ts';
+import { publications } from './publications.ts';
 
 export type Entity = { aliases: string[]; href: string; label: string };
 
@@ -22,6 +23,11 @@ const EXTRA: Record<string, string[]> = {
   ],
   'nsf-reu-ai': ['AI-Empowered Cybersecurity', 'the UMKC REU'],
   'nsf-reu-consumer': ['cybersickness', 'Consumer Networking'],
+  'securing-virtual-reality': [
+    'cybersickness attack',
+    'IEEE TDSC',
+    'Transactions on Dependable and Secure Computing',
+  ],
   'nasa-missouri-space': ['NASA', 'Missouri Space Grant'],
   'spcn-2020-ieee': ['SPCN'],
   'ransomware-detection-critical': [
@@ -29,6 +35,7 @@ const EXTRA: Record<string, string[]> = {
     'ransomware research',
     'IEEE Big Data',
   ],
+  'dysarthria-speech-understanding': ['dysarthria', 'Team LEGACY', 'TORGO', 'UA-Speech'],
   'federated-blockchain-model': ['federated blockchain', 'model registry'],
   'aws-deepracer-reward': ['DeepRacer', 'AWS DeepRacer'],
   'racket-parser': [],
@@ -49,6 +56,7 @@ function build(): Entity[] {
   };
 
   for (const r of experience) add(anchors.experience.get(r.org), '/experience', r.org.split(',')[0].trim());
+  for (const p of publications) add(anchors.publications.get(p.title), '/research', p.title);
   for (const p of research) add(anchors.research.get(p.title), '/research', p.title);
   for (const p of projects) add(anchors.projects.get(p.title), '/projects', p.title);
 
