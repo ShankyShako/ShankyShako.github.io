@@ -122,7 +122,7 @@ Six graduate assignments implemented from first principles rather than from libr
 <!--A mobile-first spaced-repetition planner for medical students. Each exam is its own study plan: its lectures are scheduled across several review passes, and the next interval adapts to the recall, understanding, and difficulty logged after each session. React 19 and Next.js on a Cloudflare Workers runtime, with Drizzle and a deliberately swappable data adapter.-->
 
 ### Care Beyond — Homelessness Resource Map (2025)
-Repo: https://github.com/hsaranu5/resourcestracker — React, Leaflet, Node.js, Express, Geospatial
+Repo: undefined — React, Leaflet, Node.js, Express, Geospatial
 
 A live map of food, shelter, clothing, and medical resources aggregated from local organisations, searchable by street address or ZIP with radius-based distance results and colour-coded markers by resource type. A community feed lets anyone read but only verified organisations publish, gated by a one-time email code rather than another password to lose.
 

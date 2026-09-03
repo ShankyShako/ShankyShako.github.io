@@ -53,7 +53,7 @@ export const projects: Project[] = [
   // },
   {
     title: 'Care Beyond — Homelessness Resource Map',
-    href: 'https://github.com/hsaranu5/resourcestracker',
+    // href: 'https://github.com/hsaranu5/resourcestracker',
     years: '2025',
     tags: ['React', 'Leaflet', 'Node.js', 'Express', 'Geospatial'],
     blurb:
