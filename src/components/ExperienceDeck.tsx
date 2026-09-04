@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { experience } from '../data/experience';
 import { anchors } from '../data/anchors';
 import { useDeck } from '../hooks/useDeck';
-import { FloorCracks } from './FloorCracks';
+import { FloorCracks, type Field } from './FloorCracks';
 
 const COUNT = experience.length;
 const INTRO_KEY = 'deck-intro-played';
@@ -91,10 +91,41 @@ export function ExperienceDeck({ heading }: { heading: ReactNode }) {
   const cards = useRef<(HTMLElement | null)[]>([]);
   const stage = useRef<HTMLDivElement | null>(null);
 
+  /* The fracture has to start on the card's real silhouette, so it is measured
+     rather than assumed. The SVG is 1000x640 with preserveAspectRatio=slice, so
+     it covers the stage at max(w/1000, h/640) and one viewBox unit is that many
+     CSS pixels. A guessed footprint left a clean margin around the card, which
+     read as the card sitting next to damage instead of causing it. */
+  const [field, setField] = useState<Field>({ footW: 384, footH: 312, visW: 1000, visH: 640 });
+
   /* During the intro the pile is still assembling, so the cracks follow the
      build rather than the scroll. null once the intro is over or skipped. */
   const [landed, setLanded] = useState<number | null>(null);
   const [flash, setFlash] = useState<number | null>(null);
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const st = stage.current;
+      const card = cards.current[0];
+      if (!st || !card) return;
+      const s0 = st.getBoundingClientRect();
+      /* The face card is untilted, so its box is its true size — including any
+         scale the pile is under on a short screen. */
+      const c0 = card.getBoundingClientRect();
+      if (!s0.width || !s0.height) return;
+      const scale = Math.max(s0.width / 1000, s0.height / 640);
+      setField({
+        footW: c0.width / scale,
+        footH: c0.height / scale,
+        visW: s0.width / scale,
+        visH: s0.height / scale,
+      });
+    };
+
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
 
   useEffect(() => {
     /* A deep link is a request for one specific card. Playing a 1.2s assembly
@@ -217,7 +248,8 @@ export function ExperienceDeck({ heading }: { heading: ReactNode }) {
         <div className="deck-heading">{heading}</div>
 
         <div className="deck-stage" ref={stage}>
-        <FloorCracks progress={cracks} />
+        <span className="deck-depression" />
+          <FloorCracks progress={cracks} field={field} />
 
         <div className="deck-pile">
           {experience.map((role, i) => {

@@ -1666,8 +1666,7 @@
   overflow: hidden;
 }
 
-/* The floor. Faint on purpose — the fractures should register without ever
-   being the thing you look at. */
+/* The floor. */
 .deck-cracks {
   position: absolute;
   inset: 0;
@@ -1676,23 +1675,50 @@
   pointer-events: none;
 }
 
-/* Each branch travels on its own, out of its own junction. Long enough that a
-   tab switch resolves as the floor splitting or healing rather than the cracks
-   blinking out. */
-.deck-cracks path {
-  transition: transform 0.9s var(--ease), opacity 0.45s ease;
+/* Filled outlines rather than strokes: one closed shape per crack means the
+   width profile is exact and the run is unbroken, where stroking it in
+   width-graded pieces left visible breaks that read as scattered splinters.
+   Flat ends and mitred corners come for free with a polygon. */
+.deck-cracks path { stroke: none; }
+
+/* Near-black desaturated maroon, taken down from the page's own ground rather
+   than warmed towards brown. Brown reads as wood; this has to read as the
+   absence of floor. */
+.deck-crack-core { fill: #150407; }
+
+/* Both walls sit inside the core and are displaced by well under a pixel. Any
+   further and the core stops reading as a groove and starts reading as a stick
+   with a drop shadow under it. */
+.deck-crack-shadow {
+  fill: rgba(0, 0, 0, 0.55);
+  transform: translate(-0.35px, -0.45px);
 }
 
-/* Solid, and dark brown rather than a white wash. A translucent light fill
-   reads as a glow lying on top of the floor; an opaque dark one reads as a hole
-   through it, which is the only way this much surface area still looks like
-   damage instead of haze. */
-.deck-cracks path {
-  fill: #2e1810;
-  stroke: none;
+.deck-crack-rim {
+  fill: rgba(255, 200, 182, 0.15);
+  transform: translate(0.4px, 0.5px);
 }
 
-:root[data-theme='elmo'] .deck-cracks path { fill: #1a0d0d; }
+:root[data-theme='elmo'] .deck-crack-core { fill: #0d0405; }
+
+/* The slab bowing under the weight. This does more for "something heavy is
+   pressing here" than the cracks do — they are the symptom, this is the load. */
+.deck-depression {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(1180px, 92%);
+  height: min(880px, 130%);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0.34) 0%,
+    rgba(0, 0, 0, 0.26) 34%,
+    rgba(0, 0, 0, 0.12) 62%,
+    transparent 78%
+  );
+}
 
 /* The perspective the arrival flies through. The view is straight down and
    stays that way — this is not here to tilt anything. It is what makes altitude
@@ -1943,6 +1969,5 @@
   /* useDeckEligible already withholds the deck here. This is the backstop for
      anyone who flips the setting mid-visit before the listener fires. */
   .deck-card,
-  .deck-veil,
-  .deck-cracks path { transition: none; }
+  .deck-veil { transition: none; }
 }
