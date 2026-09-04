@@ -59,7 +59,10 @@ export const experience: Role[] = [
       'Adapted state-of-the-art PyTorch classifiers to novel imaging modalities, parallelised across Slurm.',
       'Devised a game-theoretic approach to GAN training — 50 percentage points over baseline downstream.',
     ],
-    logos: [{ src: '/image/experience/afrl.png', alt: 'Air Force Research Laboratory' }],
+    logos: [
+      { src: '/image/experience/afrl_word_mark.png', alt: 'Air Force Research Laboratory' },
+      { src: '/image/experience/afrl.png', alt: 'Air Force Research Laboratory' },
+    ],
   },
   {
     org: 'NSF REU AI-Empowered Cybersecurity, University of Missouri Kansas City',
@@ -76,7 +79,7 @@ export const experience: Role[] = [
     ],
     logos: [
       { src: '/image/experience/nsf.png', alt: 'National Science Foundation' },
-      { src: '/image/experience/mizzou.png', alt: 'University of Missouri Kansas City' },
+      { src: '/image/experience/UMKC_logo.png', alt: 'University of Missouri Kansas City' },
     ],
   },
   {
