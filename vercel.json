@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
   "rewrites": [
-    { "source": "/((?!api/|assets/|image/|audio/|files/).*)", "destination": "/index.html" }
+    { "source": "/((?!api/|assets/|image/|audio/|files/|plane-send\\.js).*)", "destination": "/index.html" }
   ],
   "headers": [
     {

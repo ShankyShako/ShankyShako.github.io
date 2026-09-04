@@ -30,6 +30,10 @@
       href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Work+Sans:wght@300;400;500;600&display=swap"
       rel="stylesheet"
     />
+    <!-- The paper-plane send animation, vendored verbatim from the Cuneate
+         landing page. Classic defer + the module below execute in document
+         order, so window.PlaneSend exists before React mounts. -->
+    <script defer src="/plane-send.js"></script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+
+import { usePlaneSend } from '../hooks/usePlaneSend';
 
 type Status = { kind: 'idle' | 'sending' | 'ok' | 'err'; message?: string };
 
@@ -8,6 +10,8 @@ export function ContactForm() {
   const [values, setValues] = useState({ name: '', email: '', message: '', company: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
+  const sendBtn = useRef<HTMLButtonElement>(null);
+  const launchPlane = usePlaneSend(sendBtn);
 
   const update = (field: keyof typeof values) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -62,6 +66,10 @@ export function ContactForm() {
 
       setStatus({ kind: 'ok', message: "Sent. I'll get back to you." });
       setValues({ name: '', email: '', message: '', company: '' });
+      /* Only ever from here. The plane leaving is the receipt for a message
+         that actually reached the inbox — a validation trip or a dead mail
+         relay must not get one. */
+      launchPlane();
     } catch (err) {
       setStatus({
         kind: 'err',
@@ -110,9 +118,22 @@ export function ContactForm() {
         </label>
       </div>
 
-      <button type="submit" className="btn btn-solid" disabled={status.kind === 'sending'}>
+      <button
+        ref={sendBtn}
+        type="submit"
+        className="btn btn-solid btn-plane"
+        disabled={status.kind === 'sending'}
+      >
         {status.kind === 'sending' ? 'Sending…' : 'Send message'}
+        {/* Where the plane is born and how big it starts. Never seen — see
+            .plane-origin in components.css. Absolutely positioned, so it is out
+            of flow and the button's own layout is untouched. */}
+        <span id="planeOrigin" className="plane-origin" aria-hidden="true" />
       </button>
+      {/* plane-send.js refuses to initialise without a card to measure, and
+          collapses it on send. This one is 1x1 and hidden, so that collapse is
+          the no-op it should be here. */}
+      <div id="planeCardProxy" className="plane-card-proxy" aria-hidden="true" />
 
       {status.message && (
         <p className={`form-status ${status.kind === 'ok' ? 'ok' : 'err'}`} role="status">

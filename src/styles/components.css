@@ -931,9 +931,45 @@
 .form-field textarea { resize: vertical; min-height: 128px; }
 
 .form-status { margin-top: var(--sp-3); font-size: 0.9rem; }
+
 .form-status.ok { color: var(--accent); }
 .form-status.err { color: #ff9a9a; }
 .field-error { color: #ff9a9a; font-size: 0.8rem; margin-top: 0.3rem; display: block; }
+
+/* ---- paper-plane send (plane-send.js) ----
+   Two inert proxies the engine measures and never shows. `visibility: hidden`
+   rather than `opacity: 0`: the engine animates opacity on both of them with
+   fill:forwards, and an opacity keyframe would flash them onto the page.
+   The plane itself is a fixed <svg> the script appends to <body>. */
+.btn-plane { position: relative; }
+
+/* The plane is born here, as a circle this wide, and shrinks to 34px as it
+   unfolds — which is what makes it read as coming out from behind the button.
+   Sized off the button's own height rather than a fixed number: the first frame
+   is an accent-coloured disc, and anything taller than the button shows as a
+   lobe sticking out from under it. */
+.plane-origin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: 100%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--accent);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.plane-card-proxy {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  visibility: hidden;
+  pointer-events: none;
+}
 
 /* Honeypot — hidden from humans, tempting to bots. */
 .hp-field {

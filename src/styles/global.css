@@ -321,6 +321,11 @@ a { color: var(--accent); }
 @media (prefers-reduced-motion: reduce) {
   .reveal { opacity: 1; transform: none; transition: none; }
   html { scroll-behavior: auto; }
+  /* plane-send.js checks the same query and skips the flight on its own. This
+     is the belt to that brace: a flight that somehow started still cannot
+     produce motion. */
+  .planesend-plane,
+  .planesend-trail { display: none !important; }
 }
 
 /* ===== Route transition ===== */
