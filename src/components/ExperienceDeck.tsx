@@ -65,6 +65,43 @@ function restingTransform(i: number, top: number) {
   return compose(x, y, 0, rot, scale);
 }
 
+/**
+ * How far to pull the crack origins inside the card's resting rect so they stay
+ * covered while the pile is moving.
+ *
+ * Seeds sat on the resting rect, which is only correct in the one frame where
+ * nothing is in flight: the moment a card translates, rotates or scales towards
+ * its next pose, the rect it actually covers pulls away from that outline and
+ * the crack roots pop out as nubs along the edge.
+ *
+ * So it is derived from the poses rather than picked. For a rect displaced by
+ * (x, y), turned by `rot` and scaled by `s`, the inward encroachment on each
+ * axis is the translation, plus what the rotation costs at the far edge, plus
+ * what the scale gives up. Taking the worst of those over the poses a card
+ * passes through gives the distance the seed ring has to clear.
+ *
+ * Only depths 0..2 matter: a card deeper than that is never the one doing the
+ * covering during a change, and including the whole pile pushes the ring
+ * uselessly far inside.
+ */
+const COVER_MARGIN = 16;
+
+function seedInsetPx(w: number, h: number) {
+  let worst = 0;
+  for (let top = 0; top < COUNT; top++) {
+    for (let i = top; i < Math.min(COUNT, top + 3); i++) {
+      const { x, y, rot, scale } = restingPose(i, top);
+      const t = (Math.abs(rot) * Math.PI) / 180;
+      const sin = Math.sin(t);
+      const cos = Math.cos(t);
+      const dx = Math.abs(x) + (h / 2) * sin + (w / 2) * (1 - cos) + (w / 2) * (1 - scale);
+      const dy = Math.abs(y) + (w / 2) * sin + (h / 2) * (1 - cos) + (h / 2) * (1 - scale);
+      worst = Math.max(worst, dx, dy);
+    }
+  }
+  return worst + COVER_MARGIN;
+}
+
 /* The arrival.
 
    Cards come in one at a time from the bottom of the stage and travel straight
@@ -85,10 +122,39 @@ const FLIGHT: { x: number; y: number; z: number; o: number; k: number }[] = [
   { x: 0, y: 7, z: 278, o: 1, k: 0.92 },
 ];
 
+/**
+ * Whether the opening cascade should play on this mount.
+ *
+ * Pure, so the first render and the effect can both ask without disagreeing —
+ * the render needs it to decide whether the floor starts clean, and the effect
+ * needs it to decide whether to run.
+ *
+ * A deep link is a request for one specific card, and playing a 1.2s assembly
+ * over the top of it while useHashHighlight is scrolling somewhere is two
+ * animations fighting for the same screen.
+ */
+function introPending(hash: string) {
+  if (hash) return false;
+  if (typeof window === 'undefined' || !('animate' in Element.prototype)) return false;
+  /* A hidden tab freezes the animation timeline but keeps firing timers, so a
+     cascade started there would be marked played without a frame of it ever
+     being drawn. Leave it for a visit someone is actually watching. */
+  if (document.visibilityState === 'hidden') return false;
+  try {
+    return sessionStorage.getItem(INTRO_KEY) !== '1';
+  } catch {
+    /* Private browsing. Skipping the intro is the safe way to be wrong. */
+    return false;
+  }
+}
+
 export function ExperienceDeck({ heading }: { heading: ReactNode }) {
   const { sectionRef, index, goTo } = useDeck(COUNT);
   const { hash } = useLocation();
   const cards = useRef<(HTMLElement | null)[]>([]);
+  /* Which card is face-up, readable from the mount-time measure effect. */
+  const faceRef = useRef(0);
+  faceRef.current = index;
   const stage = useRef<HTMLDivElement | null>(null);
 
   /* The fracture has to start on the card's real silhouette, so it is measured
@@ -96,17 +162,27 @@ export function ExperienceDeck({ heading }: { heading: ReactNode }) {
      it covers the stage at max(w/1000, h/640) and one viewBox unit is that many
      CSS pixels. A guessed footprint left a clean margin around the card, which
      read as the card sitting next to damage instead of causing it. */
-  const [field, setField] = useState<Field>({ footW: 384, footH: 312, visW: 1000, visH: 640 });
+  const [field, setField] = useState<Field>({ footW: 384, footH: 312, visW: 1000, visH: 640, seedInset: 48 });
 
   /* During the intro the pile is still assembling, so the cracks follow the
-     build rather than the scroll. null once the intro is over or skipped. */
-  const [landed, setLanded] = useState<number | null>(null);
+     build rather than the scroll. null once the intro is over or skipped.
+     Seeded synchronously rather than from the effect: starting at null means
+     the first render reports a full pile and paints a fully fractured floor,
+     which then heals to nothing when the effect sets 0 a frame later. The
+     opening frame has to be a clean floor. */
+  const [landed, setLanded] = useState<number | null>(() => (introPending(hash) ? 0 : null));
   const [flash, setFlash] = useState<number | null>(null);
 
   useLayoutEffect(() => {
     const measure = () => {
       const st = stage.current;
-      const card = cards.current[0];
+      /* The face card, not card 0. Card 0 is only face-up at index 0; below
+         that it carries the `gone` transform, and translateZ(620px) under a
+         1500px perspective projects it at 1.7x its real size. Measuring that
+         rebuilt the whole fracture around a phantom footprint 70% too large on
+         any resize past the first level. The face card is restingPose(i, i) —
+         the one card guaranteed untransformed at every level. */
+      const card = cards.current[faceRef.current];
       if (!st || !card) return;
       const s0 = st.getBoundingClientRect();
       /* The face card is untilted, so its box is its true size — including any
@@ -119,37 +195,49 @@ export function ExperienceDeck({ heading }: { heading: ReactNode }) {
         footH: c0.height / scale,
         visW: s0.width / scale,
         visH: s0.height / scale,
+        seedInset: seedInsetPx(c0.width, c0.height) / scale,
+      });
+    };
+
+    /* Dragging a window edge fires resize at ~60Hz, and each one costs two
+       rects plus a full fracture rebuild. Same rAF gate the scroll handler
+       uses. */
+    let frame = 0;
+    const onResize = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        measure();
       });
     };
 
     measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
+    window.addEventListener('resize', onResize);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', onResize);
+    };
   }, []);
 
   useEffect(() => {
-    /* A deep link is a request for one specific card. Playing a 1.2s assembly
-       over the top of it, while useHashHighlight is scrolling somewhere, is two
-       animations fighting. */
-    const deepLinked = Boolean(hash);
-    let played = true;
-    try {
-      played = sessionStorage.getItem(INTRO_KEY) === '1';
-    } catch {
-      /* Private browsing. Skipping the intro is the safe way to be wrong. */
-    }
-    if (played || deepLinked) return;
-
-    try {
-      sessionStorage.setItem(INTRO_KEY, '1');
-    } catch {
-      /* Nothing to do; worst case it replays next visit. */
+    if (!introPending(hash)) {
+      /* Covers the StrictMode remount, where the flag is already set by the
+         first pass: drop back to the scroll-driven floor rather than sitting at
+         whatever count the aborted run left behind. */
+      setLanded(null);
+      return;
     }
 
-    if (!('animate' in Element.prototype)) return;
-
+    /* The floor opens clean. On a re-entry — arriving by deep link, then
+       clicking through to /experience with no hash — this effect runs again
+       without a remount, so the initialiser's 0 is long gone and `landed`
+       would sit at null (a fully fractured slab) until the first card lands. */
     setLanded(0);
+
     const timers: number[] = [];
+    /* Discarding these left cards flying for up to 1.6s after an aborted
+       cascade had already handed the floor back to the scroll value. */
+    const flights: Animation[] = [];
     const DUR = 820;
     const GAP = 150;
 
@@ -160,7 +248,8 @@ export function ExperienceDeck({ heading }: { heading: ReactNode }) {
       if (!el) continue;
       const pose = restingPose(i, 0);
 
-      el.animate(
+      flights.push(
+        el.animate(
         [
           ...FLIGHT.map((f) => ({
             transform: compose(f.x, f.y, f.z, pose.rot, pose.scale),
@@ -176,22 +265,41 @@ export function ExperienceDeck({ heading }: { heading: ReactNode }) {
           easing: 'cubic-bezier(.34,.72,.36,1)',
           fill: 'backwards',
         },
+        ),
       );
 
       timers.push(
         window.setTimeout(() => {
           setLanded(order + 1);
-          stage.current?.animate(
+          const shake = stage.current?.animate(
             [{ transform: 'translateY(0)' }, { transform: 'translateY(3px)' }, { transform: 'translateY(0)' }],
             { duration: 150 },
           );
+          if (shake) flights.push(shake);
         }, order * GAP + DUR),
       );
     }
 
-    timers.push(window.setTimeout(() => setLanded(null), (COUNT - 1) * GAP + DUR + 60));
+    timers.push(
+      window.setTimeout(() => {
+        setLanded(null);
+        /* Marked played when it has actually played, not when it was scheduled.
+           Writing the flag up front made the cascade unwatchable in dev: React's
+           StrictMode mounts, tears down and remounts, so the first pass claimed
+           the flag and the second pass skipped — and the first pass's cleanup had
+           already cancelled every card before a frame of it rendered. Recording
+           completion means a run that gets torn down leaves nothing behind and
+           the remount plays it properly. */
+        try {
+          sessionStorage.setItem(INTRO_KEY, '1');
+        } catch {
+          /* Private browsing. Worst case it replays next visit. */
+        }
+      }, (COUNT - 1) * GAP + DUR + 60),
+    );
     return () => {
       timers.forEach(clearTimeout);
+      flights.forEach((a) => a.cancel());
       /* StrictMode mounts, tears down and remounts. The second mount sees the
          sessionStorage flag and returns early, so without this the crack count
          stays stranded wherever the aborted run left it and the floor never
@@ -218,17 +326,35 @@ export function ExperienceDeck({ heading }: { heading: ReactNode }) {
      nothing behind. (COUNT - index) / COUNT never reaches zero and left a
      fracture under the 2020 card with nothing to have caused it. */
   const impacts = Math.max(1, COUNT - 1);
-  const cracks = landed === null ? (impacts - index) / impacts : landed / COUNT;
+  /* `landed - 1`, and over impacts rather than cards: the floor card is set
+     down on an unbroken floor, so the first landing must leave nothing behind.
+     Dividing by COUNT cracked it at 1/6 on the way in and clean on the way
+     back — the same inconsistency `impacts` exists to prevent. */
+  const cracks =
+    landed === null ? (impacts - index) / impacts : Math.max(0, landed - 1) / impacts;
+
+  /* During the arrival the floor has to keep up with the pile. Cards touch down
+     every GAP ms, and the scroll-speed growth of just over a second would still
+     be travelling when the last one lands — so the fracture would arrive as one
+     lump after the stack had finished, which is the "it is just there" reading.
+     Each impact also reports at the instant of contact rather than at the start
+     of a move, so the settle fires immediately instead of on the scroll delay. */
+  const arriving = landed !== null;
 
   return (
     <section
       className="deck-scroller"
+      aria-label="Experience deck"
       ref={sectionRef as React.RefObject<HTMLElement>}
       /* One viewport of tail, not one stage: the pile only reaches its last
          level once the page can scroll (count-1) steps past the section top,
          and a section sized to the stage runs out of page before it gets
          there. */
-      style={{ height: `calc(${COUNT - 1} * var(--deck-step) + 100vh)` }}
+      /* COUNT steps, not COUNT-1. The sticky block releases once its bottom
+         meets the section bottom, which arrives while the last level is still
+         face-up — the floor card had 64px of dwell against 120px for every
+         other. The extra step is tail the index never reaches. */
+      style={{ height: `calc(${COUNT} * var(--deck-step) + 100vh)` }}
     >
       {/* Real scroll targets for the chat bot's /experience#slug links. */}
       {experience.map((role, i) => (
@@ -249,7 +375,12 @@ export function ExperienceDeck({ heading }: { heading: ReactNode }) {
 
         <div className="deck-stage" ref={stage}>
         <span className="deck-depression" />
-          <FloorCracks progress={cracks} field={field} />
+          <FloorCracks
+            progress={cracks}
+            field={field}
+            growMs={arriving ? 210 : 1100}
+            impactDelay={arriving ? 0 : 190}
+          />
 
         <div className="deck-pile">
           {experience.map((role, i) => {

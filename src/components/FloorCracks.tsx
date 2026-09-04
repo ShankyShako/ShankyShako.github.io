@@ -65,6 +65,8 @@ export type Field = {
   /** Visible slice of the viewBox, in viewBox units. */
   visW: number;
   visH: number;
+  /** How far inside the silhouette the origins sit, in viewBox units. */
+  seedInset: number;
 };
 
 function rng(seed: number) {
@@ -105,24 +107,31 @@ function buildNetwork(field: Field) {
   const cracks: Crack[] = [];
   const placed: Seg[] = [];
 
+  /* The silhouette itself — nothing may propagate back inside it. */
   const hw = field.footW / 2;
   const hh = field.footH / 2;
-  const L = VIEW.cx - hw;
-  const R = VIEW.cx + hw;
-  const T = VIEW.cy - hh;
-  const B = VIEW.cy + hh;
+
+  /* The ring the origins sit on, pulled inside the silhouette far enough that a
+     card in flight still covers it. */
+  const inset = Math.min(field.seedInset, Math.min(hw, hh) * 0.55);
+  const L = VIEW.cx - hw + inset;
+  const R = VIEW.cx + hw - inset;
+  const T = VIEW.cy - hh + inset;
+  const B = VIEW.cy + hh - inset;
 
   /* Nothing may reach the frame. A crack that touches the edge reads as one
      arriving from somewhere off-screen. */
-  const inset = 34;
-  const minX = VIEW.cx - field.visW / 2 + inset;
-  const maxX = VIEW.cx + field.visW / 2 - inset;
-  const minY = VIEW.cy - field.visH / 2 + inset;
-  const maxY = VIEW.cy + field.visH / 2 - inset;
+  const edgeGap = 34;
+  const minX = VIEW.cx - field.visW / 2 + edgeGap;
+  const maxX = VIEW.cx + field.visW / 2 - edgeGap;
+  const minY = VIEW.cy - field.visH / 2 + edgeGap;
+  const maxY = VIEW.cy + field.visH / 2 - edgeGap;
 
   /* Roughly 40% of the shorter side of the visible field. */
   const MAX_RUN = Math.min(field.visW, field.visH) * 0.4;
 
+  /* Measured against the seed ring, not the silhouette: a crack that turned
+     back would otherwise be free to wander the band between the two. */
   const insideFoot = (p: Pt) => p[0] > L + 2 && p[0] < R - 2 && p[1] > T + 2 && p[1] < B - 2;
   const outOfFrame = (p: Pt) => p[0] < minX || p[0] > maxX || p[1] < minY || p[1] > maxY;
 
@@ -200,11 +209,28 @@ function buildNetwork(field: Field) {
 
     if (pts.length < 2) return null;
 
-    /* Width from stress along the finished run. */
+    /* Width from stress along the finished run.
+
+       Measured from where the crack leaves the card's silhouette, not from its
+       seed. The seeds are inset far enough to stay hidden while the pile moves,
+       which buries the first stretch of every run — anchoring the profile to the
+       seed would spend the widest part of the crack under the card and emerge
+       already tapering. This puts the widest point exactly where the crack
+       becomes visible. */
     const total = dists[dists.length - 1] || 1;
+    let exit = 0;
+    for (let k = 0; k < pts.length; k++) {
+      const q = pts[k];
+      if (q[0] < VIEW.cx - hw || q[0] > VIEW.cx + hw || q[1] < VIEW.cy - hh || q[1] > VIEW.cy + hh) {
+        exit = dists[k];
+        break;
+      }
+    }
+    const visible = Math.max(1, total - exit);
+
     const wTail = W_TAIL[0] + rand() * (W_TAIL[1] - W_TAIL[0]);
     const w = dists.map((d) => {
-      const f = d / total;
+      const f = Math.max(0, (d - exit) / visible);
       let base: number;
       if (f < DROP) base = wOrigin + (wTail - wOrigin) * (f / DROP);
       else if (f < FADE) base = wTail;
@@ -331,8 +357,8 @@ function buildNetwork(field: Field) {
 }
 
 /** One unbroken outline per crack: full width at the root, a point at the tip. */
-function outline(pts: Pt[], w: number[], upto: number, scale: number) {
-  const n = Math.min(pts.length, upto);
+function outline(pts: Pt[], w: number[], scale: number) {
+  const n = pts.length;
   if (n < 2) return '';
 
   const normals: Pt[] = [];
@@ -381,7 +407,7 @@ function shapesFor(network: Crack[], p: number, scale: number) {
       w.push(c.w[whole] + (c.w[whole + 1] - c.w[whole]) * frac);
     }
 
-    const d = outline(pts, w, pts.length, scale);
+    const d = outline(pts, w, scale);
     if (d) out.push(d);
   }
   return out;
@@ -389,7 +415,13 @@ function shapesFor(network: Crack[], p: number, scale: number) {
 
 function useTween(target: number, ms: number) {
   const [value, setValue] = useState(target);
-  const s = useRef({ from: target, to: target, at: 0, frame: 0, current: target });
+  const s = useRef({ from: target, to: target, at: 0, frame: 0, current: target, ms });
+  /* Held in the ref rather than the dependency list. As a dependency it killed
+     the loop: the cascade flips this from 210 to 1100 the instant it ends, React
+     ran the destructor's cancelAnimationFrame, and the re-run returned early
+     because the target had not changed — leaving every crack frozen a few
+     percent short of full length until the next scroll. */
+  s.current.ms = ms;
 
   useEffect(() => {
     if (target === s.current.to) return;
@@ -398,7 +430,7 @@ function useTween(target: number, ms: number) {
     s.current.at = performance.now();
 
     const tick = () => {
-      const k = Math.min(1, (performance.now() - s.current.at) / ms);
+      const k = Math.min(1, (performance.now() - s.current.at) / s.current.ms);
       const eased = 1 - Math.pow(1 - k, 3);
       s.current.current = s.current.from + (s.current.to - s.current.from) * eased;
       setValue(s.current.current);
@@ -408,22 +440,76 @@ function useTween(target: number, ms: number) {
     cancelAnimationFrame(s.current.frame);
     s.current.frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(s.current.frame);
-  }, [target, ms]);
+  }, [target]);
 
   return value;
 }
+
+const SETTLE_MS = 280;
 
 type Props = {
   /** 0 = clean floor, 1 = fully fractured. */
   progress: number;
   field: Field;
+  /** How long the fracture takes to travel to a new progress value. */
+  growMs: number;
+  /**
+   * How long after a progress change the impact lands.
+   *
+   * Scrolling changes the level the moment the card starts moving, and the card
+   * takes 340ms on a curve that overshoots — so it first reaches its resting
+   * place around 55% in, and the floor must not react before then. The intro is
+   * the opposite: it reports each card at the instant it touches down, so the
+   * impact is already happening and any delay reads as a late echo.
+   */
+  impactDelay: number;
 };
 
-export function FloorCracks({ progress, field }: Props) {
-  const p = useTween(Math.max(0, Math.min(1, progress)), 1100);
+export function FloorCracks({ progress, field, growMs, impactDelay }: Props) {
+  /* useDeckEligible already withholds the deck under reduced motion, but it can
+     be flipped mid-visit; the CSS backstop cannot reach a JS tween, so the
+     query is read here too — the house pattern is both, never one. */
+  const reduced =
+    typeof window !== 'undefined' &&
+    !!window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const p = useTween(Math.max(0, Math.min(1, progress)), reduced ? 0 : growMs);
+  const settle = useRef<SVGGElement | null>(null);
+  const last = useRef(progress);
+
+  /* Impact, then settle. Transform and opacity only — regenerating the geometry
+     here would reseed the jitter and flicker the whole field on every card. */
+  useEffect(() => {
+    if (progress === last.current) return;
+    last.current = progress;
+    const el = settle.current;
+    if (!el || typeof el.animate !== 'function') return;
+
+    if (reduced) return;
+
+    const fire = () =>
+      el.animate(
+        [
+          { transform: 'scale(1.05)', opacity: 0.55 },
+          { transform: 'scale(1)', opacity: 1 },
+        ],
+        { duration: SETTLE_MS, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' },
+      );
+
+    if (impactDelay <= 0) {
+      fire();
+      return;
+    }
+    const t = window.setTimeout(fire, impactDelay);
+    return () => clearTimeout(t);
+  }, [progress, impactDelay, reduced]);
+  /* seedInset included: buildNetwork derives the whole seed ring from it, and
+     the fade mask below reads it on every render — keyed without it the roots
+     and the mask that hides them could disagree. Primitives rather than the
+     object, so an identical remeasure does not rebuild. */
   const network = useMemo(
     () => buildNetwork(field),
-    [field.footW, field.footH, field.visW, field.visH],
+    [field.footW, field.footH, field.visW, field.visH, field.seedInset],
   );
   const q = Math.round(p * 220) / 220;
 
@@ -434,6 +520,18 @@ export function FloorCracks({ progress, field }: Props) {
   const shade = useMemo(() => shapesFor(network, q, 0.66), [network, q]);
   const rim = useMemo(() => shapesFor(network, q, 0.4), [network, q]);
 
+  /* The mask that dissolves the innermost run of every crack.
+
+     The inset above keeps the roots under the card in the frames it can
+     account for; this covers the ones it cannot. Fading the layer over the
+     first stretch outward means even a fully exposed root dies into the
+     surface instead of stopping at a visible endpoint — and it is a mask on the
+     layer, not a change to the paths, because the geometry still has to be one
+     continuous run. */
+  const ringW = Math.max(0, field.footW - 2 * Math.min(field.seedInset, Math.min(field.footW, field.footH) * 0.55));
+  const ringH = Math.max(0, field.footH - 2 * Math.min(field.seedInset, Math.min(field.footW, field.footH) * 0.55));
+  const pad = 8;
+
   return (
     <svg
       className="deck-cracks"
@@ -441,20 +539,43 @@ export function FloorCracks({ progress, field }: Props) {
       preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
     >
-      <g className="deck-crack-core">
-        {core.map((d, i) => (
-          <path key={i} d={d} />
-        ))}
-      </g>
-      <g className="deck-crack-shadow">
-        {shade.map((d, i) => (
-          <path key={i} d={d} />
-        ))}
-      </g>
-      <g className="deck-crack-rim">
-        {rim.map((d, i) => (
-          <path key={i} d={d} />
-        ))}
+      <defs>
+        <filter id="deck-crack-fade" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="7" />
+        </filter>
+        <mask id="deck-crack-mask" maskUnits="userSpaceOnUse">
+          <rect x="0" y="0" width={VIEW.w} height={VIEW.h} fill="#fff" />
+          <rect
+            x={VIEW.cx - ringW / 2 - pad}
+            y={VIEW.cy - ringH / 2 - pad}
+            width={ringW + pad * 2}
+            height={ringH + pad * 2}
+            fill="#000"
+            filter="url(#deck-crack-fade)"
+          />
+        </mask>
+      </defs>
+
+      <g
+        ref={settle}
+        mask="url(#deck-crack-mask)"
+        style={{ transformBox: 'view-box', transformOrigin: `${VIEW.cx}px ${VIEW.cy}px` }}
+      >
+        <g className="deck-crack-core">
+          {core.map((d, i) => (
+            <path key={i} d={d} />
+          ))}
+        </g>
+        <g className="deck-crack-shadow">
+          {shade.map((d, i) => (
+            <path key={i} d={d} />
+          ))}
+        </g>
+        <g className="deck-crack-rim">
+          {rim.map((d, i) => (
+            <path key={i} d={d} />
+          ))}
+        </g>
       </g>
     </svg>
   );

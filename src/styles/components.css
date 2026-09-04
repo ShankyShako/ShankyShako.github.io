@@ -1652,7 +1652,6 @@
   height: 1px;
 }
 
-/* No background, border or radius: the page's own ground is the floor. */
 /* Takes whatever the heading leaves. No background, border or radius: the
    page's own ground is the floor. */
 .deck-stage {
@@ -1914,6 +1913,7 @@
 }
 
 .deck-rail button {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -1970,4 +1970,7 @@
      anyone who flips the setting mid-visit before the listener fires. */
   .deck-card,
   .deck-veil { transition: none; }
+  /* The fracture is tweened in JS, so FloorCracks reads the same query itself —
+     this only covers the settle, which is a Web Animation on the layer. */
+  .deck-cracks > g { animation: none !important; }
 }

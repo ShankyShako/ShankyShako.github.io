@@ -64,9 +64,16 @@ export function useDeck(count: number) {
       });
     };
 
+    /* rAF-gated like the scroll handler: dragging a window edge fires at ~60Hz
+       and each one costs a getComputedStyle plus a rect. */
+    let resizeFrame = 0;
     const onResize = () => {
-      s.current.step = readStep();
-      measure();
+      if (resizeFrame) return;
+      resizeFrame = requestAnimationFrame(() => {
+        resizeFrame = 0;
+        s.current.step = readStep();
+        measure();
+      });
     };
 
     /* rAF does not run while the tab is hidden, so scrolls that happen either
@@ -75,9 +82,12 @@ export function useDeck(count: number) {
        level in the same frame the tab becomes visible means the browser has no
        previous painted value to interpolate from, so the cracks and the pile
        snap to their new state instead of travelling there. */
+    let wakeFrame = 0;
     const onVisible = () => {
       if (document.visibilityState !== 'visible') return;
-      requestAnimationFrame(() => requestAnimationFrame(measure));
+      wakeFrame = requestAnimationFrame(() => {
+        wakeFrame = requestAnimationFrame(measure);
+      });
     };
 
     measure();
@@ -86,6 +96,8 @@ export function useDeck(count: number) {
     document.addEventListener('visibilitychange', onVisible);
     return () => {
       cancelAnimationFrame(s.current.frame);
+      cancelAnimationFrame(resizeFrame);
+      cancelAnimationFrame(wakeFrame);
       s.current.frame = 0;
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onResize);
