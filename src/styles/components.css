@@ -627,6 +627,17 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Honours and GPA sit under a hairline so the card reads as two registers:
+   what the degree is, then how it went. */
+.degree-card .degree-note {
+  margin: 0.6rem 0 0;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
 /* Two columns of courses rather than one 2,100px column. Each course keeps its
    own sub-points, so the unit that must not break is the <li>. */
 .course-grid {
@@ -637,6 +648,31 @@
 }
 
 .course-grid > li { break-inside: avoid; }
+
+/* Undergrad: an area heading over a run of course names. Same two-column
+   measure as .course-grid so the two sections line up down the page. */
+.course-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: var(--sp-4) var(--sp-6);
+}
+
+.course-groups h3 {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-ui);
+  font-size: 0.83rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.course-groups p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
 
 .section-head {
   display: flex;

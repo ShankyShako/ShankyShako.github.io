@@ -28,8 +28,16 @@ something he has, not something he lacks.
 
 ## Education
 
-- **Bachelor of Science in Computer Science, summa cum laude** — University of Missouri-Kansas City (UMKC) — Kansas City, MO (August 2021 – December 2024)
 - **Master's in Computer Science — Emphasis on Artificial Intelligence** — Georgia Tech — Atlanta, GA (August 2025 – expected 2027)
+- **Bachelor of Science in Computer Science, summa cum laude** — University of Missouri-Kansas City (UMKC) — Kansas City, MO (August 2021 – December 2024) 3.82 cumulative GPA. Dean's List in four semesters.
+
+Taking in Fall 2026: Computer Graphics, Machine Learning for Trading, Bayesian Statistics.
+
+In progress (Fall 2026):
+
+- Computer Graphics: Rasterization, transforms, shading, and the rendering pipeline end to end; The formal version of what the recursive ray tracer works out by hand
+- Machine Learning for Trading: Supervised and reinforcement learning applied to market data; Backtesting, and the ways a strategy can look good only in hindsight
+- Bayesian Statistics: Priors, posterior inference, and hierarchical models; MCMC sampling, and reporting uncertainty instead of a single number
 
 Graduate coursework:
 
@@ -40,10 +48,13 @@ Graduate coursework:
 - Computer Vision: Image formation, feature detection, and recognition pipelines; The perception techniques underpinning the classifier work at AFRL
 - Brain & Cognitive Science: Computational models of perception, memory, and learning; Neuroscience principles that inspire AI architectures
 
-Core foundations:
+Undergraduate coursework:
 
-- Algorithms & Complexity: Algorithm design and analysis of computational complexity
-- Data Structures: Efficient organization, storage, and access of data
+- Theory and systems: Discrete Structures I & II, Data Structures, Algorithms & Complexity, Computer Architecture & Organization, Operating Systems, Programming Languages: Design & Implementation
+- Software engineering: Foundations of Software Engineering, Software Engineering Capstone, Database Management Systems, Java Programming Applications, Web Development, Game Quality Assurance, Ethics & Professionalism
+- Security and networks: Introduction to Cybersecurity, Network Security, Data Communications & Networking, Blockchain
+- AI and mathematics: Artificial Intelligence, Applied Probability, Elementary Statistics, Calculus I & II, Linear Algebra, Physics for Scientists and Engineers
+- Game development: Game Design, Game World Creation, Game Level Editing
 
 ## Experience
 
@@ -161,7 +172,7 @@ The SOS paper-and-pencil game, written in Python as a vehicle for practicing Scr
 - **Frameworks & Technologies:** SwiftUI & CoreMotion, Flask & FastAPI, React / Next.js, Node.js & Express, Socket.IO, Hardhat & IPFS, Leaflet, Wireshark
 - **Infrastructure:** Git, Docker / Apptainer, Slurm, AWS, Google Cloud Platform, Cloudflare Workers, Ollama, Metal (MPS)
 - **Developer Tools:** Xcode, VS Code, Visual Studio, PyCharm, Eclipse, Anaconda, Unity
-- **Specialized Skills:** Generative AI & GANs, Large Language Models, Self-hosted LLM Deployment, Reinforcement Learning & Reward Design, Speech & Biomedical Signal Processing, Transfer Learning, CNN Classifiers, Cybersecurity Applications, Parallel Computing (Slurm)
+- **Specialized Skills:** Generative AI & GANs, Large Language Models, Self-hosted LLM Deployment, Reinforcement Learning & Reward Design, Speech & Biomedical Signal Processing, Transfer Learning, CNN Classifiers, Cybersecurity & Network Security, Probability & Bayesian Statistics, Computer Graphics & Rendering, Parallel Computing (Slurm)
 - **Spoken Languages:** English, Spanish, Amharic
 
 ## Shop

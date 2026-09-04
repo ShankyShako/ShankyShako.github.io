@@ -19,7 +19,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const src = (f) => join(here, '..', 'src', 'data', f);
 
 const { site, nav } = await import(src('site.ts'));
-const { degrees, graduateCoursework, coreFoundations } = await import(src('education.ts'));
+const { degrees, inProgress, inProgressTerm, graduateCoursework, undergraduateCoursework } =
+  await import(src('education.ts'));
 const { experience } = await import(src('experience.ts'));
 const { projects, research } = await import(src('projects.ts'));
 const { publications, cite } = await import(src('publications.ts'));
@@ -75,19 +76,27 @@ w();
 
 w('## Education');
 w();
-for (const d of degrees) w(`- **${d.degree}** — ${d.school} (${d.date})`);
+for (const d of degrees) {
+  w(`- **${d.degree}** — ${d.school} (${d.date})${d.note ? ` ${d.note}` : ''}`);
+}
+w();
+w(`Taking in ${inProgressTerm}: ${inProgress.map((c) => c.name).join(', ')}.`);
 w();
 if (COMPACT) {
   w(`Graduate coursework: ${graduateCoursework.map((c) => c.name).join(', ')}.`);
-  w(`Core foundations: ${coreFoundations.map((c) => c.name).join(', ')}.`);
+  for (const g of undergraduateCoursework) w(`Undergrad, ${g.area}: ${g.courses.join(', ')}.`);
 } else {
+  w(`In progress (${inProgressTerm}):`);
+  w();
+  for (const c of inProgress) w(`- ${c.name}: ${c.points.join('; ')}`);
+  w();
   w('Graduate coursework:');
   w();
   for (const c of graduateCoursework) w(`- ${c.name}: ${c.points.join('; ')}`);
   w();
-  w('Core foundations:');
+  w('Undergraduate coursework:');
   w();
-  for (const c of coreFoundations) w(`- ${c.name}: ${c.points.join('; ')}`);
+  for (const g of undergraduateCoursework) w(`- ${g.area}: ${g.courses.join(', ')}`);
 }
 w();
 
