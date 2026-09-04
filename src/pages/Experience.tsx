@@ -12,7 +12,7 @@ const heading = (
     <h1>Experience</h1>
     <p className="page-intro">
       Six years of research and engineering roles, most of them in defense, security, or clinical
-      settings — newest first.
+      settings. Newest first.
     </p>
   </>
 );

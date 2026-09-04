@@ -7,8 +7,8 @@ export function Contact() {
     <>
       <h1>Contact</h1>
       <p className="page-intro">
-        Open to AI/ML engineering and research roles. The fastest route is email — the form goes to
-        the same inbox.
+        Open to AI/ML engineering and research roles. Email is the fastest way to reach me, though
+        the form below lands in the same inbox.
       </p>
 
       <div className="contact-grid">

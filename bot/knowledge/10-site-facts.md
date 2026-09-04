@@ -36,7 +36,7 @@ Graduate coursework:
 - Deep Learning: Neural network architectures: CNNs, RNNs, and transformers; Training, optimization, and regularization of deep models at scale
 - Reinforcement Learning: Markov decision processes, value-based and policy-gradient methods; Reward design and sequential decision-making for autonomous agents
 - Machine Learning: Supervised and unsupervised learning algorithms and applications; Model training, evaluation, and generalization
-- Artificial Intelligence: Search, knowledge representation, planning, and reasoning; Foundational AI techniques underpinning modern ML systems
+- Artificial Intelligence: Search, knowledge representation, planning, and reasoning; The techniques modern ML systems are built on top of
 - Computer Vision: Image formation, feature detection, and recognition pipelines; The perception techniques underpinning the classifier work at AFRL
 - Brain & Cognitive Science: Computational models of perception, memory, and learning; Neuroscience principles that inspire AI architectures
 
@@ -50,32 +50,32 @@ Core foundations:
 ### Founding AI/ML Product Engineer — Geometry Health and Wellness
 *September 2025 – Present*
 
-Founding engineer on a clinical mobility platform, taken from MVP to production. Ported clinically validated mobility assessments from research prototypes to a production iOS app, matching the clinical reference to within a fraction of a percent. Built the on-device biomarker signal-processing pipeline in Swift, alongside the in-house data-collection app that produces the labelled datasets the models are validated against. Implemented an end-to-end LLM workflow for a context-aware clinical assistant — data preparation, patient context retrieval, and peer-reviewed evidence lookup — on a self-hosted deployment with streaming responses under one second of latency. Owns the technical architecture, sprint cycles, and coordination across clinical, engineering, and product. Specifics of the methodology are withheld as proprietary.
+Founding engineer on a clinical mobility platform, from MVP to production. I ported clinically validated mobility assessments out of research prototypes and into a production iOS app, matching the clinical reference to within a fraction of a percent. I wrote the on-device biomarker signal-processing pipeline in Swift, along with the in-house data-collection app that produces the labeled datasets those models are validated against. I also built an end-to-end LLM workflow for a context-aware clinical assistant, covering data preparation, patient context retrieval, and lookup of peer-reviewed evidence, running on a self-hosted deployment that streams responses in under a second. I own the technical architecture, the sprint cycle, and coordination across clinical, engineering, and product. The methodology itself is proprietary, so the details stay off this page.
 
 ### Federal AI/ML Engineer Contractor — AFRL Sensors Directorate Internship Program, University of Dayton
 *May 2025 – August 2025*
 
-Pioneered the development of generative AI models enabling a CNN classifier to successfully recognize real objects when trained on generated data when utilized in transfer learning framework, addressing AFRL/DoD priorities. Using PyTorch, adapted state of the art classifiers to handle novel imaging modalities. Utilized Slurm to enable large batches of parallelized computation. Created an innovative game theory approach to GAN training, significantly improving the results of the generator's development. The generative model's output led to an increase of 50 percentage points in the downstream classifier compared to the baseline.
+Built generative models that let a CNN classifier recognize real objects after training on nothing but generated data, carried over through transfer learning, against AFRL and DoD priorities. Adapted state-of-the-art PyTorch classifiers to imaging modalities they were never designed for, and ran large batches in parallel on Slurm. The core of the work was a game-theoretic approach to GAN training, which pushed the generator well past what standard training gave us. Output from that generator raised downstream classifier accuracy by 50 percentage points over the baseline.
 
 ### AI/ML Engineer Intern — NSF REU AI-Empowered Cybersecurity, University of Missouri Kansas City
 *June 2024 – December 2024*
 
-Engineered a robust Large Language Model to detect ransomware threats within Industrial Control Systems. Achieved 99% accuracy for binary classification and 85% accuracy for family classification scale respectively. Research was accepted and presented at IEEE Big Data 2024 in Washington, D.C. as the solo author with mentor guidance.
+Built a large language model that detects ransomware inside industrial control systems: 99% accuracy telling malicious from benign, 85% naming the specific family. The work was accepted at IEEE Big Data 2024, and I presented it in Washington, D.C. as the solo author, with mentor guidance.
 
 ### Research Intern — NSF REU in Consumer Networking, University of Missouri Columbia
 *May 2023 – July 2023*
 
-Designed a model that detects/predicts cybersickness using a transformer machine learning model. Succeeded with an accuracy of 85% from a 1-10 cybersickness severity scale. Work from this lab carried into a co-authored paper in IEEE Transactions on Dependable and Secure Computing (2025) on adversarial attacks against cybersickness detection models, and an explainable-AI defence against them.
+Built a transformer model that predicts cybersickness severity on a 1 to 10 scale, at 85% accuracy. The lab's work carried into a co-authored 2025 paper in IEEE Transactions on Dependable and Secure Computing, on adversarial attacks against cybersickness detection models and an explainable-AI defense against them.
 
 ### Research Intern — NASA Missouri Space Grant Consortium
 *December 2021 – April 2022*
 
-Engineered an AI-driven simulation of space-bound transmissions as part of a NASA-funded initiative analyzing signal propagation and identifying optimal frequency bands under varying conditions. Developed an interactive interface to visualize transmission strength and provide adaptive frequency recommendations based on environmental parameters.
+Simulated space-bound transmissions for a NASA-funded study of signal propagation, working out which frequency bands hold up under which conditions. Built an interactive interface that shows transmission strength and recommends a frequency for whatever environment you give it.
 
 ### Web Master — SPCN - 2020 and IEEE Brain Initiative BDBC Conference, Taiwan
 *August 2020 – September 2020*
 
-Set up conference website for the 5th International Symposium on Audio and Video Signal Processing in the Context of Neurotechnology, with reliable communication and updates to the website's needs. The conference was conducted remotely through multiple worldwide locations.
+Built and ran the website for the 5th International Symposium on Audio and Video Signal Processing in the Context of Neurotechnology, keeping content and announcements current while the conference ran remotely across several countries.
 
 ## Publications
 
@@ -83,76 +83,76 @@ Set up conference website for the 5th International Symposium on Audio and Video
 R. K. Kundu, M. Denton, G. Mongalo, P. Calyam and K. A. Hoque, "Securing Virtual Reality Experiences: Unveiling and Tackling Cybersickness Attacks With Explainable AI," IEEE Transactions on Dependable and Secure Computing, vol. 22, no. 6, pp. 6040–6057, 2025, doi: 10.1109/TDSC.2025.3579969.
 Tags: Adversarial ML, Explainable AI, Virtual Reality, Security, Deep Learning
 
-In modern VR, a deep-learning model is what decides when cybersickness mitigation fires — so fooling that model is enough to break the experience. The paper introduces the cybersickness attack: a perturbation of the input small enough to be invisible to the person wearing the headset, but sufficient to suppress detection, so mitigation never triggers and the user stays sick. It then proposes an explainable-AI-guided framework that detects the attack and restores the correct mitigation. Evaluated on two open-source cybersickness datasets, Simulation 2021 and Gameplay, then confirmed on a custom VR roller-coaster testbed running on an HTC Vive Pro Eye, with a user study measuring the damage to immersive experience and the recovery. The work grew out of the NSF REU in Consumer Networking at the University of Missouri.
+In modern VR, a deep-learning model decides when cybersickness mitigation fires, so fooling that model is enough to break the experience. The paper introduces the cybersickness attack: a perturbation of the input small enough that the person wearing the headset never sees it, but large enough to suppress detection, so mitigation never triggers and the user stays sick. It then proposes an explainable-AI-guided framework that catches the attack and restores the right mitigation. Evaluated on two open-source cybersickness datasets, Simulation 2021 and Gameplay, then confirmed on a custom VR roller-coaster testbed running on an HTC Vive Pro Eye, with a user study measuring both the damage to the experience and the recovery. The work grew out of the NSF REU in Consumer Networking at the University of Missouri.
 
 ## Research
 
 ### Ransomware Detection for Critical Infrastructures (2024–2026)
 Repo: https://github.com/ShankyShako/RansomWare-Detection-Models — PyTorch, ALBERT, RoBERTa, CNN, Security
 
-A comparative study of deep-learning and transformer models for detecting and classifying ransomware from Windows API-call features, aimed at Industrial Control Systems. Each model predicts at three levels simultaneously — binary (benign vs. malicious), coarse family group, and specific family (12 classes) — and is evaluated under three feature-engineering setups (baseline, autoencoder, and K-Means clustering). The pipeline compares a DNN, a 1-D CNN, and RoBERTa- and ALBERT-style transformers against classical baselines, using chi-squared feature selection to reduce ~31,000 features to the most informative 1,000 and class-weighting to handle rare families. The reproducible PyTorch/scikit-learn pipeline reaches ~98% accuracy on binary detection, with early stopping and weight sharing (ALBERT) used to control overfitting on the small dataset. GPU-accelerated on Apple Silicon via Metal.
+A comparative study of deep-learning and transformer models for spotting and classifying ransomware from Windows API-call features, aimed at industrial control systems. Each model predicts at three levels at once: benign against malicious, coarse family group, and specific family across 12 classes. Each is then evaluated under three feature-engineering setups, baseline, autoencoder, and K-Means clustering. The pipeline puts a DNN, a 1-D CNN, and RoBERTa- and ALBERT-style transformers against classical baselines, using chi-squared selection to cut roughly 31,000 features down to the most informative 1,000, and class weighting to keep rare families from disappearing. The reproducible PyTorch and scikit-learn pipeline reaches about 98% accuracy on binary detection, with early stopping and ALBERT weight sharing holding back overfitting on a small dataset. GPU-accelerated on Apple Silicon through Metal.
 
 ### Dysarthria Speech Understanding — Heterogeneous Multi-Task Learning (2026)
 Tags: PyTorch, Whisper, wav2vec2, Multi-Task Learning, Speech, Clinical ML
 
-Speech recognition trained on healthy speakers collapses on dysarthric speech — exactly the population that most needs it, since post-stroke motor impairment tends to rule out typing as well. The system transcribes a patient's speech for their care team while scoring the same recording on two clinical axes, so one recording is both communication and a passive biomarker of recovery. A frozen pretrained encoder feeds two task-specific heads: intelligibility regression on UA-Speech, four-class severity classification on TORGO. Because those corpora label disjoint things, the heads train by masked loss routing — each clip contributes gradient only to the head it actually has a label for — evaluated leave-one-speaker-out across all 43 speakers. Whisper's encoder beats wav2vec2 on both tasks: 10.44 MAE on intelligibility, and 46.7% raw severity accuracy against a 0.809 quadratic weighted kappa, so it lands adjacent when it is wrong. The MFCC+SVM baseline scores a kappa of exactly 0.000 — it tracks the class prior and nothing else — which is the clearest evidence that the pretrained representation, not the head, is doing the work. Two findings were worth the trouble: transcription degrades roughly thirteen-fold from control to impaired speakers on identical prompts and hardware, and the two encoders fail in opposite directions — Whisper invents fluent English that is wrong, wav2vec2 produces visibly broken text. When the output is a patient's request to a nurse, the failure a reader can see is the safer one. Georgia Tech CS 7643 with Team LEGACY; my part was the ASR evaluation harness, the FDA severity parser, the Whisper multi-task grid, and the full 43-fold multi-task LOSO run.
+Speech recognition trained on healthy speakers collapses on dysarthric speech, which is exactly the population that most needs it, since post-stroke motor impairment tends to rule out typing too. The system transcribes a patient's speech for their care team and scores the same recording on two clinical axes, so one recording is both a message and a passive biomarker of recovery. A frozen pretrained encoder feeds two task-specific heads: intelligibility regression on UA-Speech, four-class severity classification on TORGO. Those corpora label disjoint things, so the heads train by masked loss routing, where each clip contributes gradient only to the head it actually has a label for. Evaluation is leave-one-speaker-out across all 43 speakers. Whisper's encoder beats wav2vec2 on both tasks, at 10.44 MAE on intelligibility and 46.7% raw severity accuracy against a 0.809 quadratic weighted kappa, so it lands adjacent when it is wrong. The MFCC+SVM baseline scores a kappa of exactly 0.000, tracking the class prior and nothing else, which is the clearest evidence that the pretrained representation is doing the work and not the head. Two findings were worth the trouble. Transcription degrades roughly thirteen-fold from control to impaired speakers on identical prompts and identical hardware, and the two encoders fail in opposite directions: Whisper invents fluent English that is wrong, wav2vec2 produces visibly broken text. When the output is a patient's request to a nurse, the failure a reader can see is the safer one. Georgia Tech CS 7643 with Team LEGACY. My part was the ASR evaluation harness, the FDA severity parser, the Whisper multi-task grid, and the full 43-fold multi-task LOSO run.
 
 ### Cognitive-Load-Aware Conversational Design (2025)
 Tags: Cognitive Science, LLM, HCI, Design Analysis
 
-A design-only analysis of a deployed clinical conversational agent, mapping its interface and dialogue decisions against four cognitive-science frameworks: cognitive load theory, Baddeley's working-memory model, dual-process theory, and Levelt's model of speech production. No human subjects were involved and no participant data was collected — the findings are analytical rather than empirical. Georgia Tech CS 6795.
+A design-only analysis of a deployed clinical conversational agent, reading its interface and dialogue decisions against four cognitive-science frameworks: cognitive load theory, Baddeley's working-memory model, dual-process theory, and Levelt's model of speech production. No human subjects, no participant data, so the findings are analytical rather than empirical. Georgia Tech CS 6795.
 
 ## Projects
 
 ### AWS DeepRacer — Reward Shaping (2026)
 Tags: Reinforcement Learning, TD3, Reward Shaping, Docker, Simulation
 
-A reinforcement-learning agent for the AWS DeepRacer environment, a 1/18-scale autonomous vehicle on a simulated physics track. A TD3 policy trains in a containerised local stack (Docker/Apptainer, GPU-accelerated on Apple Silicon via Metal) rather than in the cloud. The substance of the work is the reward function: a hand-built shaping scheme that bands reward by distance from the centre line, aligns heading against the upcoming waypoints, trades speed against steering angle, and applies hard penalties for leaving the track or crashing. The learning algorithm is off the shelf; the incentives are not, and reward design is where the difficulty in DeepRacer actually lives — a poorly shaped reward produces an agent that drives beautifully and never finishes a lap. Graduate coursework for CS 7642, Reinforcement Learning & Decision Making, at Georgia Tech; the repository is private under the university's academic-honesty policy.
+A reinforcement-learning agent for the AWS DeepRacer environment, a 1/18-scale autonomous car on a simulated physics track. A TD3 policy trains in a containerized local stack (Docker/Apptainer, GPU-accelerated on Apple Silicon through Metal) instead of in the cloud. The real work is the reward function, a hand-built shaping scheme that bands reward by distance from the center line, aligns heading against the upcoming waypoints, trades speed off against steering angle, and penalizes leaving the track or crashing outright. The learning algorithm is off the shelf. The incentives are not, and that is where DeepRacer is actually hard, since a badly shaped reward gives you an agent that drives beautifully and never finishes a lap. Graduate coursework for CS 7642, Reinforcement Learning and Decision Making, at Georgia Tech. The repository is private under the university's academic-honesty policy.
 
 ### LunarLander — Continuous Control Study (2026)
 Tags: Reinforcement Learning, PyTorch, TD3, Gymnasium, Weights & Biases
 
-Five reinforcement-learning algorithms trained and compared on Gymnasium's LunarLanderContinuous, where two continuous thrusters have to trade landing stability against fuel. Includes a hyperparameter sweep, an architecture experiment on the TD3 actor-critic, and Weights & Biases run tracking. Graduate coursework for CS 7642; the repository is private under the university's academic-honesty policy.
+Five reinforcement-learning algorithms trained and compared on Gymnasium's LunarLanderContinuous, where two continuous thrusters trade landing stability against fuel. Includes a hyperparameter sweep, an architecture experiment on the TD3 actor-critic, and Weights & Biases run tracking. Graduate coursework for CS 7642. The repository is private under the university's academic-honesty policy.
 
 ### Overcooked — Cooperative Multi-Agent RL (2026)
 Tags: Reinforcement Learning, PPO, Multi-Agent, Python
 
-PPO agents trained on the Overcooked-AI benchmark, where two cooks share a cramped kitchen and reward only arrives when a soup is delivered — so the hard part is coordination, not control. Covers self-play training, layout-by-layout evaluation, and how well a policy holds up against a partner it was not trained with. Graduate coursework for CS 7642; the repository is private under the university's academic-honesty policy.
+PPO agents trained on the Overcooked-AI benchmark, where two cooks share a cramped kitchen and reward only arrives once a soup goes out the door. That makes coordination the hard part, not control. Covers self-play training, evaluation layout by layout, and how well a policy holds up with a partner it never trained against. Graduate coursework for CS 7642. The repository is private under the university's academic-honesty policy.
 
 ### Classical AI Algorithm Suite (2026)
 Tags: Python, Search, Bayesian Networks, HMM, Expectation Maximization
 
-Six graduate assignments implemented from first principles rather than from libraries: bidirectional and tridirectional A* over the Atlanta road network, alpha-beta adversarial search for a rook-isolation variant, Bayesian networks sampled with Gibbs and Metropolis-Hastings, decision trees and random forests, Gaussian-mixture image segmentation by expectation-maximisation, and hidden Markov models for sign recognition. Georgia Tech CS 6601; the repository is private under the university's academic-honesty policy.
+Six graduate assignments written from first principles instead of pulled from libraries: bidirectional and tridirectional A* over the Atlanta road network, alpha-beta adversarial search for a rook-isolation variant, Bayesian networks sampled with Gibbs and Metropolis-Hastings, decision trees and random forests, Gaussian-mixture image segmentation by expectation-maximization, and hidden Markov models for sign recognition. Georgia Tech CS 6601. The repository is private under the university's academic-honesty policy.
 
 ### Care Beyond — Homelessness Resource Map (2025)
 Tags: React, Leaflet, Node.js, Express, Geospatial
 
-A live map of food, shelter, clothing, and medical resources aggregated from local organisations, searchable by street address or ZIP with radius-based distance results and colour-coded markers by resource type. A community feed lets anyone read but only verified organisations publish, gated by a one-time email code rather than another password to lose.
+A live map of food, shelter, clothing, and medical resources pulled together from local organizations, searchable by street address or ZIP, with distance results by radius and markers color-coded by resource type. Anyone can read the community feed, but only verified organizations can post to it, gated behind a one-time email code rather than another password to lose.
 
 ### Recursive Ray Tracer (2025)
 Tags: Java, Computer Graphics, Rendering
 
-A ray tracer built up from the intersection maths: ray-sphere, ray-triangle, and axis-aligned box tests, Phong shading with shadow rays, recursive reflection, instanced and moving surfaces, and a bounding-volume hierarchy so scenes render in something short of forever. Written in Java against a renderer interface, with per-part test suites. Graduate computer-graphics coursework; the repository is private under the university's academic-honesty policy.
+A ray tracer built up from the intersection math: ray-sphere, ray-triangle, and axis-aligned box tests, Phong shading with shadow rays, recursive reflection, instanced and moving surfaces, and a bounding-volume hierarchy so scenes render in something short of forever. Written in Java against a renderer interface, with a test suite per part. Graduate computer-graphics coursework. The repository is private under the university's academic-honesty policy.
 
 ### Federated Blockchain — Model Registry (2025–2026)
 Repo: https://github.com/ShankyShako/Federated-BlockChain — Solidity, React, IPFS, Hardhat, Web3
 
-A federated-learning model registry on Ethereum that lets nodes share and audit machine-learning models without putting large weights on-chain. Solidity smart contracts (FederatedModelStorage, FederatedLedger, and an ERC-20 FederatedToken), deployed with Hardhat and tested on Ganache, record each model's IPFS content ID on-chain. Trained models — including the ALBERT ransomware classifier from my research — are exported as self-describing bundles, uploaded to IPFS, and registered via either a Node.js script or a React/Vite frontend with MetaMask wallet integration. Includes an automated Hardhat test suite verifying a model CID round-trips through all three contracts.
+A federated-learning model registry on Ethereum that lets nodes share and audit machine-learning models without putting large weights on-chain. Solidity smart contracts (FederatedModelStorage, FederatedLedger, and an ERC-20 FederatedToken), deployed with Hardhat and tested on Ganache, record each model's IPFS content ID on-chain. Trained models, including the ALBERT ransomware classifier from my research, are exported as self-describing bundles, uploaded to IPFS, and registered through either a Node.js script or a React/Vite frontend wired to MetaMask. An automated Hardhat suite checks that a model CID round-trips through all three contracts.
 
 ### Racket Parser (2024)
 Repo: https://github.com/ShankyShako/Racket-Parser — Racket, Compilers, Parsing
 
-A custom parser built in Racket for a small artificial programming language inspired by FORTRAN. It reads .txt source files, validates syntax based on a defined grammar, and reports precise error lines when invalid constructs are encountered. This project demonstrates understanding of language grammars, recursive parsing techniques, and working with DrRacket tools to implement language analysis.
+A parser written in Racket for a small artificial language modeled on FORTRAN. It reads .txt source files, checks them against a defined grammar, and reports the exact line where an invalid construct shows up. Built and debugged in DrRacket.
 
 ### Phonebook Management System (2024)
 Repo: https://github.com/ShankyShako/PhoneBook — Java, SQL, CRUD
 
-A Java-based phonebook management application that integrates with Dolphin SQL for persistent storage. It supports user registration with secure password handling, contact addition/update/deletion, search functionality, and CSV export. Developed using Eclipse, this project highlights practical database integration, user interaction design, and CRUD operation management in a desktop application.
+A Java phonebook application backed by Dolphin SQL for storage. It handles user registration with hashed passwords, adding, updating and deleting contacts, search, and CSV export. Built in Eclipse.
 
 ### SOS Game Implementation (2023)
 Repo: https://github.com/ShankyShako/SOS-Game — Python, Scrum, Testing
 
-An implementation of the classic SOS paper-and-pencil game designed to explore software development workflows using Scrum methodology. Written in Python, this project reflects iterative development practices, automated testing, and simple game logic implementation. It's a great example of applying agile principles to deliver a functional interactive game while learning team processes.
+The SOS paper-and-pencil game, written in Python as a vehicle for practicing Scrum. Sprint by sprint, with automated tests and the game logic underneath.
 
 ## Skills
 

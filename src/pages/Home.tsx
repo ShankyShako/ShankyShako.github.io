@@ -20,15 +20,15 @@ export function Home() {
         <h1>Genova Mongalo</h1>
 
         <p className="hero-lede">
-          Summa cum laude B.S. in Computer Science from UMKC, now reading for an M.S. in Computer
-          Science with an AI emphasis at Georgia Tech. I build generative models, transformers, and
-          on-device ML for problems where being wrong is expensive.
+          I finished a B.S. in Computer Science at UMKC summa cum laude, and I am partway through an
+          M.S. in Computer Science at Georgia Tech with an AI emphasis. I build generative models,
+          transformers, and on-device ML for problems where being wrong is expensive.
         </p>
         <p className="hero-sub">
-          Most recently a Federal AI/ML engineer contractor with the AFRL Sensors Directorate, where
-          a game-theoretic approach to GAN training let a CNN classifier trained purely on generated
-          data recognise real objects. The through-line is machine learning applied to security,
-          defense, and clinical systems that ship.
+          Most recently I was a federal AI/ML engineering contractor with the AFRL Sensors
+          Directorate, where a game-theoretic approach to GAN training let a CNN classifier trained
+          only on generated data recognize real objects. The work keeps landing in the same place.
+          Machine learning for security, defense, and clinical systems that ship.
         </p>
 
         <ul className="hero-stats">

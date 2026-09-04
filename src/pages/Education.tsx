@@ -27,7 +27,7 @@ export function Education() {
     <>
       <h1>Education</h1>
       <p className="page-intro">
-        A computer-science degree finished with honours, and a graduate one aimed squarely at
+        One computer science degree finished with honors, and a graduate one pointed straight at
         artificial intelligence.
       </p>
 

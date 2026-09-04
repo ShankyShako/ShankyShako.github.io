@@ -6,7 +6,7 @@ export function Skills() {
     <>
       <h1>Skills</h1>
       <p className="page-intro">
-        Languages, frameworks, and the specialised work each one has actually been used for.
+        Languages, frameworks, and the work I have actually used each of them for.
       </p>
 
       <div className="skills-grid">

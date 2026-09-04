@@ -26,7 +26,7 @@ export const graduateCoursework: Course[] = [
     'Model training, evaluation, and generalization' ] },
   { name: 'Artificial Intelligence', points: [
     'Search, knowledge representation, planning, and reasoning',
-    'Foundational AI techniques underpinning modern ML systems' ] },
+    'The techniques modern ML systems are built on top of' ] },
   { name: 'Computer Vision', points: [
     'Image formation, feature detection, and recognition pipelines',
     'The perception techniques underpinning the classifier work at AFRL' ] },

@@ -147,7 +147,7 @@ export function Projects() {
     <>
       <h1>Projects</h1>
       <p className="page-intro">
-        Coursework, side builds, and collaborations. Filter by what they are made of.
+        Coursework, side builds, and collaborations. Filter by what they are built out of.
       </p>
 
       <div className="tag-row">
