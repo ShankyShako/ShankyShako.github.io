@@ -115,6 +115,6 @@ export const research: Project[] = [
     years: '2025',
     tags: ['Cognitive Science', 'LLM', 'HCI', 'Design Analysis'],
     blurb:
-      "A design-only analysis of a deployed clinical conversational agent, reading its interface and dialogue decisions against four cognitive-science frameworks: cognitive load theory, Baddeley's working-memory model, dual-process theory, and Levelt's model of speech production. No human subjects, no participant data, so the findings are analytical rather than empirical. Georgia Tech CS 6795.",
+      "A design analysis of a deployed clinical conversational agent, reading its interface and dialogue decisions against four cognitive-science frameworks: cognitive load theory, Baddeley's working-memory model, dual-process theory, and Levelt's model of speech production. No human subjects or participant data — the findings come from the frameworks, not from a study. Georgia Tech CS 6795.",
   },
 ];

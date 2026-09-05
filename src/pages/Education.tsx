@@ -49,8 +49,8 @@ export function Education() {
     <>
       <h1>Education</h1>
       <p className="page-intro">
-        One computer science degree finished with honors, and a graduate one pointed straight at
-        artificial intelligence.
+        B.S. in Computer Science from UMKC, summa cum laude. Now doing the M.S. at Georgia Tech,
+        focused on AI.
       </p>
 
       <Reveal>

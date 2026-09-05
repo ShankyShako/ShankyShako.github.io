@@ -14,7 +14,7 @@ export type NavItem = { path: string; label: string; title: string; description:
 
 export const nav: NavItem[] = [
   { path: '/', label: 'Home', title: 'Genova Mongalo — AI Engineer',
-    description: 'AI/ML engineer working on generative models, transformers, and security applications.' },
+    description: 'AI/ML engineer building generative models, transformers, and on-device ML.' },
   { path: '/resume', label: 'Resume', title: 'Resume — Genova Mongalo',
     description: 'Resume of Genova Mongalo, AI/ML engineer.' },
   { path: '/education', label: 'Education', title: 'Education — Genova Mongalo',

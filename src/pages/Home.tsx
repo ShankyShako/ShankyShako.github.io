@@ -27,8 +27,9 @@ export function Home() {
         <p className="hero-sub">
           Most recently I was a federal AI/ML engineering contractor with the AFRL Sensors
           Directorate, where a game-theoretic approach to GAN training let a CNN classifier trained
-          only on generated data recognize real objects. The work keeps landing in the same place.
-          Machine learning for security, defense, and clinical systems that ship.
+          only on generated data recognize real objects. Before that it was ransomware detection,
+          cybersickness prediction, and signal propagation — different problems, same thread:
+          machine learning for systems where being wrong has consequences.
         </p>
 
         <ul className="hero-stats">
