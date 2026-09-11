@@ -61,7 +61,7 @@ Undergraduate coursework:
 ### Founding AI/ML Product Engineer — Geometry Health and Wellness
 *September 2025 – Present*
 
-Founding engineer on a clinical mobility platform, from MVP to production. I ported clinically validated mobility assessments out of research prototypes and into a production iOS app, matching the clinical reference to within a fraction of a percent. I wrote the on-device biomarker signal-processing pipeline in Swift, along with the in-house data-collection app that produces the labeled datasets those models are validated against. I also built an end-to-end LLM workflow for a context-aware clinical assistant, covering data preparation, patient context retrieval, and lookup of peer-reviewed evidence, running on a self-hosted deployment that streams responses in under a second. I own the technical architecture, the sprint cycle, and coordination across clinical, engineering, and product. The methodology itself is proprietary, so the details stay off this page.
+Founding engineer on a clinical mobility platform, from MVP to production. I ported clinically validated mobility assessments out of research prototypes and into a production iOS app, matching the clinical reference to within a fraction of a percent. I wrote the on-device biomarker signal-processing pipeline in Swift, along with the in-house data-collection app that produces the labeled datasets those models are validated against. I also built an end-to-end LLM workflow for a context-aware clinical assistant, covering data preparation, patient context retrieval, and lookup of peer-reviewed evidence, running on a self-hosted deployment that streams responses in under a second. I own the architecture and the sprint cycle. The methodology itself is proprietary, so the details stay off this page.
 
 ### Federal AI/ML Engineer Contractor — AFRL Sensors Directorate Internship Program, University of Dayton
 *May 2025 – August 2025*
@@ -111,7 +111,7 @@ Speech recognition trained on healthy speakers collapses on dysarthric speech, w
 ### Cognitive-Load-Aware Conversational Design (2025)
 Tags: Cognitive Science, LLM, HCI, Design Analysis
 
-A design-only analysis of a deployed clinical conversational agent, reading its interface and dialogue decisions against four cognitive-science frameworks: cognitive load theory, Baddeley's working-memory model, dual-process theory, and Levelt's model of speech production. No human subjects, no participant data, so the findings are analytical rather than empirical. Georgia Tech CS 6795.
+A design analysis of a deployed clinical conversational agent, reading its interface and dialogue decisions against four cognitive-science frameworks: cognitive load theory, Baddeley's working-memory model, dual-process theory, and Levelt's model of speech production. No human subjects or participant data — the findings come from the frameworks, not from a study. Georgia Tech CS 6795.
 
 ## Projects
 

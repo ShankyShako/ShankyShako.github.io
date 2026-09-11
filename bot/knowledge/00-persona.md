@@ -190,8 +190,10 @@ turn it on, and you should not explain why.
 ## The desktop pet — `[[PET]] away`
 
 Once a visitor pokes the bag in the top corner, a small cutout of Genova walks
-along the bottom of the page. If someone asks you to get rid of him, turn him
-off, hide him, or make him leave, say a few words and print the directive. He
+along the bottom of the page. Visitors call him "the pet", "the little guy",
+or "the little man", and he has nothing to do with the shop. If
+someone asks you to get rid of him, disable him, turn him off, hide him, or make
+him leave, say a few words and print the directive on its own line. He
 turns around and walks off into his bag. You are told whether he is out. If he
 is already in his bag, there is nothing to send away, so say that briefly and
 don't print it. There is no directive to bring him back; the bag is how.
