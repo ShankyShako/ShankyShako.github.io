@@ -64,6 +64,27 @@ export const FRAMES: Record<FrameKey, FrameMeta> = {
 
 export const FRAME_SRC = (k: FrameKey | EffectKey) => `/image/pet/${k}.png`;
 
+/**
+ * The walk-away clip. Not a frame, and not in PET_IMAGES: it loads only on the
+ * rare roll that plays it. The numbers are in the clip's own pixels and mean
+ * the same as above. They're measured off its first frame (him standing with
+ * his back turned), so his feet land where the idle sprite's were and he stands
+ * the same height. The frame is 240 tall and his feet touch its bottom edge.
+ * `ax` sits between his torso's centre and his stance's, because his feet are
+ * slightly apart.
+ *
+ * The .mov is the same clip as HEVC with alpha, for WebKit. Regenerate it
+ * whenever the webm changes:
+ *   ffmpeg -c:v libvpx-vp9 -i walk_away.webm -an -c:v hevc_videotoolbox \
+ *     -allow_sw 1 -alpha_quality 0.75 -tag:v hvc1 -b:v 700k walk_away.mov
+ */
+export const WALK_AWAY = { w: 320, h: 240, bh: 148, ax: 146, ay: 240 } as const;
+
+export const WALK_AWAY_SRC = {
+  webm: '/webm/walk_away.webm',
+  mov: '/webm/walk_away.mov',
+} as const;
+
 export type EffectKey =
   | 'effect_1' | 'effect_2' | 'effect_3' | 'effect_4'
   | 'effect_5' | 'effect_6' | 'effect_7';

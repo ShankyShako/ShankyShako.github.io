@@ -5,7 +5,7 @@ const REDIRECT_URL = 'https://www.youtube.com/watch?v=ntuH3q5gfo4';
 type KeyLike = Pick<KeyboardEvent, 'code' | 'ctrlKey' | 'metaKey' | 'shiftKey' | 'altKey'>;
 
 /**
- * Matches the original site's shortcut list. Keyed on `event.code` (the
+ * The original site's shortcut list, minus print and save. Keyed on `event.code` (the
  * physical key) rather than `event.key` (the character produced): on macOS,
  * Option+I emits the dead key "ˆ", not "i", so a character-based check would
  * miss every Cmd+Option combination.
@@ -19,8 +19,10 @@ export function isInspectorShortcut(e: KeyLike): boolean {
     // Inspect / element picker / console
     (ctrlOrMeta && e.shiftKey && is('KeyI', 'KeyC', 'KeyJ')) ||
     (e.metaKey && e.altKey && is('KeyI', 'KeyC', 'KeyJ')) ||
-    // View source, print, save
-    (ctrlOrMeta && is('KeyU', 'KeyP', 'KeyS'))
+    /* View source. Print (Cmd+P) and save (Cmd+S) are deliberately not trapped:
+       printing or saving the resume page is the single most likely thing a
+       visitor does here, and catching those shortcuts sent them off-site. */
+    (ctrlOrMeta && is('KeyU'))
   );
 }
 
@@ -47,25 +49,20 @@ export function useDevtoolsTrap(enabled = import.meta.env.PROD) {
       }
     };
 
-    /* Viewport/window gap widens sharply when a docked panel opens. */
-    const checkSize = () => {
-      const threshold = 160;
-      if (
-        window.outerWidth - window.innerWidth > threshold ||
-        window.outerHeight - window.innerHeight > threshold
-      ) {
-        trip();
-      }
-    };
-
     /*
-     * The size gap only exists for *docked* panels. Devtools opened in a
-     * separate window - or opened before this page loaded - leaves the
-     * viewport untouched, which is how the trap could be walked past.
+     * There used to be a second check here comparing `outerWidth/Height` to
+     * `innerWidth/Height`, on the theory that a docked panel widens the gap.
+     * It also widens under browser page zoom, which leaves `outerWidth` alone
+     * while shrinking `innerWidth` — so a visitor reading the site at 150%
+     * with no devtools open would trip it and get thrown off the page. Zooming
+     * in to read something is not the behaviour this is meant to catch, so the
+     * heuristic is gone.
      *
-     * This catches those: logging an object only formats it when a devtools
-     * console is actually rendering the entry, so the getter fires exactly
-     * when a panel is open. `console.table` keeps the noise out of the page.
+     * What remains detects an open panel directly, docked or undocked, and
+     * whether or not it was open before this page loaded: logging an object
+     * only formats it when a console is actually rendering the entry, so the
+     * getter fires exactly when a panel is open. `console.table` keeps the
+     * noise out of the page.
      */
     const probe = document.createElement('pre');
     let seen = false;
@@ -83,20 +80,13 @@ export function useDevtoolsTrap(enabled = import.meta.env.PROD) {
       if (seen) trip();
     };
 
-    const check = () => {
-      checkSize();
-      checkConsole();
-    };
-
-    check();
-    const id = window.setInterval(check, 1000);
+    checkConsole();
+    const id = window.setInterval(checkConsole, 1000);
     document.addEventListener('keydown', onKeyDown);
-    window.addEventListener('resize', checkSize);
 
     return () => {
       window.clearInterval(id);
       document.removeEventListener('keydown', onKeyDown);
-      window.removeEventListener('resize', checkSize);
     };
   }, [enabled]);
 }

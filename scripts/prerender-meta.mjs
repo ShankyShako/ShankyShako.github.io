@@ -57,6 +57,12 @@ for (const route of routes) {
   }
 }
 
+/* GitHub Pages has no rewrite rules. The per-route files above cover every path
+   in the nav, so this is only the catch-all: Pages serves 404.html for anything
+   else, React reads the URL and renders the real 404 page. Vercel never asks for
+   it, since vercel.json rewrites unknown paths to index.html instead. */
+writeFileSync(join(dist, '404.html'), template);
+
 const today = new Date().toISOString().slice(0, 10);
 writeFileSync(
   join(dist, 'sitemap.xml'),
@@ -78,4 +84,6 @@ writeFileSync(
   `User-agent: *\nAllow: /\n\nSitemap: ${ORIGIN}/sitemap.xml\n`,
 );
 
-console.log(`prerender-meta: ${routes.length} routes, sitemap.xml, robots.txt`);
+console.log(
+  `prerender-meta: ${routes.length} routes, 404.html, sitemap.xml, robots.txt`,
+);

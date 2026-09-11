@@ -23,6 +23,7 @@ export type StatEvent =
   | 'activate'      // the bag got poked and he fell in
   | 'throw'
   | 'escape'        // posted through the hole in the wall
+  | 'leave'         // the rare one: he walked off into the distance on his own
   | 'elmo_on'
   | 'elmo_off'
   | 'chat_open'

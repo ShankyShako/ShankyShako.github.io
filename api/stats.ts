@@ -31,7 +31,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 /* The only keys that may be written. Without this the endpoint is an open
    write to arbitrary Redis keys. */
 const EVENTS = [
-  'pose', 'pose_idle', 'activate', 'throw', 'escape',
+  'pose', 'pose_idle', 'activate', 'throw', 'escape', 'leave',
   'elmo_on', 'elmo_off', 'chat_open', 'chat_message',
 ] as const;
 type Event = (typeof EVENTS)[number];

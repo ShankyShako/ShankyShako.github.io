@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react';
 
 import { usePlaneSend } from '../hooks/usePlaneSend';
+import { apiBase, useCanonicalReachable } from '../lib/originProbe';
+import { site } from '../data/site';
 
 type Status = { kind: 'idle' | 'sending' | 'ok' | 'err'; message?: string };
 
@@ -12,6 +14,12 @@ export function ContactForm() {
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
   const sendBtn = useRef<HTMLButtonElement>(null);
   const launchPlane = usePlaneSend(sendBtn);
+
+  /* The mirror posts to gmango.dev. On a network that blocks it, the form has
+     nowhere to send — so offer the thing that still works instead of a button
+     that fails. `null` means the probe has not answered yet; the form renders
+     as normal until it does, since that is the common case. */
+  const canReachApi = useCanonicalReachable();
 
   const update = (field: keyof typeof values) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -41,7 +49,9 @@ export function ContactForm() {
 
     setStatus({ kind: 'sending' });
     try {
-      const res = await fetch('/api/contact', {
+      /* Same-origin everywhere except the GitHub Pages mirror, which is static
+         and borrows the canonical origin's functions. */
+      const res = await fetch(`${apiBase()}/api/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
@@ -76,6 +86,23 @@ export function ContactForm() {
         message: err instanceof Error ? err.message : 'Could not send. Try email instead.',
       });
     }
+  }
+
+  if (canReachApi === false) {
+    return (
+      <div>
+        <p className="intro-text">
+          This form posts to gmango.dev, and the network you are on blocks that
+          domain. Mail is not affected, so email still reaches me normally.
+        </p>
+        <a
+          className="btn btn-solid"
+          href={`mailto:${site.email}?subject=${encodeURIComponent('Portfolio contact')}`}
+        >
+          Email {site.email}
+        </a>
+      </div>
+    );
   }
 
   return (

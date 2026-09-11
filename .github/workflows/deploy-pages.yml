@@ -1,0 +1,56 @@
+name: Deploy mirror to GitHub Pages
+
+# gmango.dev is blocked by some school and corporate filters, which reset the
+# TLS connection on the SNI hostname alone. shankyshako.github.io is not, so it
+# serves the same build as a fallback. Every push to main rebuilds it, which
+# keeps the mirror in step with what Vercel is serving.
+#
+# The redirect script in index.html sends visitors on to gmango.dev whenever
+# they can actually reach it, so this is a fallback rather than a second site.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Only what Pages needs: read the repo, publish the artifact, sign it.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancelling it; queue behind it.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # No env overrides. The bundle decides at runtime, from the hostname it
+      # was loaded over, whether it is the mirror — so one artifact is correct
+      # on both hosts and there is no build flag to get out of sync.
+      - run: npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

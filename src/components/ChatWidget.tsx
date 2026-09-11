@@ -6,6 +6,7 @@ import { useBotStatus } from '../hooks/useBotStatus';
 import { useAudio } from '../context/AudioContext';
 import { ENTITY_BY_ALIAS, ENTITY_PATTERN } from '../data/entities';
 import { bump } from '../lib/stats';
+import { petPresence, sendPetAway } from '../lib/petBus';
 
 /**
  * Actions the gateway is willing to hand the browser. Every field has already
@@ -16,7 +17,8 @@ import { bump } from '../lib/stats';
 type Action =
   | { type: 'link'; href: string; label: string; kind: 'route' | 'file' | 'external' }
   | { type: 'suggest'; items: string[] }
-  | { type: 'music'; state: 'on' | 'off' };
+  | { type: 'music'; state: 'on' | 'off' }
+  | { type: 'pet'; state: 'away' };
 
 type Turn = { role: 'user' | 'assistant'; content: string; actions?: Action[] };
 
@@ -271,6 +273,7 @@ export function ChatWidget() {
             messages: history.map(({ role, content }) => ({ role, content })),
             page: pathname,
             music: !started ? 'silent' : muted ? 'muted' : 'playing',
+            pet: petPresence(),
             mode,
           }),
           signal: ctrl.signal,
@@ -338,10 +341,12 @@ export function ChatWidget() {
               const action = event.a;
               received = true;
 
-              /* Music applies itself; the rest wait for a click. */
+              /* Music and the pet apply themselves; the rest wait for a click. */
               if (action.type === 'music') {
                 const { started: on, muted: isMuted } = audioRef.current;
                 if (on && (action.state === 'off') !== isMuted) toggleMute();
+              } else if (action.type === 'pet') {
+                sendPetAway();
               } else {
                 setTurns((prev) => {
                   const next = [...prev];

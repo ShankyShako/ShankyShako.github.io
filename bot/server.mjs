@@ -247,13 +247,14 @@ function modePrompt(name) {
  *   [[LINK]]    key             — attach a button, resolved against the menu.
  *   [[SUGGEST]] one | two       — follow-up chips.
  *   [[MUSIC]]   on | off        — the site's background music.
+ *   [[PET]]     away            — the desktop pet walks off, back into his bag.
  *
  * Note what a directive can NOT do. There is no key that writes anything, and
  * LINK carries a menu key rather than a URL, so the worst a hijacked model can
  * emit is a link to a page of Genova's own site. Giving it raw hrefs would
  * make a successful prompt injection into a phishing-link generator.
  * ------------------------------------------------------------------------ */
-const TAGS = ['[[SAY]]', '[[LEAD]]', '[[LINK]]', '[[SUGGEST]]', '[[MUSIC]]'];
+const TAGS = ['[[SAY]]', '[[LEAD]]', '[[LINK]]', '[[SUGGEST]]', '[[MUSIC]]', '[[PET]]'];
 
 /* ---------------------------------------------------------------------------
  * Reasoning suppression.
@@ -466,6 +467,16 @@ function resolve({ tag, payload }, state) {
       if (want === 'on' || want === 'off') {
         state.earlyStop = true;
         return { type: 'music', state: want };
+      }
+      return null;
+    }
+
+    case 'PET': {
+      /* One direction only. Nothing brings him back: the bag in the corner is
+         the way in, and it's the visitor's to click. */
+      if (payload.toLowerCase().trim() === 'away') {
+        state.earlyStop = true;
+        return { type: 'pet', state: 'away' };
       }
       return null;
     }
@@ -1182,8 +1193,14 @@ async function handleChat(req, res) {
     silent: 'The background music has never started — the visitor has not found the easter egg that reveals it.',
   };
   const music = MUSIC[String(body.music ?? '')] ?? null;
+  /* Same for the desktop pet: "get rid of him" only makes sense while he's out. */
+  const PET = {
+    out: 'The desktop pet, a small cutout of Genova walking along the bottom of the page, is out.',
+    away: 'The desktop pet is tucked away in his bag in the corner.',
+  };
+  const pet = PET[String(body.pet ?? '')] ?? null;
 
-  const situation = [page && `The visitor is on the ${page} page.`, music]
+  const situation = [page && `The visitor is on the ${page} page.`, music, pet]
     .filter(Boolean)
     .join(' ');
 

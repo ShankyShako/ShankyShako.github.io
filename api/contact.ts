@@ -199,7 +199,34 @@ function rateLimited(ip: string) {
   return recent.length > LIMIT;
 }
 
+/* The GitHub Pages mirror is static, so its contact form posts here across
+   origins. Echoed rather than `*`, and only for hostnames we actually serve:
+   this handler acts on a POST body, so it should not be callable from any page
+   on the web. */
+const ALLOWED_ORIGINS = new Set([
+  'https://gmango.dev',
+  'https://www.gmango.dev',
+  'https://shankyshako.github.io',
+]);
+
+function applyCors(req: VercelRequest, res: VercelResponse) {
+  const origin = req.headers.origin;
+  if (typeof origin === 'string' && ALLOWED_ORIGINS.has(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Max-Age', '86400');
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  applyCors(req, res);
+
+  /* Preflight. Answered before the method guard below, which would otherwise
+     405 the browser's OPTIONS probe and fail the request that follows it. */
+  if (req.method === 'OPTIONS') return res.status(204).end();
+
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed.' });

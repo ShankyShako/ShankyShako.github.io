@@ -1467,6 +1467,10 @@
 
 .pet:active { cursor: grabbing; }
 
+/* Walking away isn't an invitation to grab him. */
+.pet.is-leaving,
+.pet.is-leaving:active { cursor: default; }
+
 .pet-fx {
   pointer-events: none;
   /* Behind him: the katakana is scenery, not a hat. */
@@ -1487,6 +1491,23 @@
   display: block;
   pointer-events: auto;
 }
+
+/* The rare walk-away. A clip, not a frame, but anchored the same way: the feet
+   sit on the wrapper's origin, so it replaces the idle sprite without a jump.
+   Invisible until its first frame has decoded, so the swap never shows an
+   empty box. PetWalkAway sets the fade duration inline. */
+.pet-video {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+  opacity: 0;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+  transition-property: opacity;
+  transition-timing-function: var(--ease);
+}
+
+.pet-video.is-shown { opacity: 1; }
+.pet-video.is-fading { opacity: 0; }
 
 /* Whole-pixel rendering. He is a photo cutout blown up from a phone snap, and
    smoothing him would be arguing with the aesthetic.
@@ -1651,6 +1672,52 @@
   to   { opacity: 0.18; }
 }
 
+/* --------------------------------------------------------------------------
+   The dissolve
+
+   Walking onto /research or /experience ends him. PetDissolve deals the
+   sprite's pixels across a stack of canvases and hands each one its own
+   distance, lean and blur; all this does is fly them.
+
+   Geometry deliberately mirrors .pet above: a 0x0 marker pinned at the viewport
+   origin, transform-origin at his feet, carrying the matrix copied off the
+   wrapper. That is what makes the ashes start exactly where he was standing,
+   rotation and facing included.
+   -------------------------------------------------------------------------- */
+.pet-dissolve {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+  /* Just under the pet's own 590, so a fresh bag in the corner is never hidden
+     behind the last one's remains. */
+  z-index: 589;
+  pointer-events: none;
+}
+
+.pet-ash {
+  position: absolute;
+  will-change: transform, opacity, filter;
+  animation-name: petAsh;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-fill-mode: both;
+}
+
+@keyframes petAsh {
+  from {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+    opacity: 1;
+    filter: blur(0);
+  }
+  to {
+    transform: translate3d(var(--dx), var(--dy), 0) rotate(var(--rot));
+    opacity: 0;
+    filter: blur(var(--blur));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pet-counter { animation: none; }
   .pet.is-peek .pet-frame { animation: none; }
@@ -1660,6 +1727,9 @@
   .pet-hole.is-closing { animation: none; }
   .pet-dust { animation: none; opacity: 0; }
   .pet-frame { transition: none; }
+  /* DesktopPet skips the effect entirely under Reduce Motion, so this is only
+     a backstop for a preference flipped mid-flight. */
+  .pet-ash { animation: none; opacity: 0; }
 }
 
 /* ==========================================================================

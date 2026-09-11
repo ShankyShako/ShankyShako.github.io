@@ -7,6 +7,13 @@ import {
 import type { EffectKey, FrameKey } from '../components/petFrames';
 import { bump } from '../lib/stats';
 
+declare global {
+  interface Window {
+    /** Dev builds only: send him off now. Returns what it did. */
+    __petLeave?: () => string;
+  }
+}
+
 /* --------------------------------------------------------------------------
  * Tuning. Everything is px/second or degrees/second and gets multiplied by a
  * clamped delta, so none of it is framerate-dependent.
@@ -73,6 +80,21 @@ const NEAR_PX = 170;          // how close to the chat button counts as "near"
 const FAB_COOLDOWN_MS = 12_000;
 const POINT_S = 1.2;
 
+/* --------------------------------------------------------------------------
+ * The other way out.
+ *
+ * Once in a very long while he stops, turns his back on the page, and walks
+ * off into the distance by himself. It's a clip, not a sprite (PetWalkAway),
+ * because two walk frames can't draw a figure shrinking away from you.
+ *
+ * Rolled once per decision in chooseNext, which comes round every 1–3s. Someone
+ * watching him nonstop sees it about once every four or five hours, so most
+ * visitors never will. It ends the way the hole does: bag back in the corner.
+ * The chat bot can also send him off on request (requestLeave), through the
+ * same exit.
+ * ----------------------------------------------------------------------- */
+const LEAVE_CHANCE = 0.0001;
+
 
 /* --------------------------------------------------------------------------
  * Sound. Jet Set Radio chops, played as a rising combo.
@@ -108,7 +130,7 @@ const SFX_ON_IDLE_POSES = false;
 
 type Phase =
   | 'peek' | 'falling' | 'flying' | 'landing'
-  | 'idle' | 'walking' | 'posing' | 'grabbed' | 'escaping';
+  | 'idle' | 'walking' | 'posing' | 'grabbed' | 'escaping' | 'leaving';
 
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 const pick = <T,>(xs: readonly T[]) => xs[Math.floor(Math.random() * xs.length)];
@@ -151,6 +173,8 @@ export function usePetEngine() {
   /* Drawn only while he is held or in flight — that is the whole window in
      which the hole is any use, and the only time it is worth the ink. */
   const [holeShown, setHoleShown] = useState(false);
+  /* The walk-away clip is playing. The component swaps the sprite for it. */
+  const [leaving, setLeaving] = useState(false);
 
   const s = useRef({
     phase: 'peek' as Phase,
@@ -167,6 +191,8 @@ export function usePetEngine() {
     lastPose: null as FrameKey | null,
     lastEffect: null as EffectKey | null,
     sfxUntil: 0,
+    /* Someone asked him to leave while he was in the air or being held. */
+    leaveQueued: false,
     frame: PEEK_FRAME,
     drag: null as null | {
       id: number; sx: number; sy: number; ox: number; oy: number;
@@ -180,6 +206,11 @@ export function usePetEngine() {
      a stale playSfx. Same pattern ChatWidget uses for its audio mirror. */
   const sfxRef = useRef(playSfx);
   sfxRef.current = playSfx;
+
+  /* Filled in by the loop's effect, which is where leave() and the simulation
+     state live. Stable from the outside so subscribers never re-attach. */
+  const leaveRef = useRef<() => string>(() => 'Not ready yet.');
+  const requestLeave = useCallback(() => leaveRef.current(), []);
 
   const setFrame = useCallback((next: FrameKey) => {
     if (s.current.frame === next) return;
@@ -271,11 +302,24 @@ export function usePetEngine() {
     p.stateClock = 0; p.stateDur = 0;
     p.combo = 0; p.comboMaxed = false; p.lastPoseAt = -Infinity; p.sfxUntil = 0;
     p.fabCooldown = 0;
+    p.leaveQueued = false;
     setHoleShown(false);
+    setLeaving(false);
     setEffect(null);
     setPeeking(true);
     setFrame(PEEK_FRAME);
   }, [setFrame]);
+
+  /**
+   * The clip wouldn't load or play. All he did was stand still, so he just
+   * picks up where he left off. A clip that ends normally calls resetToCorner
+   * instead.
+   */
+  const abortLeaving = useCallback(() => {
+    if (s.current.phase !== 'leaving') return;
+    setLeaving(false);
+    enter('idle', rand(0.6, 1.2), 'idle');
+  }, [enter]);
 
   /** A different overlay from the one before it, recorded for next time. */
   const nextEffect = useCallback(() => {
@@ -342,6 +386,40 @@ export function usePetEngine() {
     window.addEventListener('orientationchange', onResize);
     document.addEventListener('visibilitychange', onVis);
 
+    /* The rare exit (see LEAVE_CHANCE). He stops where he is and hands over to
+       PetWalkAway. A press that hasn't become a grab yet gets dropped;
+       otherwise a pointermove during the clip would pick him up. */
+    const leave = () => {
+      p.drag = null;
+      p.vx = 0; p.vy = 0; p.rot = 0; p.facing = 1;
+      p.y = groundY();
+      setLeaving(true);
+      enter('leaving', Infinity, 'idle');
+    };
+
+    /* leave() from any state, for the chat bot and the dev console. On the
+       floor he goes now. Held, thrown, falling or landing, he goes once he's
+       back on his feet, when chooseNext picks the request up. Reduce Motion
+       gets the outcome without the clip. It reports what it did, because a
+       request that silently does nothing looks exactly like a broken one. */
+    leaveRef.current = () => {
+      if (p.phase === 'peek') return 'Nothing to do: he is in the bag.';
+      if (p.phase === 'leaving' || p.phase === 'escaping') return 'He is already on his way out.';
+      if (p.reduced) {
+        resetToCorner();
+        return 'Back in the bag (Reduce Motion is on, so no walk-away clip).';
+      }
+      if (p.phase === 'idle' || p.phase === 'walking' || p.phase === 'posing') {
+        leave();
+        return 'Walking away.';
+      }
+      p.leaveQueued = true;
+      return 'He will walk away as soon as he is back on his feet.';
+    };
+
+    /* Nobody is going to watch him for five hours to test this. */
+    if (import.meta.env.DEV) window.__petLeave = () => leaveRef.current();
+
     const chooseNext = () => {
       /* Weighted, with two rules on top: never come to rest inside the audio
          bar or chat button's footprint (walk through, just do not park there),
@@ -350,10 +428,23 @@ export function usePetEngine() {
       const parked = p.x < p.leftKeepOut || p.x > p.rightKeepOut;
       const roll = Math.random();
 
+      /* A walk-away someone asked for while he was busy (see leaveRef). */
+      if (p.leaveQueued) {
+        p.leaveQueued = false;
+        if (p.reduced) resetToCorner();
+        else leave();
+        return;
+      }
+
       if (p.reduced) {
         /* Motion the visitor did not ask for is out; he still changes pose. */
         striking(performance.now(), pickFresh(POSE_FRAMES, p.lastPose), rand(2.5, 5),
           SFX_ON_IDLE_POSES);
+        return;
+      }
+
+      if (Math.random() < LEAVE_CHANCE) {
+        leave();
         return;
       }
 
@@ -504,7 +595,9 @@ export function usePetEngine() {
           break;
         }
 
+        /* Held by the pointer, or standing still while the clip walks him off. */
         case 'grabbed':
+        case 'leaving':
           break;
       }
 
@@ -539,6 +632,7 @@ export function usePetEngine() {
       window.removeEventListener('orientationchange', onResize);
       document.removeEventListener('visibilitychange', onVis);
       p.drag = null;
+      if (import.meta.env.DEV) delete window.__petLeave;
     };
   }, [enter, groundY, halfW, holeTop, nextEffect, place, resetToCorner, setFrame, striking]);
 
@@ -552,7 +646,8 @@ export function usePetEngine() {
     /* Left button only. A right- or middle-press must not start a grab, or the
        sprite would follow a menu-click around the page. */
     if (e.pointerType === 'mouse' && e.button !== 0) return;
-    if (p.phase === 'escaping') return;   // he has left; let him go
+    /* He has left, or is leaving; let him go. */
+    if (p.phase === 'escaping' || p.phase === 'leaving') return;
     e.preventDefault();
     /* Throws InvalidPointerId if the pointer is no longer active by the time
        this runs. Capture is an optimisation here — losing it costs a drag that
@@ -605,7 +700,10 @@ export function usePetEngine() {
     (now: number) => {
       const p = s.current;
       if (p.phase === 'peek' || p.phase === 'grabbed'
-        || p.phase === 'falling' || p.phase === 'flying') return;
+        || p.phase === 'falling' || p.phase === 'flying'
+        /* A pose would cancel either exit. In `escaping` he'd stop off-screen,
+           and the next roll could start the walk-away out of view. */
+        || p.phase === 'escaping' || p.phase === 'leaving') return;
       /* The clip length is the throttle — comboSfx refuses to retrigger over
          itself, so there is no second cooldown to keep in step with it. */
       if (now < p.sfxUntil) return;
@@ -676,7 +774,8 @@ export function usePetEngine() {
   );
 
   return {
-    wrapRef, fxRef, frame, effect, peeking, place, holeShown,
+    wrapRef, fxRef, frame, effect, peeking, place, holeShown, resetToCorner,
+    leaving, abortLeaving, requestLeave,
     holeStyle: { top: `calc(${HOLE_Y_FRAC * 100}% - ${HOLE_H / 2}px)`, height: HOLE_H },
     handlers: {
       onPointerDown,
