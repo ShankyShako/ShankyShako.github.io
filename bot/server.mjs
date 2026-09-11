@@ -1196,18 +1196,9 @@ async function handleChat(req, res) {
   };
   const music = MUSIC[String(body.music ?? '')] ?? null;
   /* Same for the desktop pet: "get rid of him" only makes sense while he's out. */
-  /* The instruction rides along with the status, right before the visitor's
-     turn. The persona says the same thing thousands of tokens earlier, and a
-     model that has just read the shop's price list reaches for that instead. */
   const PET = {
-    out:
-      'The desktop pet (the little cutout of Genova walking along the bottom of the page, ' +
-      'which visitors may call "the pet" or "the little guy") is out. If the visitor asks to ' +
-      'hide, disable, or get rid of him, or to make him leave, answer in one short sentence ' +
-      'and print [[PET]] away on its own line.',
-    away:
-      'The desktop pet (the little cutout of Genova) is tucked away in his bag in the corner. ' +
-      'If the visitor asks to get rid of him, say he is already in his bag and do not print [[PET]].',
+    out: 'The desktop pet, a small cutout of Genova walking along the bottom of the page, is out.',
+    away: 'The desktop pet is tucked away in his bag in the corner.',
   };
   const pet = PET[String(body.pet ?? '')] ?? null;
 
@@ -1215,39 +1206,12 @@ async function handleChat(req, res) {
     .filter(Boolean)
     .join(' ');
 
-  /* A clear "send the pet away" skips the model entirely (see petIntent.mjs).
-     Only for a client that reports where the pet is: an older build sends no
-     `pet` field and wouldn't know what to do with the action either, so its
-     visitors still get the model. */
-  const lastTurn = turns[turns.length - 1].content;
-  if (mode === 'chat' && (body.pet === 'out' || body.pet === 'away') && asksPetToLeave(lastTurn)) {
-    const isOut = body.pet === 'out';
-    const reply = isOut ? 'Off he goes, back into his bag.' : "He's already tucked away in his bag in the corner.";
-    res.writeHead(200, {
-      'Content-Type': 'application/x-ndjson; charset=utf-8',
-      'Cache-Control': 'no-store',
-      'X-Accel-Buffering': 'no',
-    });
-    res.write(JSON.stringify({ t: reply }) + '\n');
-    if (isOut) res.write(JSON.stringify({ a: { type: 'pet', state: 'away' } }) + '\n');
-    res.write(JSON.stringify({ done: true }) + '\n');
-    res.end();
-    if (DEBUG) console.log(`[bot] pet shortcut (pet ${body.pet}): ${JSON.stringify(lastTurn)}`);
-    /* Same shape as the model path's entry. `actions` there counts buttons
-       only, so the pet isn't counted here either; `shortcut` marks the row. */
-    logQuestion({
-      ts: new Date().toISOString(),
-      visitor: visitorId(ip),
-      page,
-      mode,
-      q: lastTurn,
-      chars: lastTurn.length,
-      replyChars: reply.length,
-      actions: 0,
-      lead: false,
-      ms: 0,
-      shortcut: 'pet',
-    });
+  /* "hide the pet" and the like don't need the model (see petIntent.mjs). */
+  if (mode === 'chat' && body.pet === 'out' && asksPetToLeave(turns[turns.length - 1].content)) {
+    res.writeHead(200, { 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Cache-Control': 'no-store' });
+    res.write(JSON.stringify({ t: 'Off he goes, back into his bag.' }) + '\n');
+    res.write(JSON.stringify({ a: { type: 'pet', state: 'away' } }) + '\n');
+    res.end(JSON.stringify({ done: true }) + '\n');
     return;
   }
 

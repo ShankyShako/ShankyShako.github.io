@@ -7,46 +7,27 @@
     <!-- Mirror failover. gmango.dev is blocked by some school and corporate
          filters, which reset the TLS connection on the SNI hostname alone; a
          blocked origin never reaches the browser, so it cannot redirect anyone.
-         Only the hostname that loaded can decide. This runs first, before the
-         fonts and the bundle, so a visitor who can reach the real domain is
-         handed over before anything paints. `?stay=1` links the mirror on
-         purpose. The result is shared with src/lib/originProbe.ts. -->
+         Only the hostname that loaded can decide. `?stay=1` links the mirror
+         on purpose.
+         Probes every load and remembers nothing: caching a failed probe used
+         to pin the tab to the mirror for the whole session after one slow
+         request. Goes straight to www, which is where gmango.dev redirects. -->
     <script>
       (function () {
         if (location.hostname !== 'shankyshako.github.io') return;
         if (new URLSearchParams(location.search).has('stay')) return;
 
-        var KEY = 'canon-reachable';
-        var read = function () {
-          try { return sessionStorage.getItem(KEY); } catch (e) { return null; }
-        };
-        var write = function (v) {
-          try { sessionStorage.setItem(KEY, v); } catch (e) {}
-        };
-        var go = function () {
-          location.replace(
-            'https://gmango.dev' + location.pathname + location.search + location.hash
-          );
-        };
-
-        var seen = read();
-        if (seen === '1') return go();
-        if (seen === '0') return;
-
+        var ORIGIN = 'https://www.gmango.dev';
         var ac = new AbortController();
-        var timer = setTimeout(function () { ac.abort(); }, 1500);
-        fetch('https://gmango.dev/image/favicon-32.png', {
-          mode: 'no-cors',
-          cache: 'no-store',
-          signal: ac.signal
-        }).then(function () {
-          clearTimeout(timer);
-          write('1');
-          go();
-        }).catch(function () {
-          clearTimeout(timer);
-          write('0');
-        });
+        setTimeout(function () { ac.abort(); }, 5000);
+
+        fetch(ORIGIN + '/image/favicon-32.png', { mode: 'no-cors', cache: 'no-store', signal: ac.signal })
+          .then(function () {
+            /* Pages serves /resume as /resume/, which the site's router 404s. */
+            var path = location.pathname.replace(/\/+$/, '') || '/';
+            location.replace(ORIGIN + path + location.search + location.hash);
+          })
+          .catch(function () {});
       })();
     </script>
 

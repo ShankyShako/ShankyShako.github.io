@@ -5,10 +5,11 @@ const REDIRECT_URL = 'https://www.youtube.com/watch?v=ntuH3q5gfo4';
 type KeyLike = Pick<KeyboardEvent, 'code' | 'ctrlKey' | 'metaKey' | 'shiftKey' | 'altKey'>;
 
 /**
- * The original site's shortcut list, minus print and save. Keyed on `event.code` (the
- * physical key) rather than `event.key` (the character produced): on macOS,
- * Option+I emits the dead key "ˆ", not "i", so a character-based check would
- * miss every Cmd+Option combination.
+ * Inspector, console and view-source shortcuts. Keyed on `event.code` (the
+ * physical key) rather than `event.key`: on macOS, Option+I emits the dead key
+ * "ˆ", not "i", so a character-based check would miss every Cmd+Option combo.
+ * Print (Cmd+P) and save (Cmd+S) stay allowed; saving the resume is a normal
+ * thing for a recruiter to do.
  */
 export function isInspectorShortcut(e: KeyLike): boolean {
   const ctrlOrMeta = e.ctrlKey || e.metaKey;
@@ -16,20 +17,24 @@ export function isInspectorShortcut(e: KeyLike): boolean {
 
   return (
     e.code === 'F12' ||
-    // Inspect / element picker / console
     (ctrlOrMeta && e.shiftKey && is('KeyI', 'KeyC', 'KeyJ')) ||
     (e.metaKey && e.altKey && is('KeyI', 'KeyC', 'KeyJ')) ||
-    /* View source. Print (Cmd+P) and save (Cmd+S) are deliberately not trapped:
-       printing or saving the resume page is the single most likely thing a
-       visitor does here, and catching those shortcuts sent them off-site. */
     (ctrlOrMeta && is('KeyU'))
   );
 }
 
 /**
- * The original site's devtools deterrent, carried over. It is decorative —
- * anyone determined can still read the bundle — so it only runs in production
- * builds, keeping `npm run dev` usable.
+ * Leaves visitors what a recruiter needs: reading, clicking, selecting and
+ * copying text, printing and saving. Anything aimed at the developer tools
+ * sends them off-site. Decorative rather than security, so it only runs in
+ * production builds and `npm run dev` stays usable.
+ *
+ * - Shortcuts for the inspector, console and view-source redirect.
+ * - The right-click menu is disabled; that's where "Inspect Element" lives.
+ * - An open panel redirects, however it was opened. A `debugger` statement
+ *   does nothing until developer tools are attached, then pauses the page, so
+ *   a long gap across one means a panel is open. Page zoom can't trip it, which
+ *   is what killed the old window-size comparison.
  */
 export function useDevtoolsTrap(enabled = import.meta.env.PROD) {
   useEffect(() => {
@@ -49,44 +54,24 @@ export function useDevtoolsTrap(enabled = import.meta.env.PROD) {
       }
     };
 
-    /*
-     * There used to be a second check here comparing `outerWidth/Height` to
-     * `innerWidth/Height`, on the theory that a docked panel widens the gap.
-     * It also widens under browser page zoom, which leaves `outerWidth` alone
-     * while shrinking `innerWidth` — so a visitor reading the site at 150%
-     * with no devtools open would trip it and get thrown off the page. Zooming
-     * in to read something is not the behaviour this is meant to catch, so the
-     * heuristic is gone.
-     *
-     * What remains detects an open panel directly, docked or undocked, and
-     * whether or not it was open before this page loaded: logging an object
-     * only formats it when a console is actually rendering the entry, so the
-     * getter fires exactly when a panel is open. `console.table` keeps the
-     * noise out of the page.
-     */
-    const probe = document.createElement('pre');
-    let seen = false;
-    Object.defineProperty(probe, 'id', {
-      get() {
-        seen = true;
-        return '';
-      },
-    });
+    const onContextMenu = (e: MouseEvent) => e.preventDefault();
 
-    const checkConsole = () => {
-      seen = false;
-      console.table([probe]);
-      console.clear();
-      if (seen) trip();
+    const checkOpen = () => {
+      const start = performance.now();
+      // eslint-disable-next-line no-debugger
+      debugger;
+      if (performance.now() - start > 100) trip();
     };
 
-    checkConsole();
-    const id = window.setInterval(checkConsole, 1000);
+    checkOpen();
+    const id = window.setInterval(checkOpen, 1000);
     document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('contextmenu', onContextMenu);
 
     return () => {
       window.clearInterval(id);
       document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('contextmenu', onContextMenu);
     };
   }, [enabled]);
 }

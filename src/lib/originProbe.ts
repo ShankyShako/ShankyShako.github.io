@@ -6,23 +6,17 @@ import { useEffect, useState } from 'react';
  * hostname alone. GitHub Pages serves the same build at a hostname those
  * filters let through, so the site stays readable either way.
  *
- * The failover only works in one direction. A blocked origin never gets a byte
- * to the browser, so it cannot redirect anyone; only the reachable hostname can
- * decide where a visitor should end up. The redirect itself lives in an inline
- * script in index.html so it can run before the bundle loads. This module is
- * the same question asked from inside React, for the parts of the UI that have
- * to degrade when the API is out of reach.
+ * The redirect itself lives in an inline script in index.html so it runs before
+ * the bundle. This is the same question asked from inside React, for the parts
+ * of the UI that have to degrade when the API is out of reach.
  */
 
-export const CANONICAL_ORIGIN = 'https://gmango.dev';
-
-/** Kept explicit so local dev and Vercel previews behave exactly as production. */
-const MIRROR_HOSTS = new Set(['shankyshako.github.io']);
-
-const KEY = 'canon-reachable';
+/* www, not the apex: the apex redirects there, and a redirect in front of a
+   cross-origin POST breaks the CORS preflight. */
+export const CANONICAL_ORIGIN = 'https://www.gmango.dev';
 
 export function isMirror(): boolean {
-  return MIRROR_HOSTS.has(window.location.hostname);
+  return window.location.hostname === 'shankyshako.github.io';
 }
 
 /**
@@ -34,49 +28,24 @@ export function apiBase(): string {
   return isMirror() ? CANONICAL_ORIGIN : '';
 }
 
-/* Shared with the inline script in index.html, which usually gets there first.
-   sessionStorage throws outright in some privacy modes, so every access is
-   guarded and a failure just means the probe runs again. */
-function cached(): boolean | null {
-  try {
-    const v = sessionStorage.getItem(KEY);
-    return v === null ? null : v === '1';
-  } catch {
-    return null;
-  }
-}
-
+/* Not cached. A remembered failure is how the mirror used to get stuck. */
 export async function probeCanonical(): Promise<boolean> {
-  const hit = cached();
-  if (hit !== null) return hit;
-
   const ac = new AbortController();
-  const timer = window.setTimeout(() => ac.abort(), 1500);
-  let ok = false;
+  const timer = window.setTimeout(() => ac.abort(), 5000);
   try {
     /* `no-cors` returns an opaque response, which is all this needs: the
-       question is whether the connection completes, not what came back. It
-       also means the image needs no CORS headers. A filtered network resets
-       during the handshake and rejects in well under 100ms, so the timeout
-       only matters on a genuinely slow link. */
+       question is whether the connection completes, not what came back. */
     await fetch(`${CANONICAL_ORIGIN}/image/favicon-32.png`, {
       mode: 'no-cors',
       cache: 'no-store',
       signal: ac.signal,
     });
-    ok = true;
+    return true;
   } catch {
-    ok = false;
+    return false;
   } finally {
     window.clearTimeout(timer);
   }
-
-  try {
-    sessionStorage.setItem(KEY, ok ? '1' : '0');
-  } catch {
-    /* private mode; the answer just is not remembered */
-  }
-  return ok;
 }
 
 /**
@@ -85,12 +54,10 @@ export async function probeCanonical(): Promise<boolean> {
  * that origin, so it is reachable by definition.
  */
 export function useCanonicalReachable(): boolean | null {
-  const [reachable, setReachable] = useState<boolean | null>(() =>
-    isMirror() ? cached() : true,
-  );
+  const [reachable, setReachable] = useState<boolean | null>(() => (isMirror() ? null : true));
 
   useEffect(() => {
-    if (!isMirror() || reachable !== null) return;
+    if (!isMirror()) return;
     let live = true;
     void probeCanonical().then((r) => {
       if (live) setReachable(r);
@@ -98,7 +65,7 @@ export function useCanonicalReachable(): boolean | null {
     return () => {
       live = false;
     };
-  }, [reachable]);
+  }, []);
 
   return reachable;
 }
