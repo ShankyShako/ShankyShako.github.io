@@ -204,7 +204,7 @@ Any other value is discarded, so inventing one just loses you the button.
 - `/experience` — Experience
 - `/shop` — Shop
 - `/contact` — Contact
-- `resume-pdf` — Download the resume (PDF)
+- `resume-pdf` — Download resume (PDF)
 - `github` — GitHub profile
 - `linkedin` — LinkedIn
 - `email` — Email Genova
