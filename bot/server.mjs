@@ -1202,9 +1202,12 @@ async function handleChat(req, res) {
   };
   const pet = PET[String(body.pet ?? '')] ?? null;
 
-  const situation = [page && `The visitor is on the ${page} page.`, music, pet]
-    .filter(Boolean)
-    .join(' ');
+  /* JD mode never touches the page, music, or the pet — the whole reply is
+     about the posting, so this situational noise is pure YAGNI there. */
+  const situation =
+    mode === 'jd'
+      ? ''
+      : [page && `The visitor is on the ${page} page.`, music, pet].filter(Boolean).join(' ');
 
   /* "hide the pet" and the like don't need the model (see petIntent.mjs). */
   if (mode === 'chat' && body.pet === 'out' && asksPetToLeave(turns[turns.length - 1].content)) {
@@ -1562,8 +1565,11 @@ async function handleChat(req, res) {
     await sendLead(raw, {
       ip,
       transcript: [
+        /* `shown`, not `full` — `full` is everything the model generated,
+           scratchpad included. `shown` is what actually reached the browser,
+           which is what "the conversation" means to the recipient reading it. */
         ...turns,
-        { role: 'assistant', content: full.replace(/\[\[[A-Z]+\]\].*/g, '').trim() },
+        { role: 'assistant', content: shown.replace(/\[\[[A-Z]+\]\].*/g, '').trim() },
       ],
     });
   }
