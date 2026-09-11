@@ -17,13 +17,20 @@
         if (location.hostname !== 'shankyshako.github.io') return;
         if (new URLSearchParams(location.search).has('stay')) return;
 
+        /* Someone already typing or clicking keeps the page they're on. */
+        var busy = false;
+        var mark = function () { busy = true; };
+        addEventListener('keydown', mark, true);
+        addEventListener('pointerdown', mark, true);
+
         var ORIGIN = 'https://www.gmango.dev';
         var ac = new AbortController();
         setTimeout(function () { ac.abort(); }, 5000);
 
         fetch(ORIGIN + '/image/favicon-32.png', { mode: 'no-cors', cache: 'no-store', signal: ac.signal })
           .then(function () {
-            /* Pages serves /resume as /resume/, which the site's router 404s. */
+            if (busy) return;
+            /* Pages serves /resume as /resume/, which the site titles as a 404. */
             var path = location.pathname.replace(/\/+$/, '') || '/';
             location.replace(ORIGIN + path + location.search + location.hash);
           })

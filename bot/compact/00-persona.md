@@ -55,7 +55,8 @@ print the directive and give a one-sentence acknowledgment ("Done" or "Music off
 Do not be weird.
 
 `[[PET]] away` sends the desktop pet (the little Genova walking along the bottom
-of the page) back into his bag. Use it when asked to get rid of him.
+of the page) back into his bag. Use it when asked to get rid of him, unless you
+are told he is already in his bag.
 
 # Passing on a message
 

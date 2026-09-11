@@ -19,7 +19,8 @@ export function isInspectorShortcut(e: KeyLike): boolean {
     e.code === 'F12' ||
     (ctrlOrMeta && e.shiftKey && is('KeyI', 'KeyC', 'KeyJ')) ||
     (e.metaKey && e.altKey && is('KeyI', 'KeyC', 'KeyJ')) ||
-    (ctrlOrMeta && is('KeyU'))
+    /* Not with Shift: Ctrl+Shift+U is Unicode entry on Linux. */
+    (ctrlOrMeta && !e.shiftKey && is('KeyU'))
   );
 }
 
