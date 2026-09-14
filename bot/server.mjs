@@ -2,12 +2,10 @@
 /**
  * gmango.dev chat gateway.
  *
- * Sits between the public internet (via Tailscale Funnel or Cloudflare Tunnel)
- * and a local Ollama. Ollama itself is NEVER exposed: it binds to 127.0.0.1 and
- * only this process talks to it. That matters because Ollama's own API has no
- * auth, no rate limit, and lets the caller pick the model, the system prompt,
- * and unbounded generation lengths — publishing it directly hands a stranger
- * your laptop's GPU.
+ * Sits between the public internet and hosted model APIs (Groq, OpenRouter).
+ * The API keys never leave this process, and the browser never picks the
+ * model, the system prompt, or the generation length — a public endpoint that
+ * let it would hand a stranger your free-tier quota.
  *
  * Everything the model is told about Genova lives in ./knowledge/*.md and is
  * assembled here, server-side. The browser sends only conversation turns.
@@ -38,83 +36,89 @@ const here = dirname(fileURLToPath(import.meta.url));
 if (existsSync(join(here, '.env'))) process.loadEnvFile(join(here, '.env'));
 
 const PORT = Number(process.env.BOT_PORT ?? 8787);
-const GROQ_API_KEY = process.env.GROQ_API_KEY ?? '';
-const USE_GROQ = !!GROQ_API_KEY;
-const OLLAMA = (process.env.OLLAMA_URL ?? 'http://127.0.0.1:11434').replace(/\/$/, '');
-const MODEL = process.env.BOT_MODEL ?? (USE_GROQ ? 'llama-3.1-8b-instant' : 'qwen3:8b');
-const OLLAMA_MODEL = process.env.BOT_OLLAMA_FALLBACK_MODEL ?? 'qwen3:4b';
+
+/* ---------------------------------------------------------------------------
+ * Backends.
+ *
+ * Each mode has a chain of "provider:model" entries, tried in order. A 429, a
+ * 5xx, a network error, or no response within STALL_MS moves the request to
+ * the next entry. Only failures before the reply starts fail over: once text
+ * is streaming to the browser, that model finishes the answer.
+ * ------------------------------------------------------------------------ */
+const PROVIDERS = {
+  groq: { url: 'https://api.groq.com/openai/v1/chat/completions', key: process.env.GROQ_API_KEY ?? '' },
+  openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', key: process.env.OPENROUTER_API_KEY ?? '' },
+};
+
+/* Splits on the FIRST colon only: OpenRouter ids carry their own (`…:free`). */
+function parseChain(name, spec) {
+  const chain = [];
+  for (const raw of spec.split(',').map((s) => s.trim()).filter(Boolean)) {
+    const at = raw.indexOf(':');
+    const provider = raw.slice(0, at);
+    const model = raw.slice(at + 1);
+    if (at < 1 || !model || !PROVIDERS[provider]) {
+      console.warn(`[bot] ${name}: skipping "${raw}" — expected groq:<model> or openrouter:<model>`);
+    } else if (!PROVIDERS[provider].key) {
+      console.warn(`[bot] ${name}: skipping ${raw} — ${provider.toUpperCase()}_API_KEY is not set`);
+    } else if (provider === 'openrouter' && !model.endsWith(':free')) {
+      /* An account holding credits bills a paid id. Free ids only. */
+      console.warn(`[bot] ${name}: skipping ${raw} — only :free OpenRouter models are allowed`);
+    } else {
+      chain.push({ id: raw, provider, model });
+    }
+  }
+  return chain;
+}
+
+/* Groq counts each model's quota separately, so a second Groq model on the
+   same key covers the first one's per-minute ceiling. */
+const CHAT_CHAIN = parseChain(
+  'BOT_CHAT_CHAIN',
+  process.env.BOT_CHAT_CHAIN ?? 'groq:qwen/qwen3.6-27b,groq:llama-3.3-70b-versatile',
+);
 
 /* Job-description matching is the one answer where being wrong is expensive —
    a fabricated match sends someone into an interview to be asked about a tool
-   they have never opened. It is also rare, so it can afford a bigger, slower
-   model than the chat path. Unset means "same model as everything else". */
-const JD_MODEL = process.env.BOT_JD_MODEL || MODEL;
-
-/* Keeps the weights resident between visitors. A cold load is ~2s of dead air
-   on the first message; 30m of idle residency costs nothing but RAM. */
-const KEEP_ALIVE = process.env.BOT_KEEP_ALIVE ?? '30m';
-
-/* Short ceiling on replies. This is a site chat bubble, not an essay window —
-   and generation time is linear in tokens produced. */
-/* Covers the private scratchpad AND the spoken answer, since both come out of
-   one generation. Nothing here is billed — the cost is latency, and generation
-   time is linear in tokens, so a model that reasons for 800 tokens keeps the
-   visitor waiting for all of them before the first word appears. */
-const MAX_TOKENS = Number(process.env.BOT_MAX_TOKENS ?? 1500);
-/* 12288, not 8192: the assembled system prompt is ~9.6k tokens on its own, so
-   8192 cannot hold it before the visitor has typed anything. See the VRAM
-   table in docs/CHATBOT.md before raising this on a small GPU — the KV cache
-   grows linearly with it. */
-const NUM_CTX = Number(process.env.BOT_NUM_CTX ?? 12288);
-
-/* Job-description mode gets a longer answer, but deliberately NOT its own
-   num_ctx. Ollama keys the loaded runner on num_ctx, so varying it per request
-   unloads and reloads the model and throws away the cached prompt prefix:
-   measured at 41.5s versus 0.7s for the identical request. One context size
-   for every mode, always. */
-const JD_MAX_TOKENS = Number(process.env.BOT_JD_MAX_TOKENS ?? 700);
-
-/* The two backends need OPPOSITE budgets, which is why these are separate.
- *
- * Groq runs with reasoning disabled (see GROQ_REASONING), so its budget buys
- * answer tokens only, and the free tier's TPM ceiling makes every token spent
- * on working a token the visitor waits for twice.
- *
- * Ollama runs with `think: true` — the reasoning is routed to its own channel
- * and dropped, but it is still GENERATED from this same budget. A measured
- * qwen3 reply spent 2,218 chars (~550 tokens) thinking before its first spoken
- * word, so a 600-token ceiling produces a perfectly reasoned empty bubble.
- * Math.max means raising BOT_MAX_TOKENS never silently lowers the local one. */
-const OLLAMA_MAX_TOKENS = Number(
-  process.env.BOT_OLLAMA_MAX_TOKENS ?? Math.max(MAX_TOKENS, 1600),
+   they have never opened. It is also the long request (a 6000-char posting),
+   so it starts on OpenRouter, whose free tier limits requests rather than
+   tokens per minute, and falls back to the chat models. */
+const JD_CHAIN = parseChain(
+  'BOT_JD_CHAIN',
+  process.env.BOT_JD_CHAIN ??
+    'openrouter:nvidia/nemotron-3-super-120b-a12b:free,groq:qwen/qwen3.6-27b,groq:llama-3.3-70b-versatile',
 );
-const OLLAMA_JD_MAX_TOKENS = Number(
-  process.env.BOT_OLLAMA_JD_MAX_TOKENS ?? Math.max(JD_MAX_TOKENS, 1800),
-);
+
+/* Short ceiling on replies. This is a site chat bubble, not an essay window.
+   Reasoning is switched off upstream (see reasoningParams), so the budget buys
+   answer tokens only — and on Groq every one also counts against the
+   per-minute quota. */
+const MAX_TOKENS = Number(process.env.BOT_MAX_TOKENS ?? 600);
+
+/* A match is a longer answer, but it has to fit through Groq's per-minute
+   ceiling too when OpenRouter is down, so it stays modest. */
+const JD_MAX_TOKENS = Number(process.env.BOT_JD_MAX_TOKENS ?? 800);
 
 /* Compact overrides. With BOT_COMPACT=true any file in bot/compact/ replaces
-   the same-named file in bot/knowledge/. Small models deliberate in proportion
-   to how much they are told, so this trades detail for a reply that arrives.
-   Declared up here, not down with the prompt loader that uses them: PROFILES
-   bakes the flag into each profile and is evaluated long before that section. */
+   the same-named file in bot/knowledge/, trading detail for a smaller prompt. */
 const COMPACT = process.env.BOT_COMPACT === 'true';
 
-/* Per-backend override, because the two backends are compact for unrelated
-   reasons. Groq is compact to survive the free tier's TPM ceiling; Ollama is
-   compact because a 4B model deliberates in proportion to how much it is told,
-   and the local box has no quota to protect. Either can be set independently;
-   unset, both inherit BOT_COMPACT so an existing .env keeps working. */
+/* Per provider, because their ceilings differ. Groq's free tier caps tokens
+   per minute, so it wants the compact prompt; OpenRouter's caps requests, so
+   it can afford the full one, which gives a JD match more to match against.
+   Unset, both inherit BOT_COMPACT. */
 const asBool = (v, fallback) => (v === undefined ? fallback : v === 'true');
-const GROQ_COMPACT = asBool(process.env.BOT_GROQ_COMPACT, COMPACT);
-const OLLAMA_COMPACT = asBool(process.env.BOT_OLLAMA_COMPACT, COMPACT);
+const COMPACT_BY = {
+  groq: asBool(process.env.BOT_GROQ_COMPACT, COMPACT),
+  openrouter: asBool(process.env.BOT_OPENROUTER_COMPACT, COMPACT),
+};
 
 const LOG_QUESTIONS = process.env.BOT_LOG_QUESTIONS !== 'false';
 
-/* How long to wait for the *next* token before giving up. Not a cap on the
-   whole reply — a slow GPU generating 400 tokens is fine, a GPU that has sent
-   nothing for a minute is wedged. Ollama's own timeout is 5 minutes, which is
-   long past the point every browser has already shown a network error. */
-const STALL_MS = Number(process.env.BOT_STALL_MS ?? 60_000);
+/* How long to wait for the next chunk. Before the reply starts, running out
+   moves the request to the next backend; after, it ends the reply. A cap on
+   silence, not on the length of the answer. */
+const STALL_MS = Number(process.env.BOT_STALL_MS ?? 30_000);
 
 /* Lower than a chat model's usual 0.7. This bot's job is to be accurate about
    a real person's resume, and sampling temperature is the single biggest dial
@@ -137,8 +141,8 @@ const LEAD_FROM = process.env.LEAD_FROM ?? '';
  * Limits.
  *
  * CORS is not a security boundary — curl ignores it entirely. These caps are
- * what actually stands between a public URL and someone pinning your laptop's
- * GPU at 100% for an afternoon.
+ * what actually stands between a public URL and someone draining the free
+ * quotas in an afternoon.
  * ------------------------------------------------------------------------ */
 const LIMITS = {
   message: 1000, // chars per user turn
@@ -153,18 +157,9 @@ const LIMITS = {
 /* What each mode is allowed to cost. `maxMessage` is why JD mode exists as a
    mode at all: a 6000-char paste has to be let through, and letting every
    message be 6000 chars would hand anyone a cheap way to fill the context. */
-/* `compact` rides on the profile rather than being read globally at send time,
-   so the prompt variant is chosen by whichever backend actually served the
-   request — including when Groq fails mid-flight and Ollama picks it up. */
 const PROFILES = {
-  chat: { model: MODEL, numCtx: NUM_CTX, maxTokens: MAX_TOKENS, maxMessage: 1000, compact: GROQ_COMPACT },
-  jd: { model: JD_MODEL, numCtx: NUM_CTX, maxTokens: JD_MAX_TOKENS, maxMessage: 6000, compact: GROQ_COMPACT },
-};
-
-/* Fallback profiles for Ollama when Groq fails */
-const OLLAMA_PROFILES = {
-  chat: { model: OLLAMA_MODEL, numCtx: NUM_CTX, maxTokens: OLLAMA_MAX_TOKENS, maxMessage: 1000, compact: OLLAMA_COMPACT },
-  jd: { model: OLLAMA_MODEL, numCtx: NUM_CTX, maxTokens: OLLAMA_JD_MAX_TOKENS, maxMessage: 6000, compact: OLLAMA_COMPACT },
+  chat: { chain: CHAT_CHAIN, maxTokens: MAX_TOKENS, maxMessage: 1000 },
+  jd: { chain: JD_CHAIN, maxTokens: JD_MAX_TOKENS, maxMessage: 6000 },
 };
 
 const chatHits = new Map();
@@ -190,8 +185,7 @@ function rateLimited(ip) {
  * ------------------------------------------------------------------------ */
 const KNOWLEDGE = join(here, 'knowledge');
 
-/* COMPACT / GROQ_COMPACT / OLLAMA_COMPACT are declared with the other config
-   at the top of the file — PROFILES bakes them in and is evaluated first. */
+/* COMPACT and COMPACT_BY are declared with the other config at the top. */
 const COMPACT_DIR = join(here, 'compact');
 const MODES = join(here, 'modes');
 
@@ -216,7 +210,7 @@ function cachedRead(dir, match, cache, compact = false) {
 
 /* One cache PER VARIANT. A single cache would thrash: the key is built from the
    mtimes of the files actually picked, so alternating between a Groq turn and
-   an Ollama-fallback turn would miss every time and re-read all of knowledge/
+   an OpenRouter turn would miss every time and re-read all of knowledge/
    on both. Two caches make each variant steady-state. */
 const knowledgeCaches = { full: { key: '', text: '' }, compact: { key: '', text: '' } };
 const modeCaches = {};
@@ -610,7 +604,7 @@ async function sendLead(raw, { ip, transcript }) {
  *
  * What visitors actually ask is the most useful thing this bot produces — it
  * tells you what the site fails to answer. One JSON object per line in
- * bot/questions.jsonl, gitignored, never leaves the laptop.
+ * bot/questions.jsonl, gitignored, never leaves the host.
  *
  * Addresses are hashed rather than stored, against a salt generated once into
  * bot/.log-salt. That still distinguishes visitors from each other, which is
@@ -648,444 +642,177 @@ function logQuestion(entry) {
 }
 
 /* ---------------------------------------------------------------------------
- * Groq rate-limit tracking.
+ * Rate-limit cooldowns.
  *
- * Every request tries Groq first. There is no sticky "fallback mode" — the
- * server does NOT need a restart after a rate limit. When Groq returns 429 it
- * includes a `retry-after` header (seconds). This tracker skips the Groq call
- * entirely while the cooldown is active, saving a round-trip and avoiding
- * burning another 429 against the quota.
+ * Kept per chain entry, not per provider: Groq counts each model's quota
+ * separately, so one model being limited says nothing about the next. A 429
+ * benches the entry until its reset time rather than spending another request
+ * to learn it is still limited. Nothing here ever needs a restart.
  * ------------------------------------------------------------------------ */
-let groqCooldown = { until: 0, retryAfter: 0 };
+const cooldowns = new Map(); // entry id → epoch ms
 
-function groqAvailable() {
-  if (!groqCooldown.until) return true;
-  if (Date.now() >= groqCooldown.until) {
-    console.log('[bot] Groq cooldown expired — switching back to Groq');
-    groqCooldown = { until: 0, retryAfter: 0 };
-    return true;
-  }
+function coolingDown(entry) {
+  const until = cooldowns.get(entry.id);
+  if (!until) return false;
+  if (Date.now() < until) return true;
+  cooldowns.delete(entry.id);
+  console.log(`[bot] ${entry.id} cooldown over`);
   return false;
 }
 
-function setGroqCooldown(err) {
-  /* Groq's 429 includes `retry-after` in seconds. Fall back to 60s. */
-  const retryAfter = Number(err.headers?.get?.('retry-after') ?? 60);
-  groqCooldown = { until: Date.now() + retryAfter * 1000, retryAfter };
-  const resumeAt = new Date(groqCooldown.until).toLocaleTimeString();
-  console.warn(
-    `[bot] Groq rate-limited for ${retryAfter}s — using Ollama until ${resumeAt}`,
-  );
+function setCooldown(entry, headers) {
+  /* Groq sends retry-after in seconds. OpenRouter may send x-ratelimit-reset
+     as epoch ms instead — for its daily cap that is tomorrow, which is exactly
+     how long the entry should sit out. */
+  const after = Number(headers?.get('retry-after'));
+  const reset = Number(headers?.get('x-ratelimit-reset'));
+  const until =
+    after > 0 ? Date.now() + after * 1000 : reset > Date.now() ? reset : Date.now() + 60_000;
+  cooldowns.set(entry.id, until);
+  console.warn(`[bot] ${entry.id} rate-limited until ${new Date(until).toLocaleTimeString()}`);
 }
 
 /* ---------------------------------------------------------------------------
- * Groq
- * ------------------------------------------------------------------------ */
-/* Reasoning on the Groq side. The mirror image of BOT_THINK, and NOT the same
- * setting — Ollama's `think` says "route reasoning somewhere else", Groq's says
- * "do not reason at all".
+ * Reasoning.
  *
- * This matters because BOT_MODEL is a reasoning model (qwen3.6). Left unset,
- * Groq picks the model's default, which for qwen3 means it reasons and returns
- * the working in the response — the exact out-loud scratchpad the [[SAY]] gate
- * exists to catch. Turning it off upstream is cheaper and more reliable than
- * filtering it downstream, and on the free tier's TPM ceiling the tokens not
- * spent thinking are tokens available for the answer.
+ * The default models reason unless told not to, and left to their defaults
+ * they return the working in the reply — the out-loud scratchpad the [[SAY]]
+ * gate exists to catch. Turning it off upstream is cheaper and more reliable
+ * than filtering it downstream, and every token not spent thinking is one the
+ * visitor does not wait for.
  *
+ * BOT_GROQ_REASONING:
  *   none   — no reasoning generated. Fastest, cheapest. (default)
- *   hidden — model still reasons; Groq strips it server-side. Costs the tokens,
- *            keeps the quality on hard questions.
+ *   hidden — model still reasons; Groq strips it server-side.
  *   raw    — reasoning comes back inline in <think> tags; stripThink eats it.
  *   parsed — reasoning comes back in its own field, which this gateway drops.
- *   off    — send nothing, let Groq default. The old behaviour.
- */
+ *   off    — send nothing, let Groq default.
+ *
+ * OpenRouter always asks for effort "none".
+ * ------------------------------------------------------------------------ */
 const GROQ_REASONING = (process.env.BOT_GROQ_REASONING ?? 'none').toLowerCase();
 
-/* Same one-shot latch as `thinkSupported`: a model that does not take the
-   parameter rejects the request outright rather than ignoring it, so the first
-   rejection turns it off for the life of the process. */
-let groqReasoningSupported = true;
+/* A model with no reasoning control, or with mandatory reasoning, rejects the
+   parameter outright rather than ignoring it. The first rejection moves that
+   model to its fallback form for the life of the process. */
+const reasoningRejected = new Set();
 
-function groqReasoningParams() {
-  if (!groqReasoningSupported || GROQ_REASONING === 'off') return {};
-  /* `none` is an effort level; the rest are output formats. Sending the wrong
-     one for the mode is what earns the 400 the latch above catches. */
+function reasoningParams(entry) {
+  const rejected = reasoningRejected.has(entry.id);
+  if (entry.provider === 'openrouter') {
+    /* `exclude` still keeps the working out of the reply; it just costs the time. */
+    return { reasoning: rejected ? { exclude: true } : { effort: 'none' } };
+  }
+  if (rejected || GROQ_REASONING === 'off') return {};
+  /* `none` is an effort level; the rest are output formats. */
   return GROQ_REASONING === 'none'
     ? { reasoning_effort: 'none' }
     : { reasoning_format: GROQ_REASONING };
 }
 
-async function groqChat(messages, profile, signal) {
-  const body = {
-    model: profile.model,
-    messages,
-    stream: true,
-    temperature: TEMPERATURE,
-    max_tokens: profile.maxTokens,
-    top_p: 0.9,
-    ...groqReasoningParams(),
-  };
+function upstreamError(entry, status, text, headers) {
+  const err = new Error(`${entry.id} ${status}: ${text.slice(0, 300)}`);
+  err.status = status;
+  err.headers = headers;
+  return err;
+}
 
+/* Opens a streaming completion. Resolves when the response headers arrive;
+   handleChat still waits for the first event before committing to the entry. */
+async function callModel(entry, messages, maxTokens, signal) {
+  const { url, key } = PROVIDERS[entry.provider];
   const send = () =>
-    fetch('https://api.groq.com/openai/v1/chat/completions', {
+    fetch(url, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: entry.model,
+        messages,
+        stream: true,
+        temperature: TEMPERATURE,
+        top_p: 0.9,
+        max_tokens: maxTokens,
+        ...reasoningParams(entry),
+      }),
       signal,
     });
 
   let res = await send();
 
-  /* A 400 naming the reasoning parameter means this model has no reasoning
-     mode. Drop the flag and retry once, rather than falling through to Ollama
-     for what is a fixable request. Guarded to 400 so a 429 still counts as a
-     rate limit and reaches setGroqCooldown with its retry-after intact. */
-  if (!res.ok && res.status === 400 && groqReasoningSupported && GROQ_REASONING !== 'off') {
+  /* Guarded to 400 so a 429 still reaches the caller with its headers. */
+  if (res.status === 400 && !reasoningRejected.has(entry.id)) {
     const why = await res.text();
-    if (/reasoning/i.test(why)) {
-      console.log(`[bot] ${profile.model} does not take reasoning_*; dropping the flag`);
-      groqReasoningSupported = false;
-      delete body.reasoning_effort;
-      delete body.reasoning_format;
-      res = await send();
-    } else {
-      const err = new Error(`groq 400: ${why.slice(0, 300)}`);
-      err.status = 400;
-      err.headers = res.headers;
-      throw err;
-    }
+    if (!/reasoning/i.test(why)) throw upstreamError(entry, 400, why, res.headers);
+    console.log(`[bot] ${entry.id} rejected its reasoning parameter; retrying without it`);
+    reasoningRejected.add(entry.id);
+    res = await send();
   }
-
-  if (!res.ok) {
-    const why = await res.text();
-    const err = new Error(`groq ${res.status}: ${why.slice(0, 300)}`);
-    err.status = res.status;
-    err.headers = res.headers;
-    throw err;
-  }
-
-  return {
-    body: groqStreamToOllamaFormat(res.body, signal),
-  };
+  if (!res.ok) throw upstreamError(entry, res.status, await res.text(), res.headers);
+  return sseToNdjson(res.body, entry);
 }
 
-async function* groqStreamToOllamaFormat(responseStream, signal) {
+/* Re-emits an OpenAI-style SSE stream as the NDJSON events handleChat reads:
+   {message: {content}}, {message: {thinking}}, and {done, done_reason}. */
+async function* sseToNdjson(stream, entry) {
+  const enc = new TextEncoder();
   const decoder = new TextDecoder();
+  const event = (obj) => enc.encode(JSON.stringify(obj) + '\n');
   let buffer = '';
 
-  for await (const chunk of responseStream) {
-    if (signal?.aborted) break;
+  for await (const chunk of stream) {
     buffer += decoder.decode(chunk, { stream: true });
     const lines = buffer.split('\n');
     buffer = lines.pop() ?? '';
 
     for (const line of lines) {
-      if (signal?.aborted) break;
       const trimmed = line.trim();
-      if (!trimmed || trimmed === 'data: [DONE]') continue;
-      if (trimmed.startsWith('data: ')) {
-        try {
-          const data = JSON.parse(trimmed.slice(6));
-          const piece = data.choices?.[0]?.delta?.content ?? '';
-          const finishReason = data.choices?.[0]?.finish_reason;
+      /* This also skips OpenRouter's ": OPENROUTER PROCESSING" comments, which
+         must not count as progress: a model stuck in the queue would keep
+         resetting the stall timer and never fail over. */
+      if (!trimmed.startsWith('data: ') || trimmed === 'data: [DONE]') continue;
 
-          /* `reasoning_format: parsed` puts the working in its own delta field,
-             exactly like Ollama's `thinking`. Forward it under that name so it
-             is COUNTED but never spoken — without this the empty-reply
-             diagnostic reports 0 chars of reasoning on the Groq path and blames
-             the parser for what is really a model talking to itself. */
-          const reasoning = data.choices?.[0]?.delta?.reasoning ?? '';
-          if (reasoning) {
-            yield new TextEncoder().encode(
-              JSON.stringify({ message: { thinking: reasoning } }) + '\n'
-            );
-          }
-
-          if (piece) {
-            yield new TextEncoder().encode(
-              JSON.stringify({ message: { content: piece } }) + '\n'
-            );
-          }
-
-          if (finishReason === 'length') {
-            yield new TextEncoder().encode(
-              JSON.stringify({ done: true, done_reason: 'length' }) + '\n'
-            );
-          }
-        } catch (e) {
-          // ignore parsing errors for incomplete chunks
-        }
-      }
-    }
-  }
-}
-
-/* ---------------------------------------------------------------------------
- * Ollama
- * ------------------------------------------------------------------------ */
-
-/* Native reasoning, ON by default — the opposite of the obvious setting.
- *
- * A reasoning model reasons whether or not you allow it a channel for it. With
- * `think: false` qwen3 still works the problem, but the only place left to put
- * it is `content` — so "Okay, the user is asking..." lands in the chat bubble
- * and no amount of pattern-matching reliably gets it out again.
- *
- * With `think: true` the model's own chat template routes reasoning into a
- * separate `thinking` field. Measured on one reply: 2,218 chars of thinking,
- * 851 chars of answer, cleanly split. This gateway reads only `content`, so
- * the separation costs nothing and cannot be fooled by phrasing.
- *
- * The tokens are still generated either way — this buys correctness, not
- * speed, which is why BOT_MAX_TOKENS has to cover reasoning as well.
- */
-const THINK = process.env.BOT_THINK !== 'false';
-
-/* Models with no reasoning mode reject the flag outright rather than ignoring
-   it, so the first rejection turns it off for the life of the process. */
-let thinkSupported = true;
-
-async function ollamaChat(messages, profile, signal) {
-  const body = {
-    model: profile.model,
-    messages,
-    stream: true,
-    keep_alive: KEEP_ALIVE,
-    options: {
-      temperature: TEMPERATURE,
-      top_p: 0.9,
-      num_ctx: profile.numCtx,
-      num_predict: profile.maxTokens,
-    },
-  };
-  if (thinkSupported) body.think = THINK;
-
-  let res = await fetch(`${OLLAMA}/api/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal,
-  });
-
-  if (!res.ok && thinkSupported) {
-    const why = await res.text();
-    if (/think/i.test(why)) {
-      console.log(`[bot] ${profile.model} has no thinking mode; dropping the flag`);
-      thinkSupported = false;
-      delete body.think;
-      res = await fetch(`${OLLAMA}/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-        signal,
-      });
-    } else {
-      throw new Error(`ollama ${res.status}: ${why.slice(0, 300)}`);
-    }
-  }
-  if (!res.ok) throw new Error(`ollama ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  return res;
-}
-
-/* ---------------------------------------------------------------------------
- * Warmup.
- *
- * One real generation at startup, with num_predict 1. Three things fall out of
- * it, none of which are visible any other way:
- *
- *   1. Ollama reports `prompt_eval_count` — the EXACT token count of the
- *      assembled system prompt. Guessing from character count is how a prompt
- *      quietly grows past num_ctx and starts getting truncated.
- *   2. It times the prompt pass, which is the number that decides whether this
- *      machine can serve the bot at all.
- *   3. It leaves the weights loaded and the prompt prefix in the KV cache, so
- *      the first visitor is not the one who pays for it.
- *
- * A prompt that does not fit is reported as unhealthy, so the site hides the
- * chat button rather than offering one that times out.
- * ------------------------------------------------------------------------ */
-let readiness = { ok: false, checked: false, promptTokens: 0, note: 'not checked yet' };
-
-async function warmup() {
-  /* Measure the variant this backend will actually send, or the number in the
-     log is the wrong prompt's token count. */
-  const prompt = systemPrompt(USE_GROQ ? GROQ_COMPACT : OLLAMA_COMPACT);
-
-  if (USE_GROQ) {
-    // Groq is a remote API - no warmup needed, just estimate token count
-    const tokens = Math.round(prompt.length / 4.4);
-    readiness = { ok: true, checked: true, promptTokens: tokens, note: 'ready (Groq API)' };
-    console.log(`[bot] using Groq API with ~${tokens.toLocaleString()} estimated prompt tokens`);
-    return;
-  }
-
-  const t0 = Date.now();
-
-  try {
-    const body = {
-      model: MODEL,
-      messages: [
-        { role: 'system', content: prompt },
-        { role: 'user', content: 'hi' },
-      ],
-      stream: false,
-      keep_alive: KEEP_ALIVE,
-      options: { num_ctx: NUM_CTX, num_predict: 1 },
-    };
-    if (thinkSupported) body.think = THINK;
-
-    const res = await fetch(`${OLLAMA}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(Number(process.env.BOT_WARMUP_MS ?? 180_000)),
-    });
-
-    if (!res.ok) {
-      const why = (await res.text()).slice(0, 200);
-      /* Same one-shot fallback as ollamaChat: a model with no thinking mode
-         rejects the flag rather than ignoring it. */
-      if (thinkSupported && /think/i.test(why)) {
-        thinkSupported = false;
-        return warmup();
-      }
-      throw new Error(`ollama ${res.status}: ${why}`);
-    }
-
-    const data = await res.json();
-    const tokens = data.prompt_eval_count ?? 0;
-    const secs = (Date.now() - t0) / 1000;
-
-    readiness = { ok: true, checked: true, promptTokens: tokens, note: 'ready' };
-
-    console.log(
-      `[bot] warmup: ${tokens.toLocaleString()} prompt tokens in ${secs.toFixed(1)}s` +
-        (tokens && secs ? ` (${Math.round(tokens / secs).toLocaleString()} tok/s)` : ''),
-    );
-
-    /* "Fits" is not the bar — the prompt has to leave room for the exchange.
-       At 96% of num_ctx the prompt loads fine and then every conversation is
-       immediately truncated, which looks like a broken bot, not a full one. */
-    const HEADROOM = 0.85;
-    if (tokens >= NUM_CTX * HEADROOM) {
-      readiness = {
-        ok: false,
-        checked: true,
-        promptTokens: tokens,
-        note: `prompt ${tokens} fills ${Math.round((tokens / NUM_CTX) * 100)}% of num_ctx ${NUM_CTX}`,
-      };
-      console.error(
-        `\n[bot] STOP: the system prompt is ${tokens.toLocaleString()} tokens and ` +
-          `BOT_NUM_CTX is ${NUM_CTX.toLocaleString()} — ` +
-          `${Math.round((tokens / NUM_CTX) * 100)}% of the window.\n` +
-          `      There is no room left for the conversation, so every reply is ` +
-          `truncated, and on a small GPU\n      the prompt pass spills to CPU and stalls ` +
-          `for minutes.\n` +
-          `      Fix: set BOT_NUM_CTX=${Math.ceil((tokens * 1.4) / 1024) * 1024} in bot/.env, ` +
-          `or trim bot/knowledge/*.md.\n` +
-          `      Chat is reporting itself unhealthy until then, so the site hides the button.\n`,
-      );
-    } else if (tokens > NUM_CTX * 0.7) {
-      console.warn(
-        `[bot] warning: the prompt uses ${Math.round((tokens / NUM_CTX) * 100)}% of num_ctx — ` +
-          `long conversations will start dropping their earliest turns.`,
-      );
-    }
-
-    /* ~4.4 chars per token, calibrated against the measured count above.
-       Estimated rather than measured because a second cold pass on a slow
-       machine costs more than the precision is worth. */
-    const jdChars = (() => {
+      let data;
       try {
-        return readFileSync(join(MODES, 'jd.md'), 'utf8').length;
+        data = JSON.parse(trimmed.slice(6));
       } catch {
-        return 0;
+        continue; // incomplete chunk
       }
-    })();
-    const jdBudget = tokens + Math.round(jdChars / 4.4) + Math.round(6000 / 4.4) + JD_MAX_TOKENS;
-    if (jdBudget > NUM_CTX) {
-      console.warn(
-        `[bot] warning: a job-description match needs ~${jdBudget.toLocaleString()} tokens ` +
-          `(prompt + mode + a 6k-char posting + the answer)\n` +
-          `      but num_ctx is ${NUM_CTX.toLocaleString()}. That button will produce ` +
-          `truncated matches. Raise BOT_NUM_CTX to ${Math.ceil((jdBudget * 1.1) / 1024) * 1024}.`,
-      );
-    }
 
-    if (secs > 30) {
-      console.warn(
-        `[bot] warning: the prompt pass took ${secs.toFixed(0)}s. That is the delay before ` +
-          `the FIRST token of every cold conversation.\n` +
-          `      Usually means the model plus KV cache does not fit in VRAM. Lower ` +
-          `BOT_NUM_CTX or use a smaller model.`,
-      );
-    }
-  } catch (err) {
-    const timedOut = err.name === 'TimeoutError' || /abort|timeout/i.test(err.message);
-    readiness = {
-      ok: false,
-      checked: true,
-      promptTokens: 0,
-      note: timedOut ? 'warmup timed out' : err.message,
-    };
+      /* A failure after the 200 arrives as an event, not a status code. The
+         code rides along so a rate limit here still benches the entry. */
+      if (data.error) {
+        const err = new Error(`${entry.id} stream error: ${data.error.message ?? JSON.stringify(data.error)}`);
+        err.status = Number(data.error.code) || 0;
+        throw err;
+      }
 
-    if (timedOut) {
-      console.error(
-        `\n[bot] warmup TIMED OUT. The model could not process a ` +
-          `${(systemPrompt(OLLAMA_COMPACT).length / 4.4).toFixed(0)}-token prompt in ` +
-          `${(Number(process.env.BOT_WARMUP_MS ?? 180_000) / 1000).toFixed(0)}s.\n` +
-          `      At that speed Ollama is almost certainly running on CPU, not the GPU. Check:\n` +
-          `        ollama ps                 → the PROCESSOR column should say GPU, not CPU\n` +
-          `        nvidia-smi                → confirms the driver is present and working\n` +
-          `        journalctl -u ollama | grep -i "gpu\\|cuda\\|library"\n` +
-          `      If it says CPU: install the CUDA driver, then restart Ollama.\n` +
-          `      If it says GPU but is still slow, lower BOT_NUM_CTX so the KV cache fits.\n`,
-      );
-    } else {
-      console.error(`[bot] warmup failed: ${err.message}`);
+      const choice = data.choices?.[0];
+      /* Forwarded as `thinking` so it is COUNTED but never spoken — the
+         empty-reply diagnostic needs to know the model talked to itself. */
+      if (choice?.delta?.reasoning) yield event({ message: { thinking: choice.delta.reasoning } });
+      if (choice?.delta?.content) yield event({ message: { content: choice.delta.content } });
+      if (choice?.finish_reason === 'length') yield event({ done: true, done_reason: 'length' });
     }
   }
 }
 
-/* /health must stay cheap — the site polls it. Cache so a refresh storm does
-   not turn into a tag-listing storm. */
-let healthCache = { at: 0, ok: false, installed: false };
-
-async function backendUp() {
-  const now = Date.now();
-  if (now - healthCache.at < 10_000) return healthCache;
-
-  if (USE_GROQ) {
-    // For Groq, just verify the API key is configured
-    // Don't call the API here - would burn rate limits on health checks
-    healthCache = { at: now, ok: true, installed: true };
-    return healthCache;
-  }
-
-  try {
-    const res = await fetch(`${OLLAMA}/api/tags`, { signal: AbortSignal.timeout(2000) });
-    if (!res.ok) throw new Error(String(res.status));
-    const { models = [] } = await res.json();
-    /* Every model a profile can select, not just the chat one — a missing
-       BOT_JD_MODEL would otherwise only surface when a visitor pastes a
-       posting and gets an error. */
-    const wanted = [...new Set(Object.values(PROFILES).map((p) => p.model))];
-    healthCache = {
-      at: now,
-      ok: true,
-      installed: wanted.every((want) => {
-        const tag = want.includes(':') ? want : `${want}:latest`;
-        return models.some((m) => m.name === tag || m.model === tag);
-      }),
-    };
-  } catch {
-    healthCache = { at: now, ok: false, installed: false };
-  }
-  return healthCache;
-}
+/* ---------------------------------------------------------------------------
+ * Readiness.
+ *
+ * A hosted API has nothing to warm up, so this only checks configuration:
+ * chat needs at least one usable chain entry, or /health says so and the site
+ * hides the chat button rather than offering one that can only error.
+ * promptTokens is an estimate (~4.4 chars per token), there so /health shows
+ * at a glance whether the running bot has the current prompt.
+ * ------------------------------------------------------------------------ */
+const unserved = Object.keys(PROFILES).filter((mode) => !PROFILES[mode].chain.length);
+const readiness = {
+  /* Chat is what the button is for. A JD chain with nothing usable is logged
+     and named in `note`, but does not take the whole bot down. */
+  ok: CHAT_CHAIN.length > 0,
+  promptTokens: Math.round(systemPrompt(COMPACT_BY[CHAT_CHAIN[0]?.provider ?? 'groq']).length / 4.4),
+  note: unserved.length ? `no usable backend for ${unserved.join(', ')}` : 'ready',
+};
 
 /* ---------------------------------------------------------------------------
  * HTTP
@@ -1220,11 +947,10 @@ async function handleChat(req, res) {
 
   const extra = modePrompt(mode);
 
-  /* Assembled per backend, not once. The compact variant is a property of the
-     profile that ends up serving the request, and which that is cannot be known
-     until the Groq call has either succeeded or failed — a fallback triggered
-     mid-request has to be able to re-assemble against the local prompt. Only
-     the system text varies; the turns are shared. */
+  /* Assembled per attempt, not once. The compact variant belongs to the
+     provider that ends up serving the request, which is not known until the
+     entries before it have failed. Only the system text varies; the turns are
+     shared. */
   const buildMessages = (compact) => [
     { role: 'system', content: systemPrompt(compact) },
     ...(extra ? [{ role: 'system', content: extra }] : []),
@@ -1236,8 +962,10 @@ async function handleChat(req, res) {
   const question = turns[turns.length - 1].content;
 
   /* Abort if the model goes quiet. The timer is reset by every chunk, so it
-     bounds the gap between tokens rather than the length of the answer. */
-  const ctrl = new AbortController();
+     bounds the gap between chunks rather than the length of the answer. Each
+     attempt gets its own controller, so a stalled backend cannot abort the one
+     that replaces it. */
+  let ctrl;
   let stalled = false;
   let stallTimer;
   const kick = () => {
@@ -1247,93 +975,58 @@ async function handleChat(req, res) {
       ctrl.abort();
     }, STALL_MS);
   };
-  kick();
 
   inFlight++;
   let upstream;
-  let usedFallback = false;
+  let active;
 
-  /* If Groq is in cooldown, skip it entirely — saves a round-trip and avoids
-     stacking another 429 against the quota. */
-  const tryGroq = USE_GROQ && groqAvailable();
+  /* A visitor who closes the tab frees the generation slot, rather than
+     holding it until the model finishes talking to nobody. */
+  let gone = false;
+  res.on('close', () => {
+    gone = true;
+    ctrl?.abort();
+  });
 
-  /* Which profile actually served the reply. Every later reader — the
-     token-ceiling warning, the fallback flag — has to ask this rather than the
-     Groq profile, or it reports the wrong model's limits after a fallback. */
-  let active = tryGroq ? profile : OLLAMA_PROFILES[mode];
-
-  try {
-    upstream = await (tryGroq ? groqChat : ollamaChat)(
-      buildMessages(active.compact),
-      active,
-      ctrl.signal,
-    );
-    if (!tryGroq && USE_GROQ) usedFallback = true;
-  } catch (err) {
-    clearTimeout(stallTimer);
-
-    // If Groq fails with rate limit (429) or other errors, try Ollama fallback
-    const fallbackProfile = OLLAMA_PROFILES[mode];
-    if (tryGroq && err.status === 429) {
-      setGroqCooldown(err);
-      try {
-        upstream = await ollamaChat(
-          buildMessages(fallbackProfile.compact),
-          fallbackProfile,
-          ctrl.signal,
-        );
-        active = fallbackProfile;
-        usedFallback = true;
-      } catch (fallbackErr) {
-        console.error('[bot] Ollama fallback also failed:', fallbackErr.message);
-        inFlight--;
-        return json(res, 503, { error: 'Both Groq and Ollama are unavailable. Try again shortly.' });
-      }
-    } else if (tryGroq) {
-      // Groq had a non-rate-limit error, try Ollama
-      console.warn(`[bot] Groq error, attempting Ollama fallback (${OLLAMA_MODEL}):`, err.message);
-      try {
-        upstream = await ollamaChat(
-          buildMessages(fallbackProfile.compact),
-          fallbackProfile,
-          ctrl.signal,
-        );
-        active = fallbackProfile;
-        usedFallback = true;
-      } catch (fallbackErr) {
-        logQuestion({
-          ts: new Date().toISOString(),
-          visitor: visitorId(ip),
-          page,
-          mode,
-          q: question,
-          error: 'both-backends-failed',
-        });
-        inFlight--;
-        return json(res, 502, { error: 'The model is not responding right now.' });
-      }
-    } else {
-      logQuestion({
-        ts: new Date().toISOString(),
-        visitor: visitorId(ip),
-        page,
-        mode,
-        q: question,
-        error: 'model-unreachable',
-      });
-      inFlight--;
-      if (stalled) {
-        console.error(
-          `[bot] no first token in ${STALL_MS / 1000}s — the prompt pass is probably ` +
-            `spilling out of VRAM. Check BOT_NUM_CTX.`,
-        );
-        return json(res, 504, { error: 'The model is taking too long to start. Try again shortly.' });
-      }
-      const backend = USE_GROQ ? 'groq' : 'ollama';
-      console.error(`[bot] ${backend} call failed:`, err.message);
-      return json(res, 502, { error: 'The model is not responding right now.' });
+  for (const entry of profile.chain) {
+    if (gone) break;
+    if (coolingDown(entry)) continue;
+    ctrl = new AbortController();
+    stalled = false;
+    kick();
+    try {
+      const stream = await callModel(entry, buildMessages(COMPACT_BY[entry.provider]), profile.maxTokens, ctrl.signal);
+      /* Headers are not a reply. A free model can answer 200 and then sit in a
+         queue, or send an error event, so the entry is only chosen once its
+         first event arrives. Until then, failing over is still possible. */
+      const first = await stream.next();
+      if (first.done) throw new Error(`${entry.id} ended the stream without a reply`);
+      upstream = (async function* () {
+        yield first.value;
+        yield* stream;
+      })();
+      active = entry;
+      break;
+    } catch (err) {
+      clearTimeout(stallTimer);
+      if (err.status === 429) setCooldown(entry, err.headers);
+      else console.warn(`[bot] ${entry.id} failed: ${stalled ? `no response in ${STALL_MS / 1000}s` : err.message}`);
     }
   }
+
+  if (!upstream) {
+    logQuestion({
+      ts: new Date().toISOString(),
+      visitor: visitorId(ip),
+      page,
+      mode,
+      q: question,
+      error: gone ? 'visitor-left' : 'all-backends-failed',
+    });
+    inFlight--;
+    return json(res, 502, { error: 'The model is not responding right now. Try again shortly.' });
+  }
+  if (active !== profile.chain[0]) console.log(`[bot] ${mode} answered by fallback ${active.id}`);
 
   res.writeHead(200, {
     'Content-Type': 'application/x-ndjson; charset=utf-8',
@@ -1453,7 +1146,7 @@ async function handleChat(req, res) {
   };
 
   try {
-    for await (const chunk of upstream.body) {
+    for await (const chunk of upstream) {
       kick();
       ndjson += decoder.decode(chunk, { stream: true });
       const lines = ndjson.split('\n');
@@ -1467,13 +1160,12 @@ async function handleChat(req, res) {
         } catch {
           continue;
         }
-        /* Ollama returns native reasoning in its own field. Reading only
-           `content` is what keeps it off the wire — do not "fix" this by
-           merging them. */
+        /* Reasoning arrives in its own field. Reading only `content` is what
+           keeps it off the wire — do not "fix" this by merging them. */
         if (evt.message?.thinking) thoughtChars += evt.message.thinking.length;
         if (evt.done && evt.done_reason === 'length') {
           console.warn(
-            `[bot] reply hit the ${active.maxTokens}-token ceiling and was cut off (${active.model}). ` +
+            `[bot] reply hit the ${profile.maxTokens}-token ceiling and was cut off (${active.id}). ` +
               `If this is frequent, the model is padding — tighten the length rule in ` +
               `00-persona.md rather than raising BOT_MAX_TOKENS.`,
           );
@@ -1520,10 +1212,9 @@ async function handleChat(req, res) {
     if (!spoke && !state.acted) {
       console.warn(
         `[bot] EMPTY REPLY: ${thoughtChars} chars of reasoning, ${full.length} chars of content.` +
+          ` (${active.id})` +
           (thoughtChars > 0 && full.length < 20
-            ? `\n      The model answered inside its reasoning channel and returned nothing to say.` +
-              `\n      If this repeats, set BOT_THINK=false in bot/.env — the [[SAY]] gate handles` +
-              `\n      reasoning for models that cannot keep the two apart.`
+            ? `\n      The model answered inside its reasoning channel and returned nothing to say.`
             : ''),
       );
     }
@@ -1553,6 +1244,7 @@ async function handleChat(req, res) {
     visitor: visitorId(ip),
     page,
     mode,
+    backend: active.id,
     q: question,
     chars: question.length,
     replyChars: full.length,
@@ -1586,22 +1278,17 @@ const server = createServer(async (req, res) => {
   const path = new URL(req.url, 'http://localhost').pathname;
 
   if (req.method === 'GET' && (path === '/health' || path === '/')) {
-    const { ok, installed } = await backendUp();
-    /* Non-200 when the model is missing OR when warmup found the prompt does
-       not fit, so the site hides the button rather than showing one that
-       answers with an error — or worse, one that hangs. */
-    const healthy = ok && installed && readiness.ok;
-    const isCooldown = USE_GROQ && !groqAvailable();
-    return json(res, healthy ? 200 : 503, {
-      ok: healthy,
-      backend: USE_GROQ ? 'groq' : 'ollama',
-      model: MODEL,
-      modelInstalled: installed,
+    /* Non-200 when chat has no usable backend, so the site hides the button
+       rather than showing one that can only answer with an error. A cooldown
+       does not count: the next entry in the chain covers it. */
+    const now = Date.now();
+    return json(res, readiness.ok ? 200 : 503, {
+      ok: readiness.ok,
+      chat: CHAT_CHAIN.map((e) => e.id),
+      jd: JD_CHAIN.map((e) => e.id),
       promptTokens: readiness.promptTokens,
-      numCtx: NUM_CTX,
       note: readiness.note,
-      usingFallback: isCooldown,
-      cooldownRemaining: USE_GROQ ? Math.max(0, Math.ceil((groqCooldown.until - Date.now()) / 1000)) : 0,
+      coolingDown: [...cooldowns].filter(([, until]) => until > now).map(([id]) => id),
     });
   }
 
@@ -1612,80 +1299,35 @@ const server = createServer(async (req, res) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`[bot] listening on http://0.0.0.0:${PORT}`);
-  console.log(`[bot] backend   ${USE_GROQ ? 'Groq API' : `ollama ${OLLAMA}`}  model ${MODEL}`);
+  for (const [mode, p] of Object.entries(PROFILES)) {
+    console.log(`[bot] ${mode.padEnd(8)} ${p.chain.map((e) => e.id).join(' → ') || '(none)'}  ${p.maxTokens} tokens`);
+  }
+  console.log(
+    `[bot] prompt   ~${readiness.promptTokens.toLocaleString()} tokens  compact groq ${COMPACT_BY.groq ? 'on' : 'off'}, ` +
+      `openrouter ${COMPACT_BY.openrouter ? 'on' : 'off'}  temperature ${TEMPERATURE}  groq reasoning ${GROQ_REASONING}`,
+  );
   console.log(`[bot] origins  ${ORIGINS.join(', ')}`);
   console.log(
     `[bot] leads    ${RESEND_KEY && LEAD_TO && LEAD_FROM ? `on → ${LEAD_TO}` : 'off (RESEND_API_KEY / LEAD_TO / LEAD_FROM unset)'}`,
   );
-  if (USE_GROQ) {
-    console.log(
-      `[bot] groq     ${MODEL}  reasoning ${GROQ_REASONING}  compact ${GROQ_COMPACT ? 'on' : 'off'}  ` +
-        `${MAX_TOKENS} tokens`,
-    );
-    console.log(
-      `[bot] ollama   ${OLLAMA_MODEL} (fallback)  thinking ${THINK ? 'on' : 'OFF'}  ` +
-        `compact ${OLLAMA_COMPACT ? 'on' : 'off'}  ${OLLAMA_MAX_TOKENS} tokens`,
-    );
-  } else {
-    console.log(
-      `[bot] thinking ${THINK ? 'native — reasoning routed to its own channel and dropped' : 'OFF'}`,
-    );
-    console.log(
-      `[bot] ollama   compact ${OLLAMA_COMPACT ? 'on' : 'off'}  ${OLLAMA_MAX_TOKENS} tokens`,
-    );
-  }
-  console.log(`[bot] tokens   ctx ${NUM_CTX}, temperature ${TEMPERATURE}`);
-  if (GROQ_COMPACT || OLLAMA_COMPACT) {
-    console.log('[bot] compact  bot/compact/*.md overriding bot/knowledge/ where present');
+  if (!readiness.ok) {
+    console.error(`[bot] NOT READY: ${readiness.note}. /health answers 503, so the site hides the chat button.`);
+  } else if (unserved.length) {
+    console.error(`[bot] WARNING: ${readiness.note}. Those requests will fail until a chain entry is usable.`);
   }
 
-  /* bot/.env is a copy of the example, not a link to it, so a setting that was
-     renamed or retired sits there looking authoritative and doing nothing.
-     Every one of these cost real debugging time; say them out loud. */
-  if (!USE_GROQ && process.env.BOT_JD_NUM_CTX) {
-    console.warn(
-      `[bot] ignoring BOT_JD_NUM_CTX — a per-mode context size makes Ollama reload the\n` +
-        `      model between requests (measured 41.5s vs 0.7s). BOT_NUM_CTX covers every mode.`,
-    );
+  /* bot/.env is a copy of the example, not a link to it, so a retired setting
+     sits there looking authoritative and doing nothing. Say so. */
+  const retired = [
+    'BOT_MODEL', 'BOT_JD_MODEL', 'OLLAMA_URL', 'BOT_OLLAMA_FALLBACK_MODEL', 'BOT_THINK', 'BOT_NUM_CTX',
+    'BOT_JD_NUM_CTX', 'BOT_KEEP_ALIVE', 'BOT_WARMUP_MS', 'BOT_OLLAMA_MAX_TOKENS', 'BOT_OLLAMA_JD_MAX_TOKENS',
+    'BOT_OLLAMA_COMPACT',
+  ].filter((k) => process.env[k] !== undefined);
+  if (retired.length) {
+    console.warn(`[bot] ignoring retired settings: ${retired.join(', ')} — models now come from BOT_CHAT_CHAIN / BOT_JD_CHAIN`);
   }
 
-  /* These are about Ollama, which is either the backend or the fallback behind
-     Groq — so they are worth saying in both configurations. Scoped to
-     BOT_OLLAMA_MAX_TOKENS, since the Groq ceiling no longer governs it. */
-  if (!THINK) {
-    console.warn(
-      `\n[bot] warning: BOT_THINK=false does NOT stop a reasoning model reasoning. It removes\n` +
-        `      the separate channel it reasons into, so the working ends up in the reply where\n` +
-        `      the visitor reads it. This is the cause of "thinking output in the chat".\n` +
-        `      Set BOT_THINK=true in bot/.env.\n`,
-    );
-  }
-  if (THINK && OLLAMA_MAX_TOKENS < 1000) {
-    console.warn(
-      `[bot] warning: the Ollama ceiling is ${OLLAMA_MAX_TOKENS} tokens, but with think:true the\n` +
-        `      reasoning and the answer come out of that one budget — a few hundred tokens of\n` +
-        `      thinking leaves nothing for the reply. Set BOT_OLLAMA_MAX_TOKENS=1600 in bot/.env.`,
-    );
-  }
-
-  /* Prewarm every variant that can be sent, so the first visitor never pays to
-     read knowledge/ — including the fallback's variant, which would otherwise
-     be read cold at the worst possible moment: mid-outage. */
-  systemPrompt(GROQ_COMPACT);
-  systemPrompt(OLLAMA_COMPACT);
-
-  /* Swapping models mid-conversation is the same trap as swapping num_ctx, and
-     worse: Ollama unloads one set of weights and loads the other, so the first
-     job-description match pays a full cold start. Two models will not sit in
-     6 GB of VRAM together. Measured cost of a reload: 41.5s versus 0.7s. */
-  if (!USE_GROQ && JD_MODEL !== MODEL) {
-    console.warn(
-      `[bot] note: BOT_JD_MODEL (${JD_MODEL}) differs from BOT_MODEL (${MODEL}).\n` +
-        `      Every switch between them unloads and reloads the weights, and only the\n` +
-        `      chat model is warmed at startup. Worth it on a machine with VRAM to spare;\n` +
-        `      on a 6 GB card, set them the same.`,
-    );
-  }
-
-  warmup();
+  /* Read every prompt variant a request can use now, so the first visitor
+     after a failover is not the one who pays to read knowledge/. */
+  for (const compact of new Set(Object.values(COMPACT_BY))) systemPrompt(compact);
 });
