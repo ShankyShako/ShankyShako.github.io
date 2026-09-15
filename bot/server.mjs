@@ -682,15 +682,17 @@ function setCooldown(entry, headers) {
  * visitor does not wait for.
  *
  * BOT_GROQ_REASONING:
- *   none   — no reasoning generated. Fastest, cheapest. (default)
- *   hidden — model still reasons; Groq strips it server-side.
- *   raw    — reasoning comes back inline in <think> tags; stripThink eats it.
- *   parsed — reasoning comes back in its own field, which this gateway drops.
- *   off    — send nothing, let Groq default.
+ *   none            — no reasoning generated. Fastest, cheapest. (default)
+ *   low|medium|high — reason at that effort. gpt-oss refuses none, takes low.
+ *   hidden          — model still reasons; Groq strips it server-side.
+ *   raw             — reasoning inline in <think> tags; stripThink eats it.
+ *   parsed          — reasoning in its own field, which this gateway drops.
+ *   off             — send nothing, let Groq default.
  *
  * OpenRouter always asks for effort "none".
  * ------------------------------------------------------------------------ */
 const GROQ_REASONING = (process.env.BOT_GROQ_REASONING ?? 'none').toLowerCase();
+const EFFORTS = new Set(['none', 'low', 'medium', 'high']);
 
 /* A model with no reasoning control, or with mandatory reasoning, rejects the
    parameter outright rather than ignoring it. The first rejection moves that
@@ -704,9 +706,12 @@ function reasoningParams(entry) {
     return { reasoning: rejected ? { exclude: true } : { effort: 'none' } };
   }
   if (rejected || GROQ_REASONING === 'off') return {};
-  /* `none` is an effort level; the rest are output formats. */
-  return GROQ_REASONING === 'none'
-    ? { reasoning_effort: 'none' }
+  /* none/low/medium/high are effort levels; the rest are output formats. The
+     distinction matters because a model that refuses one effort level may take
+     another: gpt-oss rejects `none` but accepts `low`, and without that the
+     latch above would leave it reasoning at its default on every message. */
+  return EFFORTS.has(GROQ_REASONING)
+    ? { reasoning_effort: GROQ_REASONING }
     : { reasoning_format: GROQ_REASONING };
 }
 
