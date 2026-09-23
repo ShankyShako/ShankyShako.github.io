@@ -71,7 +71,7 @@ Built generative models that let a CNN classifier recognize real objects after t
 ### AI/ML Engineer Intern — NSF REU AI-Empowered Cybersecurity, University of Missouri Kansas City
 *June 2024 – December 2024*
 
-Built a large language model that detects ransomware inside industrial control systems: 99% accuracy telling malicious from benign, 85% naming the specific family. The work was accepted at IEEE Big Data 2024, and I presented it in Washington, D.C. as the solo author, with mentor guidance.
+Built a large language model that detects ransomware inside industrial control systems: 99% accuracy telling malicious from benign, 91% naming the specific family. The work was accepted at IEEE Big Data 2024, and I presented it in Washington, D.C. as the solo author, with mentor guidance.
 
 ### Research Intern — NSF REU in Consumer Networking, University of Missouri Columbia
 *May 2023 – July 2023*
@@ -204,7 +204,7 @@ Any other value is discarded, so inventing one just loses you the button.
 - `/experience` — Experience
 - `/shop` — Shop
 - `/contact` — Contact
-- `resume-pdf` — Download resume (PDF)
+- `resume-pdf` — Download the resume (PDF)
 - `github` — GitHub profile
 - `linkedin` — LinkedIn
 - `email` — Email Genova

@@ -69,12 +69,12 @@ export const experience: Role[] = [
     title: 'AI/ML Engineer Intern',
     date: 'June 2024 – December 2024',
     blurb:
-      'Built a large language model that detects ransomware inside industrial control systems: 99% accuracy telling malicious from benign, 85% naming the specific family. The work was accepted at IEEE Big Data 2024, and I presented it in Washington, D.C. as the solo author, with mentor guidance.',
+      'Built a large language model that detects ransomware inside industrial control systems: 99% accuracy telling malicious from benign, 91% naming the specific family. The work was accepted at IEEE Big Data 2024, and I presented it in Washington, D.C. as the solo author, with mentor guidance.',
     short: 'NSF REU — AI-Empowered Cybersecurity',
     tagline: 'Catching ransomware inside industrial control systems.',
     bullets: [
       'Built an LLM that detects ransomware inside industrial control systems.',
-      '99% accuracy on binary classification, 85% on family classification.',
+      '99% accuracy on binary classification, 91% on family classification.',
       'Accepted and presented at IEEE Big Data 2024 in Washington, D.C. as solo author.',
     ],
     logos: [

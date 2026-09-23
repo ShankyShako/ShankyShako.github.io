@@ -13,6 +13,7 @@ probes the bot on load and, if it does not answer, renders nothing at all.
         │
         │  GET  /health   every 90s + on tab focus   → button appears or doesn't
         │  POST /chat     NDJSON stream of tokens
+        │  POST /tailor   resume bullet rewrites (docs/RESUME-PERSONALIZER.md)
         ▼
   Tailscale Funnel or Cloudflare Tunnel   ← public HTTPS, no open ports
         ▼

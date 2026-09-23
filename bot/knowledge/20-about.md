@@ -170,7 +170,7 @@ From the current repository (best model per level):
 - Group, 5 coarse bins — 91.1% accuracy, 0.731 macro-F1
 - Specific, 12 families — ~0.55 macro-F1, held down by the rare classes above
 
-From the IEEE Big Data 2024 paper, as published: 99% binary, 85% family.
+From the IEEE Big Data 2024 paper, as published: 99% binary, 91% family.
 
 The gap between the two is a different run on a different pipeline, not a
 correction. The repository figures are the ones he can show working end to end

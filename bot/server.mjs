@@ -29,6 +29,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { asksPetToLeave } from './petIntent.mjs';
+import { fragments as RESUME_FRAGMENTS } from '../src/data/resume.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -88,6 +89,17 @@ const JD_CHAIN = parseChain(
   process.env.BOT_JD_CHAIN ??
     'openrouter:nvidia/nemotron-3-super-120b-a12b:free,groq:qwen/qwen3.6-27b,groq:llama-3.3-70b-versatile',
 );
+
+/* Resume tailoring (/tailor) rewrites a handful of bullets while the visitor
+   watches, so speed matters more than depth: Groq first. Measured 2026-09-22
+   on nine bullets: gpt-oss-120b on Groq, first line in ~1s and done in ~2s;
+   nemotron on OpenRouter's free tier, ~11s to the first token. */
+const TAILOR_CHAIN = parseChain(
+  'BOT_TAILOR_CHAIN',
+  process.env.BOT_TAILOR_CHAIN ??
+    'groq:openai/gpt-oss-120b,groq:llama-3.3-70b-versatile,openrouter:nvidia/nemotron-3-super-120b-a12b:free',
+);
+const TAILOR_MAX_TOKENS = Number(process.env.BOT_TAILOR_MAX_TOKENS ?? 1200);
 
 /* Short ceiling on replies. This is a site chat bubble, not an essay window.
    Reasoning is switched off upstream (see reasoningParams), so the budget buys
@@ -706,6 +718,9 @@ function reasoningParams(entry) {
     return { reasoning: rejected ? { exclude: true } : { effort: 'none' } };
   }
   if (rejected || GROQ_REASONING === 'off') return {};
+  /* gpt-oss refuses `none`, and at its default effort it can spend the whole
+     token budget reasoning and return no text. `low` is its floor. */
+  if (GROQ_REASONING === 'none' && entry.model.startsWith('openai/gpt-oss')) return { reasoning_effort: 'low' };
   /* none/low/medium/high are effort levels; the rest are output formats. The
      distinction matters because a model that refuses one effort level may take
      another: gpt-oss rejects `none` but accepts `low`, and without that the
@@ -876,6 +891,7 @@ async function handleChat(req, res) {
   } catch {
     return json(res, 400, { error: 'Malformed request.' });
   }
+  if (!body || typeof body !== 'object') return json(res, 400, { error: 'Malformed request.' });
 
   /* The client picks a mode, but only from this set, and the mode only ever
      selects a server-side profile — it never carries limits of its own. */
@@ -896,7 +912,7 @@ async function handleChat(req, res) {
   const turns = raw
     .map((m, i) => ({
       role: m.role,
-      content: String(m.content ?? '').slice(0, i === last ? profile.maxMessage : LIMITS.message),
+      content: (typeof m.content === 'string' ? m.content : '').slice(0, i === last ? profile.maxMessage : LIMITS.message),
     }))
     .filter((m) => m.content.trim())
     /* Put the marker back on the model's own past replies.
@@ -1272,6 +1288,161 @@ async function handleChat(req, res) {
   }
 }
 
+/* ---------------------------------------------------------------------------
+ * Resume tailoring.
+ *
+ * The browser sends the query and the ids of the bullets it picked, never the
+ * bullet text: the text comes from src/data/resume.ts, so this cannot be used
+ * to rewrite arbitrary prose on someone else's quota. Replies stream back one
+ * bullet at a time as {r: {id, text}}. The browser checks every rewrite
+ * against the original (src/lib/resume/verify.ts) and drops any that fail.
+ * ------------------------------------------------------------------------ */
+const TAILORABLE = new Map(RESUME_FRAGMENTS.filter((f) => !f.fixed).map((f) => [f.id, f.text]));
+const TAILOR_LINE = /^[\s*`-]*([a-z0-9-]+)[`*]*\s*:\s*(.+?)\s*$/;
+
+/* Its own per-IP budget, so a visitor tailoring several roles in a minute
+   does not lock themselves out of the chat. */
+const tailorHits = new Map();
+function tailorLimited(ip) {
+  const now = Date.now();
+  const recent = (tailorHits.get(ip) ?? []).filter((t) => now - t < 60_000);
+  recent.push(now);
+  tailorHits.set(ip, recent);
+  if (tailorHits.size > 5000) tailorHits.clear();
+  return recent.length > 8;
+}
+
+async function handleTailor(req, res) {
+  const ip = clientIp(req);
+  if (tailorLimited(ip)) return json(res, 429, { error: 'Slow down a moment.' });
+  /* One slot always stays free for chat. */
+  if (inFlight >= LIMITS.concurrent - 1) return json(res, 503, { error: 'Busy — try again shortly.' });
+  if (!TAILOR_CHAIN.length) return json(res, 503, { error: 'Tailoring is not configured.' });
+
+  let body;
+  try {
+    body = JSON.parse(await readBody(req));
+  } catch {
+    return json(res, 400, { error: 'Malformed request.' });
+  }
+  if (!body || typeof body !== 'object') return json(res, 400, { error: 'Malformed request.' });
+  const query = typeof body.query === 'string' ? body.query.trim().slice(0, 6000) : '';
+  const ids = [...new Set(Array.isArray(body.ids) ? body.ids : [])]
+    .filter((id) => TAILORABLE.has(id))
+    .slice(0, 16);
+  if (!query || !ids.length) return json(res, 400, { error: 'Nothing to tailor.' });
+
+  const messages = [
+    { role: 'system', content: modePrompt('tailor') },
+    {
+      role: 'user',
+      content: `Job:\n${query}\n\nBullets:\n${ids.map((id) => `${id}: ${TAILORABLE.get(id)}`).join('\n')}`,
+    },
+  ];
+
+  /* As in /chat: a controller per attempt, so a stall moves on to the next
+     entry instead of ending the request. */
+  inFlight++;
+  let ctrl;
+  let stalled = false;
+  let gone = false;
+  let stallTimer;
+  const kick = () => {
+    clearTimeout(stallTimer);
+    stallTimer = setTimeout(() => {
+      stalled = true;
+      ctrl.abort();
+    }, STALL_MS);
+  };
+  res.on('close', () => {
+    gone = true;
+    ctrl?.abort();
+  });
+
+  try {
+    let upstream;
+    let active;
+    for (const entry of TAILOR_CHAIN) {
+      if (gone) break;
+      if (coolingDown(entry)) continue;
+      ctrl = new AbortController();
+      stalled = false;
+      kick();
+      try {
+        const stream = await callModel(entry, messages, TAILOR_MAX_TOKENS, ctrl.signal);
+        const first = await stream.next();
+        if (first.done) throw new Error(`${entry.id} ended the stream without a reply`);
+        upstream = (async function* () {
+          yield first.value;
+          yield* stream;
+        })();
+        active = entry;
+        break;
+      } catch (err) {
+        clearTimeout(stallTimer);
+        if (err.status === 429) setCooldown(entry, err.headers);
+        else if (!gone) console.warn(`[bot] tailor ${entry.id} failed: ${stalled ? `no response in ${STALL_MS / 1000}s` : err.message}`);
+      }
+    }
+    if (!upstream) return json(res, 502, { error: 'The model is not responding right now.' });
+
+    res.writeHead(200, {
+      'Content-Type': 'application/x-ndjson; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'X-Accel-Buffering': 'no',
+    });
+
+    const wanted = new Set(ids);
+    const think = { inside: false };
+    const decoder = new TextDecoder();
+    let events = '';
+    let held = '';
+    let text = '';
+    let cut = false;
+    const emit = (line) => {
+      const m = TAILOR_LINE.exec(line);
+      if (!m || !wanted.has(m[1])) return;
+      wanted.delete(m[1]);
+      res.write(JSON.stringify({ r: { id: m[1], text: m[2] } }) + '\n');
+    };
+
+    for await (const chunk of upstream) {
+      kick();
+      events += decoder.decode(chunk, { stream: true });
+      const lines = events.split('\n');
+      events = lines.pop() ?? '';
+      for (const line of lines) {
+        let evt;
+        try {
+          evt = JSON.parse(line);
+        } catch {
+          continue;
+        }
+        if (evt.done && evt.done_reason === 'length') cut = true;
+        const piece = evt.message?.content;
+        if (!piece) continue;
+        const stripped = stripThink(held + piece, think);
+        held = stripped.keep;
+        text = (stripped.orphan ? '' : text) + stripped.out;
+        const done = text.split('\n');
+        text = done.pop() ?? '';
+        done.forEach(emit);
+      }
+    }
+    /* A reply cut off at the token ceiling ends mid-bullet. Drop that line. */
+    if (cut) console.warn(`[bot] tailor reply hit the ${TAILOR_MAX_TOKENS}-token ceiling (${active.id})`);
+    else emit(text + held);
+    res.end(JSON.stringify({ done: true, model: DEBUG ? active.id : undefined }) + '\n');
+  } catch (err) {
+    if (!res.headersSent) return json(res, 502, { error: 'The model stopped responding.' });
+    if (!gone) console.warn('[bot] tailor stream broke:', stalled ? 'stalled' : err.message);
+    res.end(JSON.stringify({ error: 'Connection interrupted.' }) + '\n');
+  } finally {
+    clearTimeout(stallTimer);
+    inFlight--;
+  }
+}
+
 const server = createServer(async (req, res) => {
   cors(req, res);
 
@@ -1291,13 +1462,23 @@ const server = createServer(async (req, res) => {
       ok: readiness.ok,
       chat: CHAT_CHAIN.map((e) => e.id),
       jd: JD_CHAIN.map((e) => e.id),
+      tailor: TAILOR_CHAIN.map((e) => e.id),
       promptTokens: readiness.promptTokens,
       note: readiness.note,
       coolingDown: [...cooldowns].filter(([, until]) => until > now).map(([id]) => id),
     });
   }
 
-  if (req.method === 'POST' && path === '/chat') return handleChat(req, res);
+  /* A handler that throws must not become an unhandled rejection: Node
+     exits on those, and every visitor loses the bot. */
+  const handler = req.method !== 'POST' ? null : path === '/chat' ? handleChat : path === '/tailor' ? handleTailor : null;
+  if (handler) {
+    return handler(req, res).catch((err) => {
+      console.error(`[bot] ${path} threw:`, err);
+      if (!res.headersSent) json(res, 500, { error: 'Something went wrong.' });
+      else res.end();
+    });
+  }
 
   return json(res, 404, { error: 'Not found.' });
 });
@@ -1307,6 +1488,7 @@ server.listen(PORT, '0.0.0.0', () => {
   for (const [mode, p] of Object.entries(PROFILES)) {
     console.log(`[bot] ${mode.padEnd(8)} ${p.chain.map((e) => e.id).join(' → ') || '(none)'}  ${p.maxTokens} tokens`);
   }
+  console.log(`[bot] tailor   ${TAILOR_CHAIN.map((e) => e.id).join(' → ') || '(none)'}  ${TAILOR_MAX_TOKENS} tokens`);
   console.log(
     `[bot] prompt   ~${readiness.promptTokens.toLocaleString()} tokens  compact groq ${COMPACT_BY.groq ? 'on' : 'off'}, ` +
       `openrouter ${COMPACT_BY.openrouter ? 'on' : 'off'}  temperature ${TEMPERATURE}  groq reasoning ${GROQ_REASONING}`,

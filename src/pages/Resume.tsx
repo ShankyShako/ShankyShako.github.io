@@ -1,4 +1,5 @@
 import { Reveal } from '../components/Reveal';
+import { Personalizer } from '../components/resume/Personalizer';
 
 const PDF = '/files/Resume.pdf';
 
@@ -15,9 +16,7 @@ export function Resume() {
             Open in new tab
           </a>
         </div>
-        <div className="resume-frame">
-          <iframe src={PDF} title="Resume of Genova Mongalo" />
-        </div>
+        <Personalizer original={PDF} />
       </Reveal>
     </>
   );
