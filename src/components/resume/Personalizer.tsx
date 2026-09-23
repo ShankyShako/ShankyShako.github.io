@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { fragments } from '../../data/resume';
-import { CHIPS, fragById, liftedChips, parseQuery, rank, tailorSkillLines } from '../../lib/resume/match';
+import { CHIPS, DEFAULT_RANKING, fragById, liftedChips, parseQuery, rank, tailorSkillLines } from '../../lib/resume/match';
 import { normalizeRewrite, verifyRewrite } from '../../lib/resume/verify';
 import { tailorStream } from '../../lib/resume/tailor';
 import type { Typesetter } from '../../lib/resume/layout';
@@ -44,13 +44,46 @@ const FIELD_TOP = 30;
 const RESERVE = 290;
 const ORIGINAL = Object.fromEntries(fragments.map((f) => [f.id, f.text]));
 
-export function Personalizer({ original }: { original: string }) {
+/* Side by side needs room for a readable stage next to a full-height page. */
+const SIDE_QUERY = '(min-width: 1000px)';
+const PAGE_RATIO = 8.5 / 11;
+
+/**
+ * Stage and page side by side, sized so both fit the window without
+ * scrolling: the row runs from where it starts to the bottom of the viewport.
+ * Measured from the document top (offsetTop, not the bounding box), because
+ * the Reveal wrapper animates a transform on mount.
+ */
+function useSideBySide(ref: React.RefObject<HTMLElement | null>) {
+  const [height, setHeight] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const mq = window.matchMedia(SIDE_QUERY);
+    const measure = () => {
+      const el = ref.current;
+      if (!el || !mq.matches) return setHeight(null);
+      let top = 0;
+      for (let n: HTMLElement | null = el; n; n = n.offsetParent as HTMLElement | null) top += n.offsetTop;
+      setHeight(Math.max(540, window.innerHeight - top - 20));
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    mq.addEventListener('change', measure);
+    return () => {
+      window.removeEventListener('resize', measure);
+      mq.removeEventListener('change', measure);
+    };
+  }, [ref]);
+  return height;
+}
+
+export function Personalizer() {
   const [query, setQuery] = useState('');
   const [settled, setSettled] = useState('');
   const [engine, setEngine] = useState<Engine | null>(null);
   const [engineFailed, setEngineFailed] = useState(false);
   const [rewrites, setRewrites] = useState<{ query: string; byId: Record<string, Rewrite> }>({ query: '', byId: {} });
   const [phase, setPhase] = useState<'idle' | 'rewriting' | 'done' | 'failed'>('idle');
+  const [failure, setFailure] = useState('');
   const [saving, setSaving] = useState(false);
   const rush = useRef('');
   const [nudge, setNudge] = useState(0);
@@ -59,6 +92,8 @@ export function Personalizer({ original }: { original: string }) {
   const field = useRef<HTMLTextAreaElement>(null);
   const [fieldH, setFieldH] = useState(58);
   const { status, botUrl } = useBotStatus();
+  const section = useRef<HTMLElement>(null);
+  const sideH = useSideBySide(section);
 
   const warm = () => {
     if (engine) return;
@@ -67,6 +102,10 @@ export function Personalizer({ original }: { original: string }) {
       setEngine(e);
     }, () => setEngineFailed(true));
   };
+
+  /* The page itself is the default resume, so the typesetter loads at once. */
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(warm, []);
 
   /* 1. Chips follow every keystroke. */
   const live = useMemo(() => rank(parseQuery(query)), [query]);
@@ -79,7 +118,7 @@ export function Personalizer({ original }: { original: string }) {
   }, [query]);
 
   const active = settled.length >= 2;
-  const ranking = useMemo(() => rank(parseQuery(settled)), [settled]);
+  const ranking = useMemo(() => (settled.length >= 2 ? rank(parseQuery(settled)) : DEFAULT_RANKING), [settled]);
   const skills = useMemo(() => tailorSkillLines(settled), [settled]);
   const texts = useMemo(() => {
     if (rewrites.query !== settled) return ORIGINAL;
@@ -88,8 +127,8 @@ export function Personalizer({ original }: { original: string }) {
     return t;
   }, [rewrites, settled]);
   const fitted = useMemo(
-    () => (engine && active ? engine.fit(engine.ts, ranking, texts, skills) : null),
-    [engine, active, ranking, texts, skills],
+    () => (engine ? engine.fit(engine.ts, ranking, texts, skills) : null),
+    [engine, ranking, texts, skills],
   );
   const fittedRef = useRef(fitted);
   fittedRef.current = fitted;
@@ -128,8 +167,10 @@ export function Personalizer({ original }: { original: string }) {
           return prev;
         });
         setPhase('done');
-      } catch {
-        if (!ctrl.signal.aborted) setPhase('failed');
+      } catch (err) {
+        if (ctrl.signal.aborted) return;
+        setFailure(err instanceof Error ? err.message.replace(/\.$/, '') : '');
+        setPhase('failed');
       }
     }, rush.current === settled ? 0 : 1100);
     return () => {
@@ -163,10 +204,11 @@ export function Personalizer({ original }: { original: string }) {
     if (!engine || !fitted) return;
     setSaving(true);
     try {
-      const bytes = await engine.ts.pdf(fitted.page);
+      const bytes = await engine.ts.pdf(fitted.page, fitted.scale);
       const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'application/pdf' }));
       const slug = settled.toLowerCase().replace(/[^a-z0-9]+/g, '-').split('-').filter(Boolean).slice(0, 4).join('-');
-      const a = Object.assign(document.createElement('a'), { href: url, download: `Genova-Mongalo-Resume-${slug || 'tailored'}.pdf` });
+      const name = active && slug ? `Genova-Mongalo-Resume-${slug}.pdf` : 'Genova-Mongalo-Resume.pdf';
+      const a = Object.assign(document.createElement('a'), { href: url, download: name });
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 10_000);
     } finally {
@@ -174,13 +216,24 @@ export function Personalizer({ original }: { original: string }) {
     }
   };
 
+  /* /resume?download (the chat bot's "Download the resume" link) saves the
+     default version as soon as it is typeset, once. */
+  const autoSave = useRef(new URLSearchParams(window.location.search).has('download'));
+  useEffect(() => {
+    if (!autoSave.current || !fitted || active) return;
+    autoSave.current = false;
+    window.history.replaceState(null, '', window.location.pathname);
+    download();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitted, active]);
+
   const tailorable = fitted?.ids.filter((id) => !fragById.get(id)!.fixed).length ?? 0;
   const done = rewrites.query === settled ? Object.values(rewrites.byId) : [];
   const kept = done.filter((r) => !r.ok && r.why.length);
-  const note = !active
-    ? ''
-    : engineFailed
-      ? 'The typesetter did not load. Reload to try again.'
+  const note = engineFailed
+    ? 'The resume did not load. Reload to try again.'
+    : !active
+      ? ''
       : !fitted
         ? 'Setting type…'
         : phase === 'rewriting'
@@ -192,7 +245,7 @@ export function Personalizer({ original }: { original: string }) {
             : phase === 'failed'
               ? done.some((r) => r.ok)
                 ? `Rewording stopped partway. ${done.filter((r) => r.ok).length} bullets are reworded, the rest as written.`
-                : 'Rewording failed, so the bullets are as written. Picked and ordered for this role.'
+                : `Rewording failed${failure ? ` (${failure})` : ''}, so the bullets are as written. Picked and ordered for this role.`
               : !ranking.matched
                 ? 'Nothing on the resume matches that, so this is the general version.'
               : status === 'online'
@@ -200,7 +253,13 @@ export function Personalizer({ original }: { original: string }) {
                 : 'Picked and ordered for this role, in your browser. Rewording needs the chat bot, which is offline.';
 
   return (
-    <section className="tailor" aria-labelledby="tailor-title">
+    <section
+      ref={section}
+      className={`tailor${sideH ? ' is-side' : ''}`}
+      aria-labelledby="tailor-title"
+      style={sideH ? ({ height: sideH, '--page-w': `${Math.round(sideH * PAGE_RATIO)}px` } as React.CSSProperties) : undefined}
+    >
+      <div className="tailor-main">
       <div className="tailor-stage" onPointerEnter={warm}>
         <h2 id="tailor-title" className="visually-hidden">Tailor this resume</h2>
         <div className="tailor-field">
@@ -238,7 +297,7 @@ export function Personalizer({ original }: { original: string }) {
             ))}
           </div>
         )}
-        <GlyphPile chips={CHIPS} lifted={lifted} rowTop={FIELD_TOP + fieldH + 22} reserve={RESERVE} />
+        <GlyphPile chips={CHIPS} lifted={lifted} rowTop={FIELD_TOP + fieldH + 22} reserve={RESERVE} fill={!!sideH} />
       </div>
 
       <div className="tailor-bar" aria-live="polite">
@@ -247,9 +306,9 @@ export function Personalizer({ original }: { original: string }) {
           {/* Progress is shown, not announced: one update per bullet is noise. */}
           {phase === 'rewriting' && <span aria-hidden="true"> {done.length} of {tailorable}</span>}
         </p>
-        {active && fitted && (
+        {fitted && (
           <button type="button" className="btn btn-solid" onClick={download} disabled={saving || phase === 'rewriting'}>
-            {saving ? 'Saving…' : 'Download this version'}
+            {saving ? 'Saving…' : active ? 'Download this version' : 'Download PDF'}
           </button>
         )}
       </div>
@@ -267,12 +326,18 @@ export function Personalizer({ original }: { original: string }) {
           </ul>
         </details>
       )}
+      </div>
 
       <div className="resume-frame">
-        {active && fitted ? (
-          <ResumePaper plan={fitted.plan} label={`Resume tailored to: ${settled.slice(0, 80)}`} />
+        {fitted ? (
+          <ResumePaper
+            plan={fitted.plan}
+            label={active ? `Resume tailored to: ${settled.slice(0, 80)}` : 'Resume of Genova Mongalo'}
+          />
         ) : (
-          <iframe src={original} title="Resume of Genova Mongalo" />
+          <div className="resume-placeholder" aria-busy="true">
+            {engineFailed ? 'The resume did not load.' : 'Setting type…'}
+          </div>
         )}
       </div>
     </section>

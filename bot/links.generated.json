@@ -56,8 +56,8 @@
     },
     {
       "key": "resume-pdf",
-      "kind": "file",
-      "href": "/files/Resume.pdf",
+      "kind": "route",
+      "href": "/resume?download",
       "label": "Download the resume (PDF)"
     },
     {

@@ -13,9 +13,18 @@ import { entryOf, type Ranking } from './match.ts';
 /* Without a cap, one role with many good bullets crowds out the rest. */
 const maxOf = (e: Entry) => e.max ?? (e.section === 'projects' ? 2 : e.id === 'exp-ghw' ? 5 : 4);
 
-export type Fitted = { ids: string[]; page: PageSection[]; plan: Plan };
+/** `scale` < 1 only for a pinned page that runs over; the PDF uses the same. */
+export type Fitted = { ids: string[]; page: PageSection[]; plan: Plan; scale: number };
 
 export function fit(ts: Typesetter, ranking: Ranking, texts: Record<string, string>, skills: SkillLine[]): Fitted {
+  if (ranking.pinned) {
+    const page = buildPage(ranking.order, texts, skills);
+    let scale = 1;
+    let plan = ts.plan(page, scale);
+    while (plan.height > plan.usable && scale > 0.9) plan = ts.plan(page, (scale -= 0.005));
+    return { ids: ranking.order, page, plan, scale };
+  }
+
   const pos = new Map(ranking.order.map((id, i) => [id, i]));
   const byRank = (ids: string[]) => [...ids].sort((a, b) => pos.get(a)! - pos.get(b)!);
 
@@ -42,5 +51,5 @@ export function fit(ts: Typesetter, ranking: Ranking, texts: Record<string, stri
       plan = tryPlan;
     }
   }
-  return { ids: byRank(chosen), page, plan };
+  return { ids: byRank(chosen), page, plan, scale: 1 };
 }

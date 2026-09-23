@@ -67,8 +67,9 @@ export const meta = {
     links: ['linkedin.com/in/GMongalo'],
   },
   /* The QR code in the corner. Its link is added to the contact line as text,
-     because an ATS cannot read a QR code. */
-  badgeUrl: site.url,
+     because an ATS cannot read a QR code. GitHub Pages rather than gmango.dev,
+     as in resume.tex: a printed page outlives a domain renewal. */
+  badgeUrl: 'https://ShankyShako.github.io',
 };
 
 export const sections: Section[] = [
@@ -160,6 +161,17 @@ export const entries: Entry[] = [
   { id: 'prj-racket', section: 'projects', title: 'Racket Parser', tags: 'Racket', bullets: ['racket-parser'] },
   { id: 'prj-phonebook', section: 'projects', title: 'Phonebook Management System', tags: 'Java, SQL',
     bullets: ['phonebook'] },
+];
+
+/**
+ * The page before anyone types: the published resume's bullets, in its order,
+ * and nothing else. If they run a hair over one page, the page is set a hair
+ * smaller rather than lose one (fit.ts).
+ */
+export const defaultBullets = [
+  'ghw-port', 'ghw-dsp', 'ghw-speech', 'ghw-llm',
+  'afrl-gen', 'afrl-modal', 'afrl-gan', 'afrl-result',
+  'reu-ics', 'pres-bigdata', 'deepracer-train',
 ];
 
 export const fragments: Fragment[] = [

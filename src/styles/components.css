@@ -223,31 +223,19 @@
 /* ==========================================================================
    Resume
    ========================================================================== */
-.resume-actions {
-  display: flex;
-  gap: var(--sp-3);
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-bottom: var(--sp-5);
-}
-
 .resume-frame { display: flex; justify-content: center; margin: var(--sp-5) 0 0; }
 
-.resume-frame iframe {
+/* Page-shaped while the typesetter loads, so nothing jumps when it lands. */
+.resume-placeholder {
+  display: grid;
+  place-items: center;
   width: 100%;
   max-width: 860px;
-  /* Tall enough to read a page of it without the inner scrollbar becoming the
-     interaction, short enough that the page still ends somewhere. */
-  height: min(1120px, calc(100vh - 12rem));
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  background: rgba(0, 0, 0, 0.28);
-  padding: 14px;
-  box-shadow: var(--shadow-lg);
-}
-
-@media (max-width: 768px) {
-  .resume-frame iframe { height: 62vh; padding: 6px; }
+  aspect-ratio: 8.5 / 11;
+  border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-faint);
+  font-size: 0.9rem;
 }
 
 /* --------------------------------------------------------------------------
@@ -436,6 +424,53 @@
 .resume-paper text { fill: #000; white-space: pre; }
 .resume-paper .paper-move { transition: transform 0.45s var(--ease); }
 .resume-paper a:hover text { fill: var(--primary-red); }
+
+/* Side by side (set from JS, ≥1000px wide): stage on the left, the page on
+   the right at full height, the whole row sized to end at the viewport's
+   bottom edge so neither needs a scroll. */
+/* One panel, no border: a pool of shade that dissolves into the page at its
+   edges, with the heap fading out the same way and the page floating on it. */
+.tailor.is-side {
+  display: grid;
+  grid-template-columns: minmax(360px, 1fr) minmax(0, var(--page-w));
+  gap: var(--sp-5);
+  padding: var(--sp-4);
+  border-radius: 36px;
+  background:
+    radial-gradient(70% 55% at 28% 18%, rgba(255, 255, 255, 0.055), transparent 70%),
+    radial-gradient(75% 80% at 50% 55%, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.16) 58%, transparent 100%);
+}
+
+.tailor.is-side .tailor-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.tailor.is-side .tailor-stage {
+  flex: 1;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.tailor.is-side .glyph-pile.is-fill {
+  position: absolute;
+  inset: 0;
+  /* Soft edges left, right, and at the floor, instead of a clipped box. */
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent),
+    linear-gradient(to bottom, #000 88%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent),
+    linear-gradient(to bottom, #000 88%, transparent);
+  mask-composite: intersect;
+}
+.tailor.is-side .tailor-bar { max-width: none; margin: var(--sp-3) 0 0; padding: 0 var(--sp-2); flex-wrap: wrap; }
+.tailor.is-side .tailor-kept { max-width: none; max-height: 9rem; overflow: auto; margin: var(--sp-2) 0 0; padding: 0 var(--sp-2); }
+.tailor.is-side .resume-frame { margin: 0; min-height: 0; align-items: flex-start; }
+.tailor.is-side .resume-paper {
+  border: 0;
+  border-radius: 8px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 2px 6px rgba(0, 0, 0, 0.25), 0 28px 60px -18px rgba(0, 0, 0, 0.6);
+}
+.tailor.is-side .resume-placeholder { width: auto; height: 100%; max-width: 100%; }
+.tailor.is-side .resume-paper { width: auto; height: 100%; max-width: 100%; }
 
 @media (max-width: 620px) {
   .tailor-field textarea { font-size: 1.08rem; padding: 0.85rem 2.8rem 0.85rem 1.1rem; }

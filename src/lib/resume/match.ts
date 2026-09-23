@@ -9,7 +9,7 @@
  * a tool. Ranking is Resumator's greedy weighted set cover (engine/select.js),
  * without its line budget: the fit loop in layout.ts decides how many fit.
  */
-import { DOMAINS, entries, fragments, sections, type Fragment, type SkillLine } from '../../data/resume.ts';
+import { DOMAINS, defaultBullets, entries, fragments, sections, type Fragment, type SkillLine } from '../../data/resume.ts';
 import { buildIdf, cosine, extractNumbers, hasPhrase, norm, tf, tokenize, type Tf } from './text.ts';
 
 export type Req = { text: string; weight: number; tf: Tf; padded: string; domains: Set<string> };
@@ -76,6 +76,8 @@ export type Ranking = {
   score: Map<string, number>;
   /** True when the query hit anything at all. */
   matched: boolean;
+  /** Print exactly `order`, nothing added: the default resume. */
+  pinned?: boolean;
 };
 
 export function rank(reqs: Req[]): Ranking {
@@ -115,6 +117,14 @@ export function rank(reqs: Req[]): Ranking {
 
   return { order, score, matched: [...score.values()].some((s) => s > 0.12) };
 }
+
+/** The general resume, for an empty field: the published bullets, as published. */
+export const DEFAULT_RANKING: Ranking = {
+  order: defaultBullets,
+  score: new Map(fragments.map((f) => [f.id, 0])),
+  matched: false,
+  pinned: true,
+};
 
 /* ---------------------------------------------------------------------------
  * Chips: the pile of terms on the stage. A chip rises when the query names it,

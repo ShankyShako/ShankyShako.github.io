@@ -15,6 +15,8 @@ export async function* tailorStream(
     signal,
   });
   if (!res.ok || !res.body) {
+    /* 404 means the bot predates /tailor: it needs a pull and a restart. */
+    if (res.status === 404) throw new Error('the chat bot is an older version without rewording');
     const why = await res.json().catch(() => null);
     throw new Error(why?.error ?? `HTTP ${res.status}`);
   }

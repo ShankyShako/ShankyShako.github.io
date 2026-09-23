@@ -405,8 +405,8 @@ export class Typesetter {
   }
 
   /** The page as PDF bytes. Shrinks a step at a time rather than spill onto page two. */
-  async pdf(page: PageSection[]): Promise<Uint8Array> {
-    for (let attempt = 0, scale = 1; attempt < 8; attempt++, scale *= 0.96) {
+  async pdf(page: PageSection[], from = 1): Promise<Uint8Array> {
+    for (let attempt = 0, scale = from; attempt < 8; attempt++, scale *= 0.96) {
       if (layout(page, this.measure, scale).height > PAGE.h - 2 * PAGE.margin) continue;
       const doc = await PDFDocument.create();
       const fonts = await Typesetter.embed(doc, this.bytes, this.metrics);

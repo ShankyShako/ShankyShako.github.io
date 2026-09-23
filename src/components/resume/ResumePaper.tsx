@@ -109,7 +109,7 @@ export function ResumePaper({ plan, label }: { plan: Plan; label: string }) {
           );
         })}
         {qr && qr.kind === 'badge' && (
-          <a href={qr.href} target="_blank" rel="noopener noreferrer" aria-label="QR code: gmango.dev">
+          <a href={qr.href} target="_blank" rel="noopener noreferrer" aria-label={`QR code: ${qr.href.replace(/^https?:\/\//, '')}`}>
             <path d={qr.qr.path} transform={`translate(${qr.x} ${qr.y}) scale(${qr.w / qr.qr.size})`} fill="#000" shapeRendering="crispEdges" />
           </a>
         )}

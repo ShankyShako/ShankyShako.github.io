@@ -186,7 +186,9 @@ const slug = (title) => {
 
 const links = [
   ...nav.map((n) => ({ key: n.path, kind: 'route', href: n.path, label: n.label })),
-  { key: 'resume-pdf', kind: 'file', href: '/files/Resume.pdf', label: 'Download the resume (PDF)' },
+  /* The resume is typeset in the browser (src/components/resume), so the
+     download is the page itself: /resume?download saves the default version. */
+  { key: 'resume-pdf', kind: 'route', href: '/resume?download', label: 'Download the resume (PDF)' },
   { key: 'github', kind: 'external', href: site.github, label: 'GitHub profile' },
   { key: 'linkedin', kind: 'external', href: site.linkedin, label: 'LinkedIn' },
   { key: 'email', kind: 'external', href: `mailto:${site.email}`, label: `Email ${site.name.split(' ')[0]}` },

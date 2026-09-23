@@ -24,7 +24,7 @@ function rng(seed: number) {
 const COL = 4; // px per height-map column
 
 /** Resting positions, with y measured up from the floor (so negative). */
-function heap(sizes: { w: number; h: number }[], width: number): Pos[] {
+function heap(sizes: { w: number; h: number }[], width: number, target?: number): Pos[] {
   const rand = rng(7);
   const cols = new Float32Array(Math.ceil(width / COL) + 1);
   const order = sizes.map((_, i) => i).sort(() => rand() - 0.5);
@@ -32,7 +32,8 @@ function heap(sizes: { w: number; h: number }[], width: number): Pos[] {
      packed tighter, so the heap stays a band instead of a whole
      phone screen: buried chips still lift out when they match. */
   const area = sizes.reduce((sum, s) => sum + s.w * s.h, 0);
-  const stack = Math.min(0.62, Math.max(0.18, ((width > 700 ? 400 : 130) * width) / area));
+  const depth = target ?? (width > 700 ? 400 : 130);
+  const stack = Math.min(0.62, Math.max(0.12, (depth * width) / area));
   const out: Pos[] = new Array(sizes.length);
   for (const i of order) {
     const { w, h } = sizes[i];
@@ -81,13 +82,18 @@ function rows(ids: string[], sizes: Map<string, { w: number; h: number }>, width
 
 /**
  * @param reserve px kept clear at the top for the search field and the lifted
- *                rows. The heap sits below it, and the stage grows to fit the
- *                heap, which on a phone is several rows deep.
+ *                rows. The heap sits below it.
+ * @param fill    the stage has a fixed height (side by side with the page):
+ *                the heap packs into what is left. Otherwise the stage grows
+ *                to fit the heap, which on a phone is several rows deep.
  */
-export function GlyphPile({ chips, lifted, rowTop, reserve }: { chips: Chip[]; lifted: string[]; rowTop: number; reserve: number }) {
+export function GlyphPile({ chips, lifted, rowTop, reserve, fill = false }: {
+  chips: Chip[]; lifted: string[]; rowTop: number; reserve: number; fill?: boolean;
+}) {
   const box = useRef<HTMLDivElement>(null);
   const tiles = useRef(new Map<string, HTMLSpanElement>());
   const [width, setWidth] = useState(0);
+  const [boxH, setBoxH] = useState(0);
   const [sizes, setSizes] = useState<Map<string, { w: number; h: number }> | null>(null);
   /* start: tiles wait above the stage. landing: they fall, staggered.
      settled: moves are lifts and drops, with no stagger left over. */
@@ -104,7 +110,10 @@ export function GlyphPile({ chips, lifted, rowTop, reserve }: { chips: Chip[]; l
   useLayoutEffect(() => {
     const el = box.current;
     if (!el) return;
-    const measure = () => setWidth(el.clientWidth);
+    const measure = () => {
+      setWidth(el.clientWidth);
+      setBoxH(el.clientHeight);
+    };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
@@ -127,14 +136,21 @@ export function GlyphPile({ chips, lifted, rowTop, reserve }: { chips: Chip[]; l
   }, [width, shown]);
 
   const { pilePos, height } = useMemo(() => {
-    if (!sizes || !width) return { pilePos: null, height: reserve + 200 };
+    if (!sizes || !width || (fill && !boxH)) return { pilePos: null, height: fill ? undefined : reserve + 200 };
     const list = shown.map((c) => sizes.get(c.id) ?? { w: 20, h: 20 });
-    const pos = heap(list, width);
+    /* In a fixed stage the heap has to fit the room left under the field.
+       Random drops leave hollows, so aim low, then squash if still too deep. */
+    const room = fill ? Math.max(80, boxH - reserve - 12) : undefined;
+    const pos = heap(list, width, room && room * 0.7);
     const depth = Math.max(...pos.map((p) => -p.y));
-    const height = Math.round(reserve + depth + 8);
+    const squash = room && depth > room ? room / depth : 1;
+    const height = fill ? boxH : Math.round(reserve + depth + 8);
     const floor = height - 6;
-    return { pilePos: new Map(shown.map((c, i) => [c.id, { ...pos[i], y: floor + pos[i].y }])), height };
-  }, [sizes, width, shown, reserve]);
+    return {
+      pilePos: new Map(shown.map((c, i) => [c.id, { ...pos[i], y: floor + pos[i].y * squash }])),
+      height: fill ? undefined : height,
+    };
+  }, [sizes, width, boxH, fill, shown, reserve]);
 
   const liftPos = useMemo(
     () => (sizes && width ? rows(lifted, sizes, width, rowTop) : new Map<string, Pos>()),
@@ -156,14 +172,14 @@ export function GlyphPile({ chips, lifted, rowTop, reserve }: { chips: Chip[]; l
   }, [phase]);
 
   return (
-    <div className="glyph-pile" ref={box} style={{ height }} aria-hidden="true">
+    <div className={`glyph-pile${fill ? ' is-fill' : ''}`} ref={box} style={{ height }} aria-hidden="true">
       {shown.map((c, i) => {
         const up = liftPos.get(c.id);
         const p = up ?? pilePos?.get(c.id);
         const style = p
           ? {
               transform: phase === 'start' && !up
-                ? `translate(${p.x}px, ${p.y - height - 80}px) rotate(${p.r * 2}deg)`
+                ? `translate(${p.x}px, ${p.y - (height ?? boxH) - 80}px) rotate(${p.r * 2}deg)`
                 : `translate(${p.x}px, ${p.y}px) rotate(${p.r}deg)${up ? ' scale(1.06)' : ''}`,
               transitionDelay: phase === 'settled' ? `${up ? lifted.indexOf(c.id) * 28 : 0}ms` : `${(i * 37) % 700}ms`,
             }

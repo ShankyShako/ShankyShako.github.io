@@ -3,8 +3,11 @@
 The stage on `/resume`: a search field over a heap of type. A visitor types a
 role or pastes a job post. Matching skills and figures lift out of the heap,
 the one-page resume below re-sets itself for that role, and **Download this
-version** saves it as a PDF. With the query cleared, the page shows the
-published `public/files/Resume.pdf` as before.
+version** saves it as a PDF. With the field empty, the same typesetter shows
+the general resume (`defaultBullets` in `resume.ts`, the published PDF's
+bullets), so the page never switches renderers. There is no static resume
+PDF: the chat bot's "Download the resume" link goes to `/resume?download`,
+which saves the default version once it is typeset.
 
 The template engine is ported from Resumator
 (`../Resumator/resumator/docs/resume-templates.md`), LaTeX template only.
