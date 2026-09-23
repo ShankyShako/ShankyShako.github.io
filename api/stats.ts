@@ -84,14 +84,19 @@ function secretEquals(a: string, b: string): boolean {
   return diff === 0;
 }
 
+/* The GitHub Pages mirror is static and reads and writes the counter across
+   origins, through this project's vercel.app alias. */
+const MIRROR_ORIGIN = 'https://shankyshako.github.io';
+
 /**
- * A write must come from a page on this deployment. Trivially forgeable by
- * anything that is not a browser — the point is only that a random site cannot
- * drive the number from a visitor's tab.
+ * A write must come from a page on this deployment or the mirror. Trivially
+ * forgeable by anything that is not a browser — the point is only that a
+ * random site cannot drive the number from a visitor's tab.
  */
 function sameOrigin(req: VercelRequest): boolean {
   const origin = req.headers.origin;
   if (!origin) return true;  // same-origin fetches often omit it entirely
+  if (origin === MIRROR_ORIGIN) return true;
   const host = req.headers.host;
   if (!host) return false;
   try {
@@ -102,6 +107,13 @@ function sameOrigin(req: VercelRequest): boolean {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  /* Lets the mirror read the number. Its writes are simple text/plain
+     requests, so there is no preflight to answer. */
+  if (req.headers.origin === MIRROR_ORIGIN) {
+    res.setHeader('Access-Control-Allow-Origin', MIRROR_ORIGIN);
+  }
+  res.setHeader('Vary', 'Origin');
+
   if (!REDIS_URL || !REDIS_TOKEN) {
     /* Nothing configured: say nothing, successfully. The client treats this
        exactly like "no number" and renders no counter. */

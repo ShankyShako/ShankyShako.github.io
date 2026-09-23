@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 
 import { usePlaneSend } from '../hooks/usePlaneSend';
-import { apiBase, useCanonicalReachable } from '../lib/originProbe';
+import { apiBase, useApiReachable } from '../lib/originProbe';
 import { site } from '../data/site';
 
 type Status = { kind: 'idle' | 'sending' | 'ok' | 'err'; message?: string };
@@ -15,11 +15,11 @@ export function ContactForm() {
   const sendBtn = useRef<HTMLButtonElement>(null);
   const launchPlane = usePlaneSend(sendBtn);
 
-  /* The mirror posts to gmango.dev. On a network that blocks it, the form has
-     nowhere to send — so offer the thing that still works instead of a button
-     that fails. `null` means the probe has not answered yet; the form renders
-     as normal until it does, since that is the common case. */
-  const canReachApi = useCanonicalReachable();
+  /* The mirror posts to the Vercel relay. On a network that blocks that too,
+     the form has nowhere to send — so offer the thing that still works instead
+     of a button that fails. `null` means the probe has not answered yet; the
+     form renders as normal until it does, since that is the common case. */
+  const canReachApi = useApiReachable();
 
   const update = (field: keyof typeof values) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -50,7 +50,7 @@ export function ContactForm() {
     setStatus({ kind: 'sending' });
     try {
       /* Same-origin everywhere except the GitHub Pages mirror, which is static
-         and borrows the canonical origin's functions. */
+         and borrows the relay's functions. */
       const res = await fetch(`${apiBase()}/api/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -92,8 +92,8 @@ export function ContactForm() {
     return (
       <div>
         <p className="intro-text">
-          This form posts to gmango.dev, and the network you are on blocks that
-          domain. Mail is not affected, so email still reaches me normally.
+          The network you are on blocks the server this form posts to. Mail is
+          not affected, so email still reaches me normally.
         </p>
         <a
           className="btn btn-solid"

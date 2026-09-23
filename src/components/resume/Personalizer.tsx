@@ -83,9 +83,11 @@ export function Personalizer() {
   const [engineFailed, setEngineFailed] = useState(false);
   const [rewrites, setRewrites] = useState<{ query: string; byId: Record<string, Rewrite> }>({ query: '', byId: {} });
   const [phase, setPhase] = useState<'idle' | 'rewriting' | 'done' | 'failed'>('idle');
-  const [failure, setFailure] = useState('');
   const [saving, setSaving] = useState(false);
-  const rush = useRef('');
+  /* The query the visitor has finished typing: set by Enter, leaving the
+     field, picking an example, or a 3 s pause. Rewording waits for it, so a
+     request is not started and cancelled on every pause mid-sentence. */
+  const [finished, setFinished] = useState('');
   const [nudge, setNudge] = useState(0);
   /* Finished rewrites per query, so going back to a role does not ask again. */
   const cache = useRef(new Map<string, Record<string, Rewrite>>());
@@ -114,8 +116,17 @@ export function Personalizer() {
   /* 2. The page follows once typing pauses for a moment. */
   useEffect(() => {
     const t = setTimeout(() => setSettled(query.trim()), 180);
-    return () => clearTimeout(t);
+    const done = setTimeout(() => setFinished(query.trim()), 3000);
+    return () => {
+      clearTimeout(t);
+      clearTimeout(done);
+    };
   }, [query]);
+
+  const finish = (q: string) => {
+    setSettled(q);
+    setFinished(q);
+  };
 
   const active = settled.length >= 2;
   const ranking = useMemo(() => (settled.length >= 2 ? rank(parseQuery(settled)) : DEFAULT_RANKING), [settled]);
@@ -133,8 +144,8 @@ export function Personalizer() {
   const fittedRef = useRef(fitted);
   fittedRef.current = fitted;
 
-  /* 3. Rewording, once per settled query. Typing again aborts it. */
-  const canRewrite = status === 'online' && !!engine && settled.length >= 4;
+  /* 3. Rewording, once per finished query. Typing again aborts it. */
+  const canRewrite = status === 'online' && !!engine && finished.length >= 4 && finished === settled;
   useEffect(() => {
     setPhase('idle');
     if (!canRewrite) return;
@@ -145,7 +156,7 @@ export function Personalizer() {
       return;
     }
     const ctrl = new AbortController();
-    const t = setTimeout(async () => {
+    (async () => {
       const ids = (fittedRef.current?.ids ?? []).filter((id) => !fragById.get(id)!.fixed);
       if (!ids.length) return;
       setRewrites({ query: settled, byId: {} });
@@ -169,24 +180,21 @@ export function Personalizer() {
         setPhase('done');
       } catch (err) {
         if (ctrl.signal.aborted) return;
-        setFailure(err instanceof Error ? err.message.replace(/\.$/, '') : '');
+        /* Not the visitor's problem: the page stays as picked. The reason is
+           for whoever runs the bot. */
+        console.warn('[resume] rewording failed:', err instanceof Error ? err.message : err);
         setPhase('failed');
       }
-    }, rush.current === settled ? 0 : 1100);
-    return () => {
-      clearTimeout(t);
-      ctrl.abort();
-    };
+    })();
+    return () => ctrl.abort();
   }, [settled, canRewrite, botUrl, nudge]);
 
   const onKey = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       const q = query.trim();
-      rush.current = q;
-      /* Already settled: the timer is running, so restart it at zero. */
-      if (q === settled && (rewrites.query !== q || phase === 'failed')) setNudge((n) => n + 1);
-      setSettled(q);
+      if (q === finished && phase === 'failed') setNudge((n) => n + 1); // try again
+      finish(q);
     }
     if (e.key === 'Escape') setQuery('');
   };
@@ -242,15 +250,11 @@ export function Personalizer() {
             ? 'The model kept every bullet as written for this role.'
           : phase === 'done'
             ? `Reworded ${done.filter((r) => r.ok).length} bullets for this role.${kept.length ? ` Kept ${kept.length} as written, because a rewrite changed a fact.` : ''}`
-            : phase === 'failed'
-              ? done.some((r) => r.ok)
-                ? `Rewording stopped partway. ${done.filter((r) => r.ok).length} bullets are reworded, the rest as written.`
-                : `Rewording failed${failure ? ` (${failure})` : ''}, so the bullets are as written. Picked and ordered for this role.`
+            : phase === 'failed' && done.some((r) => r.ok)
+              ? `Reworded ${done.filter((r) => r.ok).length} bullets for this role.`
               : !ranking.matched
                 ? 'Nothing on the resume matches that, so this is the general version.'
-              : status === 'online'
-                ? 'Picked and ordered for this role. Rewording starts when you stop typing.'
-                : 'Picked and ordered for this role, in your browser. Rewording needs the chat bot, which is offline.';
+                : 'Picked and ordered for this role.';
 
   return (
     <section
@@ -269,6 +273,7 @@ export function Personalizer() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={warm}
+            onBlur={() => finish(query.trim())}
             onKeyDown={onKey}
             placeholder="Tailor it to a role or job post"
             aria-label="Role or job description to tailor the resume to"
@@ -291,7 +296,7 @@ export function Personalizer() {
         {!query && (
           <div className="tailor-examples" style={{ top: FIELD_TOP + fieldH + 14 }}>
             {EXAMPLES.map((ex) => (
-              <button key={ex} type="button" onClick={() => { warm(); setQuery(ex); }}>
+              <button key={ex} type="button" onClick={() => { warm(); setQuery(ex); finish(ex); }}>
                 {ex}
               </button>
             ))}

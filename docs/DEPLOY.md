@@ -170,6 +170,34 @@ it's worth keeping the old markup at `legacy-index.html` until you're settled.
 
 ---
 
+## 5. The mirror's relay (shankyshako.github.io)
+
+Filters that block gmango.dev also block every `*.gmango.dev` subdomain,
+including `bot.gmango.dev`. The GitHub Pages mirror is static, so it sends
+everything that needs a server to `https://gmango.vercel.app` instead: `/api/*`
+runs there as usual, and `/bot/*` is rewritten to `bot.gmango.dev` by
+`vercel.json`. Vercel fetches from the bot, so the visitor's network only
+ever sees `gmango.vercel.app`.
+
+1. Vercel → project **gmango2** → **Settings** → **Environments** →
+   **Production** → add the domain `gmango.vercel.app`. A domain listed there counts as production, so
+   Deployment Protection doesn't put a login page in front of it the way it
+   does for the generated `gmango2-*.vercel.app` URLs.
+2. Generate a key with `openssl rand -hex 32` and set it as `BOT_RELAY_KEY`
+   in two places: the Vercel project's environment variables (Production),
+   and `bot/.env` on the bot host. The `/bot` route sends it as `x-relay-key`,
+   which is how the bot knows the visitor address in `x-forwarded-for` came
+   from Vercel rather than from the caller. Redeploy Vercel after adding it.
+3. On the bot host, `BOT_ALLOWED_ORIGINS` in `bot/.env` must include
+   `https://shankyshako.github.io`. Then restart the bot.
+4. Check: `curl https://gmango.vercel.app/bot/health` returns the bot's health
+   JSON.
+
+If a network blocks `vercel.app` as well, the mirror's contact form falls back
+to a mailto link, and the chat button stays hidden.
+
+---
+
 ## Afterwards
 
 - `npm run build` regenerates `sitemap.xml`; submit `https://gmango.dev/sitemap.xml`

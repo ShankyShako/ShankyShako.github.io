@@ -46,12 +46,22 @@ const PORT = Number(process.env.BOT_PORT ?? 8787);
  * the next entry. Only failures before the reply starts fail over: once text
  * is streaming to the browser, that model finishes the answer.
  * ------------------------------------------------------------------------ */
+/* A key setting may hold several keys, comma-separated: one per account. */
+const keysOf = (v) => (v ?? '').split(',').map((k) => k.trim()).filter(Boolean);
+
 const PROVIDERS = {
-  groq: { url: 'https://api.groq.com/openai/v1/chat/completions', key: process.env.GROQ_API_KEY ?? '' },
-  openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', key: process.env.OPENROUTER_API_KEY ?? '' },
+  groq: { url: 'https://api.groq.com/openai/v1/chat/completions', keys: keysOf(process.env.GROQ_API_KEY) },
+  openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', keys: keysOf(process.env.OPENROUTER_API_KEY) },
 };
 
-/* Splits on the FIRST colon only: OpenRouter ids carry their own (`…:free`). */
+/* Splits on the FIRST colon only: OpenRouter ids carry their own (`…:free`).
+ *
+ * With several keys, each "provider:model" becomes one entry per key, the
+ * model's keys side by side: groq:m, groq#2:m, then the next model. Each has
+ * its own cooldown, so when one account hits its per-minute ceiling the next
+ * account's copy of the same model answers, before falling to a slower model.
+ * Keys only add capacity if they belong to different accounts: keys within
+ * one Groq organization share its limits. */
 function parseChain(name, spec) {
   const chain = [];
   for (const raw of spec.split(',').map((s) => s.trim()).filter(Boolean)) {
@@ -60,13 +70,15 @@ function parseChain(name, spec) {
     const model = raw.slice(at + 1);
     if (at < 1 || !model || !PROVIDERS[provider]) {
       console.warn(`[bot] ${name}: skipping "${raw}" — expected groq:<model> or openrouter:<model>`);
-    } else if (!PROVIDERS[provider].key) {
+    } else if (!PROVIDERS[provider].keys.length) {
       console.warn(`[bot] ${name}: skipping ${raw} — ${provider.toUpperCase()}_API_KEY is not set`);
     } else if (provider === 'openrouter' && !model.endsWith(':free')) {
       /* An account holding credits bills a paid id. Free ids only. */
       console.warn(`[bot] ${name}: skipping ${raw} — only :free OpenRouter models are allowed`);
     } else {
-      chain.push({ id: raw, provider, model });
+      PROVIDERS[provider].keys.forEach((key, i) =>
+        chain.push({ id: i ? `${provider}#${i + 1}:${model}` : raw, provider, model, key }),
+      );
     }
   }
   return chain;
@@ -139,7 +151,7 @@ const TEMPERATURE = Number(process.env.BOT_TEMPERATURE ?? 0.4);
 
 const ORIGINS = (
   process.env.BOT_ALLOWED_ORIGINS ??
-  'https://gmango.dev,https://www.gmango.dev,http://localhost:5173'
+  'https://gmango.dev,https://www.gmango.dev,https://shankyshako.github.io,http://localhost:5173'
 )
   .split(',')
   .map((s) => s.trim())
@@ -740,7 +752,8 @@ function upstreamError(entry, status, text, headers) {
 /* Opens a streaming completion. Resolves when the response headers arrive;
    handleChat still waits for the first event before committing to the entry. */
 async function callModel(entry, messages, maxTokens, signal) {
-  const { url, key } = PROVIDERS[entry.provider];
+  const { url } = PROVIDERS[entry.provider];
+  const { key } = entry;
   const send = () =>
     fetch(url, {
       method: 'POST',
@@ -853,13 +866,25 @@ function json(res, code, obj) {
   res.end(JSON.stringify(obj));
 }
 
+/* Shared with the Vercel relay (vercel.json's /bot route sets x-relay-key from
+   the same variable). Unset means relayed visitors share Vercel's addresses. */
+const RELAY_KEY = process.env.BOT_RELAY_KEY ?? '';
+
+/**
+ * The address rate limits are keyed on. The first x-forwarded-for entry can't
+ * be used as-is: Cloudflare appends to whatever the caller sent, so a direct
+ * caller could pick their own bucket.
+ */
 function clientIp(req) {
-  const fwd = req.headers['x-forwarded-for'];
-  return (
-    (Array.isArray(fwd) ? fwd[0] : fwd)?.split(',')[0]?.trim() ||
-    req.socket.remoteAddress ||
-    'unknown'
-  );
+  /* Via the mirror's relay. Vercel overwrites any x-forwarded-for the visitor
+     sent, so with the key proving Vercel sent this, the first entry is real. */
+  if (RELAY_KEY && req.headers['x-relay-key'] === RELAY_KEY) {
+    const first = String(req.headers['x-forwarded-for'] ?? '').split(',')[0].trim();
+    if (first) return first;
+  }
+  /* Direct through the tunnel: Cloudflare sets this itself, replacing any copy
+     the caller sent. Absent locally, where the socket is the caller. */
+  return req.headers['cf-connecting-ip'] || req.socket.remoteAddress || 'unknown';
 }
 
 function readBody(req, cap = 64 * 1024) {

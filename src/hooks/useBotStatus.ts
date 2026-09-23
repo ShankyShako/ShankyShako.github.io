@@ -1,11 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { isMirror, RELAY_ORIGIN } from '../lib/originProbe';
+
 export type BotStatus = 'checking' | 'online' | 'offline';
 
-/* Trailing slash would produce `//health`, which some proxies 404. */
-const BOT_URL = (import.meta.env.VITE_BOT_URL ?? '').trim().replace(/\/$/, '');
+/* The mirror is built without VITE_BOT_URL and is used where bot.gmango.dev is
+   blocked anyway, so it goes through the relay's /bot/* rewrite instead.
+   Trailing slash would produce `//health`, which some proxies 404. */
+const BOT_URL = isMirror()
+  ? `${RELAY_ORIGIN}/bot`
+  : (import.meta.env.VITE_BOT_URL ?? '').trim().replace(/\/$/, '');
 
-const PROBE_TIMEOUT_MS = 2500;
+/* Room for the mirror's extra hop (relay → tunnel). The button appears the
+   moment the probe answers, so a longer limit only delays an offline verdict. */
+const PROBE_TIMEOUT_MS = 5000;
 const POLL_MS = 90_000;
 
 /**

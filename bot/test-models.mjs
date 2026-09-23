@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 /**
- * One real request to every model in BOT_CHAT_CHAIN and BOT_JD_CHAIN, with the
+ * One real request to every model in BOT_CHAT_CHAIN, BOT_JD_CHAIN and
+ * BOT_TAILOR_CHAIN (on every key, when a provider has several), with the
  * prompt and parameters the server sends, timed. Run it after changing a key or
  * a chain, or to try a candidate model before putting it in one. Costs one
  * request per model against that provider's free quota.
  *
- *   node bot/test-models.mjs                 both chains
- *   node bot/test-models.mjs jd              JD chain only
+ *   node bot/test-models.mjs                 every chain
+ *   node bot/test-models.mjs tailor          one chain only
  *   node bot/test-models.mjs jd openrouter:google/gemma-4-31b-it:free
  *                                            one model, not necessarily in a chain
  */
@@ -21,7 +22,9 @@ const URLS = {
   groq: 'https://api.groq.com/openai/v1/chat/completions',
   openrouter: 'https://openrouter.ai/api/v1/chat/completions',
 };
-const KEYS = { groq: process.env.GROQ_API_KEY, openrouter: process.env.OPENROUTER_API_KEY };
+/* Comma-separated, one per account, as in server.mjs. Every key is tested. */
+const keysOf = (v) => (v ?? '').split(',').map((k) => k.trim()).filter(Boolean);
+const KEYS = { groq: keysOf(process.env.GROQ_API_KEY), openrouter: keysOf(process.env.OPENROUTER_API_KEY) };
 
 const compactFor = (provider) => {
   const v = process.env[`BOT_${provider.toUpperCase()}_COMPACT`];
@@ -61,29 +64,49 @@ const MODES = {
     turn: POSTING,
     extra: readFileSync(join(here, 'modes', 'jd.md'), 'utf8'),
   },
+  /* Rewording resume bullets for /tailor. No site prompt: the server sends
+     only modes/tailor.md and the bullets. */
+  tailor: {
+    chain:
+      process.env.BOT_TAILOR_CHAIN ??
+      'groq:openai/gpt-oss-120b,groq:llama-3.3-70b-versatile,openrouter:nvidia/nemotron-3-super-120b-a12b:free',
+    maxTokens: Number(process.env.BOT_TAILOR_MAX_TOKENS ?? 1200),
+    only: readFileSync(join(here, 'modes', 'tailor.md'), 'utf8'),
+    turn:
+      'Job:\nML engineer at a health startup\n\nBullets:\n' +
+      'ghw-dsp: Built the on-device biomarker signal-processing pipeline in Swift: 100 Hz CoreMotion capture, gravity removal, zero-phase Butterworth band-pass filtering, double integration, and PCA into 15 biomarkers with automated quality flags.\n' +
+      'reu-ics: Engineered an LLM to detect ransomware in Industrial Control Systems, achieving 99%/91% binary/family classification accuracy; presented at IEEE Big Data 2024 (solo author, mentor-guided).',
+  },
 };
 
 /* Mirrors reasoningParams() in server.mjs, including its one retry. */
 const GROQ_REASONING = (process.env.BOT_GROQ_REASONING ?? 'none').toLowerCase();
-const reasoning = (provider, retry) => {
+const reasoning = (provider, retry, model) => {
   if (provider === 'openrouter') return { reasoning: retry ? { exclude: true } : { effort: 'none' } };
   if (retry || GROQ_REASONING === 'off') return {};
+  if (GROQ_REASONING === 'none' && model.startsWith('openai/gpt-oss')) return { reasoning_effort: 'low' };
   return GROQ_REASONING === 'none' ? { reasoning_effort: 'none' } : { reasoning_format: GROQ_REASONING };
 };
 
-async function run(mode, id) {
-  const at = id.indexOf(':');
-  const provider = id.slice(0, at);
-  const model = id.slice(at + 1);
+async function run(mode, entry, keyIndex = 0) {
+  const at = entry.indexOf(':');
+  const provider = entry.slice(0, at);
+  const model = entry.slice(at + 1);
+  const id = keyIndex ? `${provider}#${keyIndex + 1}:${model}` : entry;
+  const key = KEYS[provider]?.[keyIndex];
   if (!URLS[provider]) return console.log(`✗ ${id}: unknown provider`);
-  if (!KEYS[provider]) return console.log(`✗ ${id}: ${provider.toUpperCase()}_API_KEY is not set`);
+  if (!key) return console.log(`✗ ${id}: ${provider.toUpperCase()}_API_KEY is not set`);
   /* Same billing guard as the server. */
   if (provider === 'openrouter' && !model.endsWith(':free')) return console.log(`✗ ${id}: only :free OpenRouter models`);
 
   const m = MODES[mode];
   const messages = [
-    { role: 'system', content: systemPrompt(compactFor(provider)) },
-    ...(m.extra ? [{ role: 'system', content: m.extra }] : []),
+    ...(m.only
+      ? [{ role: 'system', content: m.only }]
+      : [
+          { role: 'system', content: systemPrompt(compactFor(provider)) },
+          ...(m.extra ? [{ role: 'system', content: m.extra }] : []),
+        ]),
     { role: 'user', content: m.turn },
   ];
 
@@ -91,10 +114,10 @@ async function run(mode, id) {
   const send = (retry) =>
     fetch(URLS[provider], {
       method: 'POST',
-      headers: { Authorization: `Bearer ${KEYS[provider]}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model, messages, stream: true, temperature: Number(process.env.BOT_TEMPERATURE ?? 0.4), top_p: 0.9, max_tokens: m.maxTokens,
-        ...reasoning(provider, retry),
+        ...reasoning(provider, retry, model),
       }),
       signal: AbortSignal.timeout(120_000),
     });
@@ -148,19 +171,22 @@ async function run(mode, id) {
 }
 
 const [only, single] = process.argv.slice(2);
-for (const mode of only ? [only] : ['chat', 'jd']) {
+for (const mode of only ? [only] : Object.keys(MODES)) {
   if (!MODES[mode]) {
-    console.error(`unknown mode "${mode}" (use chat or jd)`);
+    console.error(`unknown mode "${mode}" (use ${Object.keys(MODES).join(', ')})`);
     process.exit(1);
   }
   const ids = single ? [single] : (MODES[mode].chain ?? '').split(',').map((s) => s.trim()).filter(Boolean);
   if (!ids.length) console.log(`BOT_${mode.toUpperCase()}_CHAIN is not set in bot/.env`);
   /* One at a time: back-to-back Groq calls already brush its per-minute ceiling. */
   for (const id of ids) {
-    try {
-      await run(mode, id);
-    } catch (err) {
-      console.log(`✗ ${id} [${mode}]: ${err.message}`);
+    const provider = id.slice(0, id.indexOf(':'));
+    for (let k = 0; k < Math.max(1, KEYS[provider]?.length ?? 0); k++) {
+      try {
+        await run(mode, id, k);
+      } catch (err) {
+        console.log(`✗ ${id} [${mode}]: ${err.message}`);
+      }
     }
   }
 }

@@ -109,14 +109,11 @@ const dateRange = (s = '') => s.replace(/\s*--\s*/g, T.dateDash);
 
 function contactItems() {
   const c = meta.contact;
-  const items: { text: string; href: string | null }[] = [
+  return [
     { text: c.phone, href: null },
     { text: c.email, href: `mailto:${c.email}` },
     ...c.links.map((l) => ({ text: l, href: hrefFor(l) })),
   ];
-  /* Anything only the QR code says, an ATS cannot read, so it is text too. */
-  items.push({ text: meta.badgeUrl.replace(/^https?:\/\//, ''), href: meta.badgeUrl });
-  return items;
 }
 
 function qrMatrix(text: string) {

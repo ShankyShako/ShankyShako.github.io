@@ -68,8 +68,8 @@ These carry over from Resumator. Each one fixes a failure that was seen there.
   the dates), or extractors glue them together.
 - **The bullet marker sits on the text's baseline**, lifted with text rise, so a
   parser reads "• Ported…" as one line.
-- **The QR code's URL is also in the contact line as text**, and the code holds
-  the full `https://` URL.
+- **The QR code holds a full `https://` URL** (GitHub Pages). The contact line
+  shows gmango.dev, the same site, so an ATS still reads a working link.
 
 ## Changing things
 

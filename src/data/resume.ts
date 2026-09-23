@@ -64,11 +64,11 @@ export const meta = {
   contact: {
     phone: site.phone,
     email: site.email,
-    links: ['linkedin.com/in/GMongalo'],
+    links: ['linkedin.com/in/GMongalo', 'gmango.dev'],
   },
-  /* The QR code in the corner. Its link is added to the contact line as text,
-     because an ATS cannot read a QR code. GitHub Pages rather than gmango.dev,
-     as in resume.tex: a printed page outlives a domain renewal. */
+  /* The QR code in the corner goes to GitHub Pages, the fallback that outlives
+     a lapsed domain, while the contact line shows gmango.dev. Both serve the
+     same site, so an ATS reading the text still gets a working link. */
   badgeUrl: 'https://ShankyShako.github.io',
 };
 

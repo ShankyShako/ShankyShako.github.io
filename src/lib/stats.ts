@@ -16,6 +16,8 @@
  *      gestures, nothing else.
  */
 
+import { apiBase } from './originProbe';
+
 /** Every event the API will accept. The server allowlists the same set. */
 export type StatEvent =
   | 'pose'          // a pose the visitor caused — the public number
@@ -29,7 +31,8 @@ export type StatEvent =
   | 'chat_open'
   | 'chat_message';
 
-const ENDPOINT = '/api/stats';
+/* Cross-origin on the mirror, which has no functions of its own. */
+const ENDPOINT = `${apiBase()}/api/stats`;
 /** Long enough that a hover-happy visitor still costs one request. */
 const FLUSH_MS = 10_000;
 
@@ -67,13 +70,15 @@ function flush(beacon = false) {
   if (!events) return;
 
   const body = JSON.stringify({ events });
+  /* text/plain keeps the mirror's cross-origin write a simple request: no
+     preflight, and a beacon Chrome will send. The server parses the string. */
   try {
-    if (beacon && navigator.sendBeacon?.(ENDPOINT, new Blob([body], { type: 'application/json' }))) {
+    if (beacon && navigator.sendBeacon?.(ENDPOINT, new Blob([body], { type: 'text/plain' }))) {
       return;
     }
     void fetch(ENDPOINT, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain' },
       body,
       keepalive: true,
     }).catch(() => {});

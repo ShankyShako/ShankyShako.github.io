@@ -1,8 +1,23 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
+  "routes": [
+    {
+      "src": "/bot/(.*)",
+      "dest": "https://bot.gmango.dev/$1",
+      "transforms": [
+        {
+          "type": "request.headers",
+          "op": "set",
+          "target": { "key": "x-relay-key" },
+          "args": "$BOT_RELAY_KEY",
+          "env": ["BOT_RELAY_KEY"]
+        }
+      ]
+    }
+  ],
   "rewrites": [
-    { "source": "/((?!api/|assets/|image/|audio/|files/|fonts/|plane-send\\.js).*)", "destination": "/index.html" }
+    { "source": "/((?!api/|bot/|assets/|image/|audio/|files/|fonts/|plane-send\\.js).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
