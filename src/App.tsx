@@ -28,7 +28,7 @@ import './styles/global.css';
 import './styles/components.css';
 
 const NOT_FOUND = {
-  title: '404 — Genova Mongalo',
+  title: '404 | Genova Mongalo',
   description: 'That page does not exist.',
 };
 

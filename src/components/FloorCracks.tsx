@@ -44,9 +44,12 @@ const SPLIT_CHANCE = 0.2;
 const SPLIT_MIN = 0.7;
 const SPLIT_MAX = 1.45;
 
-const W_ORIGIN = [3.2, 4.8];
-const W_TAIL = [0.7, 1.2];
-const W_TIP = 0.22;
+/* Sized for the screen, not the viewBox: at the usual 1.2-1.5x slice scale the
+   old 0.7-1.2 tail came out as a 1px hairline, which read as twigs lying on the
+   floor rather than the floor having split. */
+const W_ORIGIN = [6, 8.5];
+const W_TAIL = [1.4, 2.1];
+const W_TIP = 0.35;
 /* Stress drops over the first third; the last fifth tapers out. */
 const DROP = 0.3;
 const FADE = 0.8;
@@ -454,18 +457,15 @@ type Props = {
   /** How long the fracture takes to travel to a new progress value. */
   growMs: number;
   /**
-   * How long after a progress change the impact lands.
-   *
-   * Scrolling changes the level the moment the card starts moving, and the card
-   * takes 340ms on a curve that overshoots — so it first reaches its resting
-   * place around 55% in, and the floor must not react before then. The intro is
-   * the opposite: it reports each card at the instant it touches down, so the
-   * impact is already happening and any delay reads as a late echo.
+   * Bumped once per landing, at the instant of contact. The flex is keyed off
+   * this rather than off `progress` because the floor no longer heals: a card
+   * dropping back onto a pile that has already done its damage changes nothing
+   * about the fracture, but the slab still has to take the hit.
    */
-  impactDelay: number;
+  impact: number;
 };
 
-export function FloorCracks({ progress, field, growMs, impactDelay }: Props) {
+export function FloorCracks({ progress, field, growMs, impact }: Props) {
   /* useDeckEligible already withholds the deck under reduced motion, but it can
      be flipped mid-visit; the CSS backstop cannot reach a JS tween, so the
      query is read here too — the house pattern is both, never one. */
@@ -475,34 +475,23 @@ export function FloorCracks({ progress, field, growMs, impactDelay }: Props) {
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const p = useTween(Math.max(0, Math.min(1, progress)), reduced ? 0 : growMs);
   const settle = useRef<SVGGElement | null>(null);
-  const last = useRef(progress);
+  const last = useRef(impact);
 
   /* Impact, then settle. Transform and opacity only — regenerating the geometry
      here would reseed the jitter and flicker the whole field on every card. */
   useEffect(() => {
-    if (progress === last.current) return;
-    last.current = progress;
+    if (impact === last.current) return;
+    last.current = impact;
     const el = settle.current;
-    if (!el || typeof el.animate !== 'function') return;
-
-    if (reduced) return;
-
-    const fire = () =>
-      el.animate(
-        [
-          { transform: 'scale(1.05)', opacity: 0.55 },
-          { transform: 'scale(1)', opacity: 1 },
-        ],
-        { duration: SETTLE_MS, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' },
-      );
-
-    if (impactDelay <= 0) {
-      fire();
-      return;
-    }
-    const t = window.setTimeout(fire, impactDelay);
-    return () => clearTimeout(t);
-  }, [progress, impactDelay, reduced]);
+    if (!el || typeof el.animate !== 'function' || reduced) return;
+    el.animate(
+      [
+        { transform: 'scale(1.04)', opacity: 0.5 },
+        { transform: 'scale(1)', opacity: 1 },
+      ],
+      { duration: SETTLE_MS, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' },
+    );
+  }, [impact, reduced]);
   /* seedInset included: buildNetwork derives the whole seed ring from it, and
      the fade mask below reads it on every render — keyed without it the roots
      and the mask that hides them could disagree. Primitives rather than the
@@ -513,12 +502,14 @@ export function FloorCracks({ progress, field, growMs, impactDelay }: Props) {
   );
   const q = Math.round(p * 220) / 220;
 
-  /* Three passes over one route. The core is the widest and sits underneath;
-     the shadow and the rim are narrower and barely displaced, so they read as
-     the walls of a groove rather than as a stick with a drop shadow. */
+  /* Three passes over one route. The lip is the core's own shape nudged away
+     from the light and drawn underneath, so all that survives is a bright
+     sliver along the far edge — the broken edge of the slab catching the light.
+     The shadow is narrower and sits inside, darkening the near wall. Lit edge
+     outside, dark wall inside is what makes it read as a cut into the floor
+     rather than a mark on top of it. */
   const core = useMemo(() => shapesFor(network, q, 1), [network, q]);
-  const shade = useMemo(() => shapesFor(network, q, 0.66), [network, q]);
-  const rim = useMemo(() => shapesFor(network, q, 0.4), [network, q]);
+  const shade = useMemo(() => shapesFor(network, q, 0.6), [network, q]);
 
   /* The mask that dissolves the innermost run of every crack.
 
@@ -528,8 +519,11 @@ export function FloorCracks({ progress, field, growMs, impactDelay }: Props) {
      surface instead of stopping at a visible endpoint — and it is a mask on the
      layer, not a change to the paths, because the geometry still has to be one
      continuous run. */
-  const ringW = Math.max(0, field.footW - 2 * Math.min(field.seedInset, Math.min(field.footW, field.footH) * 0.55));
-  const ringH = Math.max(0, field.footH - 2 * Math.min(field.seedInset, Math.min(field.footW, field.footH) * 0.55));
+  /* Same cap buildNetwork applies — half the shorter side, not the whole side —
+     so the mask always sits on the ring the roots actually start from. */
+  const inset = Math.min(field.seedInset, (Math.min(field.footW, field.footH) / 2) * 0.55);
+  const ringW = Math.max(0, field.footW - 2 * inset);
+  const ringH = Math.max(0, field.footH - 2 * inset);
   const pad = 8;
 
   return (
@@ -561,6 +555,11 @@ export function FloorCracks({ progress, field, growMs, impactDelay }: Props) {
         mask="url(#deck-crack-mask)"
         style={{ transformBox: 'view-box', transformOrigin: `${VIEW.cx}px ${VIEW.cy}px` }}
       >
+        <g className="deck-crack-lip">
+          {core.map((d, i) => (
+            <path key={i} d={d} />
+          ))}
+        </g>
         <g className="deck-crack-core">
           {core.map((d, i) => (
             <path key={i} d={d} />
@@ -568,11 +567,6 @@ export function FloorCracks({ progress, field, growMs, impactDelay }: Props) {
         </g>
         <g className="deck-crack-shadow">
           {shade.map((d, i) => (
-            <path key={i} d={d} />
-          ))}
-        </g>
-        <g className="deck-crack-rim">
-          {rim.map((d, i) => (
             <path key={i} d={d} />
           ))}
         </g>

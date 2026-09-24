@@ -147,7 +147,7 @@ export function Projects() {
     <>
       <h1>Projects</h1>
       <p className="page-intro">
-        Coursework, side builds, and collaborations. Filter by what they are built out of.
+        Coursework, side projects, and things I built for other people. Click a tag to filter.
       </p>
 
       <div className="tag-row">
@@ -190,7 +190,7 @@ export function Research() {
     <>
       <h1>Research</h1>
       <p className="page-intro">
-        Peer-reviewed and publication-track work, with the code behind it.
+        Published papers and research projects, with code where I'm allowed to share it.
       </p>
 
       <Reveal>

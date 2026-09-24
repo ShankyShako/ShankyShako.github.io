@@ -49,8 +49,8 @@ export function Education() {
     <>
       <h1>Education</h1>
       <p className="page-intro">
-        B.S. in Computer Science from UMKC, summa cum laude. Now doing the M.S. at Georgia Tech,
-        focused on AI.
+        B.S. in Computer Science from UMKC, summa cum laude. Now working on the M.S. at Georgia
+        Tech, with an AI emphasis.
       </p>
 
       <Reveal>
@@ -76,7 +76,7 @@ export function Education() {
 
           <div className="section-head">
             <h2>Graduate coursework</h2>
-            <span>Georgia Tech — M.S. Computer Science, AI emphasis</span>
+            <span>Georgia Tech, M.S. Computer Science, AI emphasis</span>
           </div>
           <CourseList courses={graduateCoursework} />
 

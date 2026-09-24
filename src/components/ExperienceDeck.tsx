@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { experience } from '../data/experience';
 import { anchors } from '../data/anchors';
@@ -29,9 +29,15 @@ const settle = (d: number) => 1 - Math.exp(-d / 1.6);
    `z` is altitude above the floor. The view stays straight down throughout —
    nothing ever tilts — so height is carried by perspective alone: a card in the
    air is nearer the overhead camera and therefore bigger, and it shrinks to
-   floor size as it lands. */
+   floor size as it lands.
+
+   The -50% centring is not in here: it lives in `.deck-card`'s own `translate`
+   property. Individual transform properties are applied outside `transform`,
+   so with the centring inside it the landing press (the `scale` property) had
+   its pivot on the card's bottom-right corner and slid the card diagonally
+   instead of pressing it down. */
 function compose(x: number, y: number, z: number, rot: number, scale: number) {
-  return `translate(-50%, -50%) translate(${x.toFixed(2)}px, ${y.toFixed(2)}px) translateZ(${z.toFixed(1)}px) rotate(${rot.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
+  return `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px) translateZ(${z.toFixed(1)}px) rotate(${rot.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
 }
 
 function restingPose(i: number, top: number) {
@@ -43,9 +49,9 @@ function restingPose(i: number, top: number) {
      and y, because noise near zero puts a card exactly behind the one above it
      and it vanishes from the pile entirely. An angle always displaces. */
   const angle = noise(i) * Math.PI;
-  const spread = 52 * e;
+  const spread = 62 * e;
   /* Squashed vertically: the camera is above the floor, not level with it. */
-  const y = Math.sin(angle) * spread * 0.58 + 15 * e;
+  const y = Math.sin(angle) * spread * 0.58 + 18 * e;
 
   /* The face-up card is never tilted. Rotation is a record of impacts already
      taken, and it does that job just as well one card down. Given a floor of 3
@@ -56,7 +62,7 @@ function restingPose(i: number, top: number) {
     x: Math.cos(angle) * spread + noise(i + 13) * 7 * e,
     y,
     rot: (spin * 7 + Math.sign(spin) * 3) * e,
-    scale: 1 - 0.05 * e,
+    scale: 1 - 0.07 * e,
   };
 }
 
@@ -165,13 +171,80 @@ export function ExperienceDeck({ heading }: { heading: ReactNode }) {
   const [field, setField] = useState<Field>({ footW: 384, footH: 312, visW: 1000, visH: 640, seedInset: 48 });
 
   /* During the intro the pile is still assembling, so the cracks follow the
-     build rather than the scroll. null once the intro is over or skipped.
+     build. null once the intro is over or skipped, and the floor stays fully
+     broken from then on.
      Seeded synchronously rather than from the effect: starting at null means
      the first render reports a full pile and paints a fully fractured floor,
      which then heals to nothing when the effect sets 0 a frame later. The
      opening frame has to be a clean floor. */
   const [landed, setLanded] = useState<number | null>(() => (introPending(hash) ? 0 : null));
   const [flash, setFlash] = useState<number | null>(null);
+  /* Bumped on every landing so the floor flexes; see FloorCracks. */
+  const [impact, setImpact] = useState(0);
+  const dust = useRef<HTMLSpanElement | null>(null);
+  const shock = useRef<HTMLSpanElement | null>(null);
+
+  /**
+   * Everything a card does to the room when it touches down, at weight 0..1.
+   *
+   * The card is pressed a few percent further from the overhead camera and held
+   * there for a beat before it recovers — the hold is the hit-stop, and it is
+   * what makes the contact register as weight rather than as a card arriving.
+   * Then the stage kicks, dust squeezes out from under the edges and a ring of
+   * shock runs out across the slab. `scale` is animated as its own property so
+   * it does not have to repeat the pose held in `transform`.
+   *
+   * `card` is optional: a card dropping back on scroll already dips below the
+   * floor on its overshoot curve, and pressing it again doubled the bounce.
+   */
+  const land = useCallback((card: HTMLElement | null | undefined, weight: number) => {
+    const out: Animation[] = [];
+    /* useDeckEligible unmounts the deck under reduced motion, but only once its
+       listener fires. Same both-places rule FloorCracks follows. */
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return out;
+    setImpact((n) => n + 1);
+    const press = 1 - 0.035 * weight;
+    const a = card?.animate(
+      [{ scale: '1' }, { scale: `${press}`, offset: 0.2 }, { scale: `${press}`, offset: 0.42 }, { scale: '1' }],
+      { duration: 220, easing: 'ease-out' },
+    );
+    const kick = 7 * weight;
+    const b = stage.current?.animate(
+      [
+        { transform: 'translate(0, 0)' },
+        { transform: `translate(${(kick * 0.3).toFixed(1)}px, ${kick.toFixed(1)}px)`, offset: 0.2 },
+        { transform: `translate(${(-kick * 0.25).toFixed(1)}px, ${(-kick * 0.35).toFixed(1)}px)`, offset: 0.5 },
+        { transform: `translate(0, ${(kick * 0.12).toFixed(1)}px)`, offset: 0.75 },
+        { transform: 'translate(0, 0)' },
+      ],
+      { duration: 150 + 130 * weight, easing: 'ease-out' },
+    );
+    const c = dust.current?.animate(
+      [
+        { opacity: 0, transform: 'translate(-50%, -50%) scale(0.9)' },
+        /* Eased per leg, not overall: an overall ease-out spent the puff's
+           peak in the first frame and it was gone before it could be seen. */
+        {
+          opacity: weight,
+          transform: 'translate(-50%, -50%) scale(1)',
+          offset: 0.1,
+          easing: 'cubic-bezier(.2,.6,.35,1)',
+        },
+        { opacity: 0, transform: `translate(-50%, -50%) scale(${1.12 + 0.16 * weight})` },
+      ],
+      { duration: 760 },
+    );
+    const d = shock.current?.animate(
+      [
+        { opacity: weight, transform: 'translate(-50%, -50%) scale(0.9)', easing: 'cubic-bezier(.2,.8,.4,1)' },
+        { opacity: 0.7 * weight, transform: `translate(-50%, -50%) scale(${1.3 + 0.3 * weight})`, offset: 0.4 },
+        { opacity: 0, transform: `translate(-50%, -50%) scale(${1.7 + 0.5 * weight})` },
+      ],
+      { duration: 520 },
+    );
+    for (const x of [a, b, c, d]) if (x) out.push(x);
+    return out;
+  }, []);
 
   useLayoutEffect(() => {
     const measure = () => {
@@ -222,8 +295,8 @@ export function ExperienceDeck({ heading }: { heading: ReactNode }) {
   useEffect(() => {
     if (!introPending(hash)) {
       /* Covers the StrictMode remount, where the flag is already set by the
-         first pass: drop back to the scroll-driven floor rather than sitting at
-         whatever count the aborted run left behind. */
+         first pass: drop back to the settled, fully broken floor rather than
+         sitting at whatever count the aborted run left behind. */
       setLanded(null);
       return;
     }
@@ -236,7 +309,7 @@ export function ExperienceDeck({ heading }: { heading: ReactNode }) {
 
     const timers: number[] = [];
     /* Discarding these left cards flying for up to 1.6s after an aborted
-       cascade had already handed the floor back to the scroll value. */
+       cascade had already handed the floor back to its settled state. */
     const flights: Animation[] = [];
     const DUR = 820;
     const GAP = 150;
@@ -271,11 +344,9 @@ export function ExperienceDeck({ heading }: { heading: ReactNode }) {
       timers.push(
         window.setTimeout(() => {
           setLanded(order + 1);
-          const shake = stage.current?.animate(
-            [{ transform: 'translateY(0)' }, { transform: 'translateY(3px)' }, { transform: 'translateY(0)' }],
-            { duration: 150 },
-          );
-          if (shake) flights.push(shake);
+          /* Each card comes down on a heavier pile than the last, so the hits
+             build to the final one rather than all landing the same. */
+          flights.push(...land(el, 0.55 + (0.45 * order) / Math.max(1, COUNT - 1)));
         }, order * GAP + DUR),
       );
     }
@@ -306,7 +377,7 @@ export function ExperienceDeck({ heading }: { heading: ReactNode }) {
          draws. */
       setLanded(null);
     };
-  }, [hash]);
+  }, [hash, land]);
 
   /* useHashHighlight scrolls to the proxy anchor and flashes it; the anchor is
      an invisible 1px marker in the scroll track, so mirror the flash onto the
@@ -321,24 +392,38 @@ export function ExperienceDeck({ heading }: { heading: ReactNode }) {
     return () => clearTimeout(t);
   }, [hash]);
 
-  /* Divided by the number of *impacts*, not the number of cards: the floor
-     card was set down on an unbroken floor, so arriving back at it has to leave
-     nothing behind. (COUNT - index) / COUNT never reaches zero and left a
-     fracture under the 2020 card with nothing to have caused it. */
+  /* Scrolling back up drops a lifted card onto the pile again, and that is a
+     landing like any in the arrival. Scrolling down only lifts, which costs the
+     floor nothing. The face card's curve, cubic-bezier(0.2, 1.45, 0.4, 1) over
+     340ms, first reaches the floor about 97ms in, so the hit lands there. The
+     arrival is checked again when the timer fires: a nav click back to
+     /experience can start the intro inside that window. */
+  const prevIndex = useRef(index);
+  const arrivingRef = useRef(false);
+  arrivingRef.current = landed !== null;
+  useEffect(() => {
+    const prev = prevIndex.current;
+    prevIndex.current = index;
+    if (index >= prev || arrivingRef.current) return;
+    const t = window.setTimeout(() => {
+      if (!arrivingRef.current) land(null, 0.75);
+    }, 100);
+    return () => clearTimeout(t);
+  }, [index, land]);
+
+  /* The floor remembers. During the arrival it breaks one impact at a time —
+     `landed - 1` over impacts, because the floor card is set down on an
+     unbroken floor and the first landing must leave nothing behind. After that
+     it stays broken: lifting cards off a cracked slab does not mend it, and a
+     floor that healed as you scrolled took the drama away one card at a time,
+     until the last role sat on a spotless floor. */
   const impacts = Math.max(1, COUNT - 1);
-  /* `landed - 1`, and over impacts rather than cards: the floor card is set
-     down on an unbroken floor, so the first landing must leave nothing behind.
-     Dividing by COUNT cracked it at 1/6 on the way in and clean on the way
-     back — the same inconsistency `impacts` exists to prevent. */
-  const cracks =
-    landed === null ? (impacts - index) / impacts : Math.max(0, landed - 1) / impacts;
+  const cracks = landed === null ? 1 : Math.max(0, landed - 1) / impacts;
 
   /* During the arrival the floor has to keep up with the pile. Cards touch down
-     every GAP ms, and the scroll-speed growth of just over a second would still
-     be travelling when the last one lands — so the fracture would arrive as one
-     lump after the stack had finished, which is the "it is just there" reading.
-     Each impact also reports at the instant of contact rather than at the start
-     of a move, so the settle fires immediately instead of on the scroll delay. */
+     every GAP ms, and a slower growth would still be travelling when the last
+     one lands — so the fracture would arrive as one lump after the stack had
+     finished, which is the "it is just there" reading. */
   const arriving = landed !== null;
 
   return (
@@ -379,10 +464,12 @@ export function ExperienceDeck({ heading }: { heading: ReactNode }) {
             progress={cracks}
             field={field}
             growMs={arriving ? 210 : 1100}
-            impactDelay={arriving ? 0 : 190}
+            impact={impact}
           />
 
         <div className="deck-pile">
+          <span className="deck-shock" ref={shock} />
+          <span className="deck-dust" ref={dust} />
           {experience.map((role, i) => {
             const d = i - index;
             const gone = d < 0;

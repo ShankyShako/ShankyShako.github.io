@@ -181,41 +181,41 @@ export const fragments: Fragment[] = [
   { id: 'ghw-dsp', priority: 5, tags: ['health', 'mobile', 'signal'], skills: ['Swift', 'CoreMotion', 'Butterworth filtering', 'PCA'],
     text: 'Built the on-device biomarker signal-processing pipeline in Swift: 100 Hz CoreMotion capture, gravity removal, zero-phase Butterworth band-pass filtering, double integration, and PCA into 15 biomarkers with automated quality flags.' },
   { id: 'ghw-speech', priority: 4, tags: ['ml', 'health', 'speech', 'llm', 'mobile'], skills: ['Apple Speech', 'Whisper', 'LLM'],
-    text: 'Built a speech assessment pipeline pairing on-device Apple Speech for live partials with a Whisper backend and LLM transcript normalization, surfaced through a patient-review panel to capture the communication deficits affecting one in three stroke survivors.' },
+    text: 'Built a speech assessment pipeline pairing on-device Apple Speech for live partials with a Whisper backend and LLM transcript normalization, with a patient-review panel, to catch the communication deficits that affect one in three stroke survivors.' },
   { id: 'ghw-llm', priority: 5, tags: ['ml', 'health', 'llm', 'web'], skills: ['LLM', 'PubMed', 'Entrez', 'Ollama', 'DeepSeek-V2', 'Flask', 'REST', 'WebSocket'],
     text: 'Implemented an end-to-end LLM workflow for a context-aware clinical assistant (data prep, patient-context retrieval, PubMed/NCBI evidence via Entrez), deployed on a self-hosted Ollama DeepSeek-V2 16B model with Flask REST + WebSocket streaming under 1s latency.' },
   { id: 'ghw-collect', priority: 3, tags: ['health', 'mobile', 'data'], skills: ['iOS', 'JSON'],
-    text: 'Developed the in-house iOS data-collection app capturing motion, survey, and fall/emergency data, exporting each trial as timestamped JSON to build the labeled datasets that models are validated against.' },
+    text: 'Built the in-house iOS data-collection app for motion, survey, and fall/emergency data; each trial exports as timestamped JSON into the labeled datasets the models are validated against.' },
   { id: 'ghw-lead', priority: 4, tags: ['lead', 'health'], skills: [],
-    text: 'Led the product from MVP to production as founding engineer, owning technical architecture, sprint cycles, and cross-functional coordination across clinical, engineering, and product.' },
+    text: 'Led the product from MVP to production as founding engineer, owning the architecture and sprint cycles and keeping the clinical, engineering, and product sides in step.' },
   { id: 'ghw-stack', priority: 2, tags: ['health', 'mobile', 'web'], skills: ['Swift', 'SwiftUI', 'Python', 'Flask', 'SQLite'],
-    text: 'Architected the full-stack platform (Swift/SwiftUI iOS 17 + Python/Flask, SQLite) delivering real-time AI guidance, biomarker tracking, and a clinician communication dashboard.' },
+    text: 'Architected the full-stack platform (Swift/SwiftUI on iOS 17, Python/Flask, SQLite) with real-time AI guidance, biomarker tracking, and a dashboard for messaging clinicians.' },
 
   // AFRL
   { id: 'afrl-gen', priority: 5, tags: ['ml', 'genai', 'vision', 'defense', 'research'], skills: ['Generative AI', 'CNN', 'Transfer learning'],
-    text: 'Pioneered the development of generative AI models enabling a CNN classifier to successfully recognize real objects when trained on generated data when utilized in transfer learning framework, addressing AFRL/DoD priorities.' },
+    text: 'Led development of generative AI models that let a CNN classifier recognize real objects after training only on generated data, carried over by transfer learning, for AFRL/DoD priorities.' },
   { id: 'afrl-gan', priority: 4, tags: ['ml', 'genai', 'research', 'infra', 'defense'], skills: ['GAN', 'Game theory', 'Slurm'],
-    text: 'Created an innovative game theory approach to GAN training, significantly improving the results of the generator’s development, trained at scale using Slurm-parallelized compute.' },
+    text: 'Created a game theory approach to GAN training that made the generator far stronger than standard training did, run at scale on Slurm-parallelized compute.' },
   { id: 'afrl-result', priority: 5, tags: ['ml', 'genai', 'vision', 'research', 'defense'], skills: [],
-    text: 'The generative model’s output led to an increase of 50 percentage points in the downstream classifier compared to the baseline.' },
+    text: 'Training on the generator’s output raised downstream classifier accuracy by 50 percentage points over the baseline.' },
   { id: 'afrl-modal', priority: 3, tags: ['ml', 'vision', 'research', 'defense'], skills: ['PyTorch'],
-    text: 'Using PyTorch, adapted state of the art classifiers to handle novel imaging modalities.' },
+    text: 'Adapted state-of-the-art PyTorch classifiers to imaging modalities they were not designed for.' },
 
   // NSF REU, UMKC
   { id: 'reu-ics', priority: 5, tags: ['ml', 'security', 'llm', 'research'], skills: ['LLM', 'IEEE Big Data'],
-    text: 'Engineered an LLM to detect ransomware in Industrial Control Systems, achieving 99%/91% binary/family classification accuracy; presented at IEEE Big Data 2024 (solo author, mentor-guided).' },
+    text: 'Engineered an LLM that detects ransomware in Industrial Control Systems at 99% binary and 91% family classification accuracy; presented it at IEEE Big Data 2024 as solo author, with mentor guidance.' },
 
   // NSF REU, Mizzou
   { id: 'mu-cyber', priority: 3, tags: ['ml', 'research', 'xr'], skills: ['Transformer'],
-    text: 'Designed a transformer model that predicts cybersickness severity on a 1-10 scale, succeeding with 85% accuracy.' },
+    text: 'Designed a transformer model that predicts cybersickness severity on a 1-10 scale with 85% accuracy.' },
   { id: 'mu-paper', priority: 3, tags: ['research', 'security', 'xr'], skills: ['Adversarial ML', 'Explainable AI'],
     text: 'The lab’s work carried into a co-authored 2025 IEEE Transactions on Dependable and Secure Computing paper on adversarial attacks against cybersickness detection and an explainable-AI defense.' },
 
   // NASA
   { id: 'nasa-sim', priority: 2, tags: ['ml', 'research', 'signal'], skills: ['Simulation'],
-    text: 'Engineered an AI-driven simulation of space-bound transmissions as part of a NASA-funded initiative, analyzing signal propagation and identifying optimal frequency bands under varying conditions.' },
+    text: 'Engineered an AI-driven simulation of space-bound transmissions for a NASA-funded study of signal propagation, finding which frequency bands hold up under which conditions.' },
   { id: 'nasa-ui', priority: 2, tags: ['signal', 'web'], skills: [],
-    text: 'Developed an interactive interface to visualize transmission strength and provide adaptive frequency recommendations based on environmental parameters.' },
+    text: 'Developed an interactive interface that shows transmission strength and recommends a frequency for the environment you give it.' },
 
   // SPCN
   { id: 'spcn-site', priority: 1, tags: ['web'], skills: [],
@@ -229,7 +229,7 @@ export const fragments: Fragment[] = [
 
   // Projects
   { id: 'deepracer-train', priority: 4, tags: ['ml', 'rl', 'infra'], skills: ['Reinforcement learning', 'AWS'],
-    text: 'Trained and tuned reinforcement-learning policies for a 1/18-scale autonomous vehicle on AWS, iterating on reward functions and evaluating driving performance: hands-on autonomous control and cloud-based model training.' },
+    text: 'Trained and tuned reinforcement-learning policies for a 1/18-scale autonomous vehicle on AWS, iterating on reward functions and scoring the laps each policy ran.' },
   { id: 'deepracer-reward', priority: 3, tags: ['ml', 'rl'], skills: ['TD3', 'Reward shaping'],
     text: 'Designed the reward-shaping scheme for a TD3 policy: center-line distance bands, heading alignment with upcoming waypoints, a speed-versus-steering trade-off, and penalties for leaving the track or crashing.' },
   { id: 'ransom-study', priority: 3, tags: ['ml', 'security', 'research', 'llm'], skills: ['PyTorch', 'scikit-learn', 'CNN', 'RoBERTa', 'ALBERT'],

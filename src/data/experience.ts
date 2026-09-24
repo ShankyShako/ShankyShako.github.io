@@ -51,13 +51,13 @@ export const experience: Role[] = [
     title: 'Federal AI/ML Engineer Contractor',
     date: 'May 2025 – August 2025',
     blurb:
-      "Built generative models that let a CNN classifier recognize real objects after training on nothing but generated data, carried over through transfer learning, against AFRL and DoD priorities. Adapted state-of-the-art PyTorch classifiers to imaging modalities they were never designed for, and ran large batches in parallel on Slurm. The core of the work was a game-theoretic approach to GAN training, which pushed the generator well past what standard training gave us. Output from that generator raised downstream classifier accuracy by 50 percentage points over the baseline.",
+      "I built generative models for AFRL and DoD priorities. The goal was a CNN classifier that could recognize real objects after training on nothing but generated data, with transfer learning carrying it over. I adapted state-of-the-art PyTorch classifiers to imaging modalities they were never designed for and ran large batches in parallel on Slurm. The biggest result came from a game-theoretic approach to GAN training I worked out. The generator got far better than standard training could make it, and its output raised downstream classifier accuracy by 50 percentage points over the baseline.",
     short: 'AFRL Sensors Directorate',
-    tagline: 'Teaching a classifier to recognize things it had only ever seen synthesized.',
+    tagline: 'A classifier trained on generated images, tested on real ones.',
     bullets: [
       'Built generative models that let a CNN recognize real objects after training on generated data alone, through transfer learning.',
-      'Adapted state-of-the-art PyTorch classifiers to unfamiliar imaging modalities, parallelized across Slurm.',
-      'Devised a game-theoretic approach to GAN training, worth 50 percentage points over baseline downstream.',
+      'Adapted state-of-the-art PyTorch classifiers to imaging modalities they were not built for, and ran the jobs in parallel on Slurm.',
+      'Worked out a game-theoretic approach to GAN training that raised downstream accuracy 50 points over baseline.',
     ],
     logos: [
       { src: '/image/experience/afrl_word_mark.png', alt: 'Air Force Research Laboratory' },
@@ -70,8 +70,8 @@ export const experience: Role[] = [
     date: 'June 2024 – December 2024',
     blurb:
       'Built a large language model that detects ransomware inside industrial control systems: 99% accuracy telling malicious from benign, 91% naming the specific family. The work was accepted at IEEE Big Data 2024, and I presented it in Washington, D.C. as the solo author, with mentor guidance.',
-    short: 'NSF REU — AI-Empowered Cybersecurity',
-    tagline: 'Catching ransomware inside industrial control systems.',
+    short: 'NSF REU: AI-Empowered Cybersecurity',
+    tagline: 'Ransomware detection for the systems that run power and water.',
     bullets: [
       'Built an LLM that detects ransomware inside industrial control systems.',
       '99% accuracy on binary classification, 91% on family classification.',
@@ -88,12 +88,12 @@ export const experience: Role[] = [
     date: 'May 2023 – July 2023',
     blurb:
       'Built a transformer model that predicts cybersickness severity on a 1 to 10 scale, at 85% accuracy. The lab\'s work carried into a co-authored 2025 paper in IEEE Transactions on Dependable and Secure Computing, on adversarial attacks against cybersickness detection models and an explainable-AI defense against them.',
-    short: 'NSF REU — Consumer Networking',
-    tagline: 'Predicting cybersickness before the user feels it.',
+    short: 'NSF REU: Consumer Networking',
+    tagline: 'Predicting how sick a VR headset is making someone.',
     bullets: [
       'Transformer model predicting cybersickness severity on a 1 to 10 scale, at 85% accuracy.',
       'Carried into a co-authored IEEE Transactions on Dependable and Secure Computing paper (2025).',
-      'That paper covers adversarial attacks on cybersickness detection, and an explainable-AI defense.',
+      'The paper shows how to attack cybersickness detection models, then defends them with explainable AI.',
     ],
     logos: [
       { src: '/image/experience/nsf.png', alt: 'National Science Foundation' },
@@ -110,8 +110,8 @@ export const experience: Role[] = [
     tagline: 'Which frequencies survive the trip up.',
     bullets: [
       'Simulated space-bound transmissions for a NASA-funded study of signal propagation.',
-      'Identified optimal frequency bands under varying environmental conditions.',
-      'Built an interactive tool showing transmission strength, with frequency recommendations that adapt to conditions.',
+      'Worked out which frequency bands hold up in which conditions.',
+      'Built an interactive tool that shows transmission strength and recommends a frequency for the conditions you enter.',
     ],
     logos: [
       { src: '/image/experience/nasa.png', alt: 'NASA' },
@@ -128,7 +128,7 @@ export const experience: Role[] = [
     tagline: 'The site the 5th neurotechnology symposium ran on.',
     bullets: [
       'Built and ran the site for the 5th International Symposium on Audio and Video Signal Processing in the Context of Neurotechnology.',
-      'Kept updates and communication flowing while the conference ran remotely across multiple countries.',
+      'Kept announcements current while the conference ran remotely across several countries.',
     ],
     logos: [
       { src: '/image/experience/ieee-brain.png', alt: 'IEEE Brain Initiative' },

@@ -14,12 +14,12 @@ export type CourseGroup = { area: string; courses: string[] };
 
 export const degrees: Degree[] = [
   {
-    school: 'Georgia Tech — Atlanta, GA',
-    degree: "Master's in Computer Science — Emphasis on Artificial Intelligence",
+    school: 'Georgia Tech, Atlanta, GA',
+    degree: "Master's in Computer Science, emphasis on Artificial Intelligence",
     date: 'August 2025 – expected 2027',
   },
   {
-    school: 'University of Missouri-Kansas City (UMKC) — Kansas City, MO',
+    school: 'University of Missouri-Kansas City (UMKC), Kansas City, MO',
     degree: 'Bachelor of Science in Computer Science, summa cum laude',
     date: 'August 2021 – December 2024',
     note: "3.82 cumulative GPA. Dean's List in four semesters.",
@@ -32,34 +32,34 @@ export const inProgressTerm = 'Fall 2026';
 export const inProgress: Course[] = [
   { name: 'Computer Graphics', points: [
     'Rasterization, transforms, shading, and the rendering pipeline end to end',
-    'The formal version of what the recursive ray tracer works out by hand' ] },
+    'The theory behind the ray tracer on the Projects page' ] },
   { name: 'Machine Learning for Trading', points: [
     'Supervised and reinforcement learning applied to market data',
-    'Backtesting, and the ways a strategy can look good only in hindsight' ] },
+    'Backtesting, and catching strategies that only work in hindsight' ] },
   { name: 'Bayesian Statistics', points: [
     'Priors, posterior inference, and hierarchical models',
-    'MCMC sampling, and reporting uncertainty instead of a single number' ] },
+    'MCMC sampling and credible intervals' ] },
 ];
 
 export const graduateCoursework: Course[] = [
   { name: 'Deep Learning', points: [
-    'Neural network architectures: CNNs, RNNs, and transformers',
-    'Training, optimization, and regularization of deep models at scale' ] },
+    'CNNs, RNNs, and transformers',
+    'Training, optimizing, and regularizing deep models' ] },
   { name: 'Reinforcement Learning', points: [
     'Markov decision processes, value-based and policy-gradient methods',
-    'Reward design and sequential decision-making for autonomous agents' ] },
+    'Reward design, the hard part of the DeepRacer project' ] },
   { name: 'Machine Learning', points: [
-    'Supervised and unsupervised learning algorithms and applications',
-    'Model training, evaluation, and generalization' ] },
+    'Supervised and unsupervised learning',
+    'Evaluating a model and telling when it overfits' ] },
   { name: 'Artificial Intelligence', points: [
-    'Search, knowledge representation, planning, and reasoning',
-    'The techniques modern ML systems are built on top of' ] },
+    'Search, game playing, probabilistic inference, and planning',
+    'The assignments behind the Classical AI Algorithm Suite project' ] },
   { name: 'Computer Vision', points: [
-    'Image formation, feature detection, and recognition pipelines',
-    'The perception techniques underpinning the classifier work at AFRL' ] },
+    'Image formation, feature detection, and recognition',
+    'Background for the imaging classifier work at AFRL' ] },
   { name: 'Brain & Cognitive Science', points: [
     'Computational models of perception, memory, and learning',
-    'Neuroscience principles that inspire AI architectures' ] },
+    'Ideas from neuroscience that ended up in neural network design' ] },
 ];
 
 export const undergraduateCoursework: CourseGroup[] = [

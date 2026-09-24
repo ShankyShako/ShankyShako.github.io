@@ -20,16 +20,17 @@ export function Home() {
         <h1>Genova Mongalo</h1>
 
         <p className="hero-lede">
-          I finished a B.S. in Computer Science at UMKC summa cum laude, and I am partway through an
-          M.S. in Computer Science at Georgia Tech with an AI emphasis. I build generative models,
-          transformers, and on-device ML for problems where being wrong is expensive.
+          I'm an ML engineer, a year into an M.S. in Computer Science at Georgia Tech with an AI
+          emphasis, after a B.S. from UMKC summa cum laude. I build generative models, transformers, and
+          on-device ML, mostly for jobs where a wrong answer hurts someone: a ransomware infection
+          nobody caught, a stroke patient's balance test read wrong.
         </p>
         <p className="hero-sub">
-          Most recently I was a federal AI/ML engineering contractor with the AFRL Sensors
-          Directorate, where a game-theoretic approach to GAN training let a CNN classifier trained
-          only on generated data recognize real objects. Before that it was ransomware detection,
-          cybersickness prediction, and signal propagation — different problems, same thread:
-          machine learning for systems where being wrong has consequences.
+          Right now I'm the founding engineer at Geometry Health and Wellness, putting clinical
+          mobility tests on an iPhone. Before that I was a federal contractor with the AFRL Sensors
+          Directorate. My game-theoretic spin on GAN training there let a CNN trained only on
+          generated images recognize real objects. Earlier I worked on ransomware detection,
+          cybersickness prediction in VR, and signal propagation for a NASA-funded study.
         </p>
 
         <ul className="hero-stats">

@@ -198,7 +198,7 @@ const links = [
       key: slug(p.title),
       kind: 'external',
       href: p.href,
-      label: `${p.title} — repo`,
+      label: `${p.title} (repo)`,
     })),
 
   /* Deep links. Slugs come from src/data/anchors.ts, the same module the
@@ -208,7 +208,7 @@ const links = [
     key: slug(p.title),
     kind: 'external',
     href: `https://doi.org/${p.doi}`,
-    label: `${p.title} — paper (DOI)`,
+    label: `${p.title} (paper, DOI)`,
   })),
 
   ...experience.map((r) => ({

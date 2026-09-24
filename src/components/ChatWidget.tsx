@@ -23,8 +23,8 @@ type Action =
 type Turn = { role: 'user' | 'assistant'; content: string; actions?: Action[] };
 
 const GREETING =
-  "I'm a small language model running on Genova's laptop — ask me about his " +
-  'work, or leave a message and I\'ll pass it along.';
+  "I'm a small language model that knows Genova's work. Ask me about it, or " +
+  'leave a message and I\'ll pass it along.';
 
 const OPENERS = [
   'What is he working on?',
@@ -366,7 +366,7 @@ export function ChatWidget() {
             const next = [...prev];
             next[next.length - 1] = {
               role: 'assistant',
-              content: "Sorry — I didn't manage an answer to that. Try rephrasing?",
+              content: "I couldn't come up with an answer to that. Try asking another way?",
             };
             return next;
           });
@@ -482,7 +482,7 @@ export function ChatWidget() {
             <span className="chat-dot" aria-hidden="true" />
             <div>
               <strong>Ask about Genova</strong>
-              <small>Running locally. Answers may be imperfect.</small>
+              <small>A small AI model answers here. It can get things wrong.</small>
             </div>
             <button type="button" onClick={() => setOpen(false)} aria-label="Close chat">
               <CloseIcon />
@@ -551,7 +551,7 @@ export function ChatWidget() {
 
           {jdMode && (
             <p className="chat-jd-note">
-              Paste the posting — I&rsquo;ll map it against his experience, gaps included.
+              Paste the posting and I&rsquo;ll check it against his experience, gaps included.
               <button type="button" onClick={() => setJdMode(false)} aria-label="Cancel">
                 <CloseIcon />
               </button>

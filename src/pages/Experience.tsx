@@ -34,7 +34,7 @@ export function Experience() {
           <Reveal key={role.org} delay={i * 50}>
             <article className="experience-item" id={anchors.experience.get(role.org)}>
               <h3>
-                {role.org} — <u>{role.title}</u>
+                {role.org} · <u>{role.title}</u>
               </h3>
               <span className="experience-date">{role.date}</span>
               <p>{role.blurb}</p>
