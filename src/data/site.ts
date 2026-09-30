@@ -13,16 +13,16 @@ export const site = {
 export type NavItem = { path: string; label: string; title: string; description: string };
 
 export const nav: NavItem[] = [
-  { path: '/', label: 'Home', title: 'Genova Mongalo | AI Engineer',
-    description: 'AI/ML engineer building generative models, transformers, and on-device ML.' },
+  { path: '/', label: 'Home', title: 'Genova Mongalo | Software Engineer',
+    description: 'Software engineer building systems, research, and on-device applications.' },
   { path: '/resume', label: 'Resume', title: 'Resume | Genova Mongalo',
-    description: 'Resume of Genova Mongalo, AI/ML engineer.' },
+    description: 'Resume of Genova Mongalo, software engineer.' },
   { path: '/education', label: 'Education', title: 'Education | Genova Mongalo',
-    description: 'B.S. Computer Science (summa cum laude, UMKC) and M.S. Computer Science, AI emphasis (Georgia Tech).' },
+    description: 'B.S. Computer Science (summa cum laude, UMKC) and M.S. Computer Science (Georgia Tech).' },
   { path: '/skills', label: 'Skills', title: 'Skills | Genova Mongalo',
-    description: 'Languages, frameworks, and tools for ML, security, and iOS work.' },
+    description: 'Languages, frameworks, and tools for software, security, and iOS work.' },
   { path: '/projects', label: 'Projects', title: 'Projects | Genova Mongalo',
-    description: 'The Unbound family portal, reinforcement learning projects, a homelessness resource map, and more.' },
+    description: 'The Unbound family portal, software projects, a homelessness resource map, and more.' },
   { path: '/research', label: 'Research', title: 'Research | Genova Mongalo',
     description: 'Ransomware detection for industrial control systems, dysarthric speech recognition, and a paper on attacks against VR cybersickness detection.' },
   { path: '/experience', label: 'Experience', title: 'Experience | Genova Mongalo',
