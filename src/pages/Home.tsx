@@ -16,7 +16,7 @@ export function Home() {
   return (
     <section className="hero">
       <div className="hero-copy">
-        <span className="eyebrow">AI / ML Engineer</span>
+        <span className="eyebrow">Software Engineer</span>
         <h1>Genova Mongalo</h1>
 
         <p className="hero-lede">

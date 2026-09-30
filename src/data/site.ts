@@ -1,6 +1,6 @@
 export const site = {
   name: 'Genova Mongalo',
-  role: 'AI Engineer',
+  role: 'Software Engineer',
   url: 'https://gmango.dev',
   email: 'genova@gmango.dev',
   phone: '(510) 274-1272',
