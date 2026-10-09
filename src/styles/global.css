@@ -336,6 +336,17 @@ a { color: var(--accent); }
 
 .route-enter { animation: fadeIn 0.42s var(--ease); }
 
+/* Every route change runs this, so Reduce Motion gets the fade without the
+   rise. */
+@keyframes routeFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-enter { animation-name: routeFade; }
+}
+
 /* ==========================================================================
    Lists
    ========================================================================== */

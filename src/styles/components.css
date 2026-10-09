@@ -768,11 +768,15 @@
 
 .timeline > *:last-child .experience-item { margin-bottom: 0; }
 
-.experience-item:hover {
-  background: var(--surface-hover);
-  border-color: var(--accent-soft);
-  transform: translateX(4px);
-  box-shadow: var(--shadow);
+/* Hover only where hover is real, so a tap on a phone does not leave the card
+   nudged sideways until the next tap. */
+@media (hover: hover) and (pointer: fine) {
+  .experience-item:hover {
+    background: var(--surface-hover);
+    border-color: var(--accent-soft);
+    transform: translateX(4px);
+    box-shadow: var(--shadow);
+  }
 }
 
 /* The node. Ringed in the page background so the rail appears to pass behind
@@ -787,7 +791,30 @@
   border-radius: 50%;
   background: var(--accent);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
-  transition: background var(--dur-slow) ease, box-shadow var(--dur-slow) ease;
+  transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+
+/* The node answers too: the card you are on, or the one a link sent you to,
+   lights its point on the rail. */
+.experience-item.is-target::before {
+  background: var(--accent);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--accent) 35%, transparent),
+    0 0 16px 3px color-mix(in srgb, var(--accent) 65%, transparent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .experience-item:hover::before {
+    background: var(--accent);
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--accent) 35%, transparent),
+      0 0 16px 3px color-mix(in srgb, var(--accent) 65%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Colour, border and shadow still respond; the card stays put. */
+  .experience-item:hover { transform: none; }
 }
 
 .experience-item h3 {
@@ -956,10 +983,28 @@
     box-shadow var(--dur) var(--ease);
 }
 
-.product:hover {
-  transform: translateY(-4px);
-  border-color: var(--accent-soft);
-  box-shadow: var(--shadow-lg);
+/* Press feedback: the card gives under the finger, so a tap that opens a modal
+   a beat later still reads as "you pressed this". Faster in than out — the
+   press should feel immediate, the release can settle. */
+.product:active {
+  transform: scale(0.97);
+  transition: transform 160ms var(--ease), border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+/* Hover only where hover is real. On a touchscreen the tap leaves :hover stuck
+   on the card until the next tap elsewhere, which reads as a frozen lift. */
+@media (hover: hover) and (pointer: fine) {
+  .product:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent-soft);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Pressing a lifted card keeps the lift, or the press snaps it to the floor. */
+  .product:hover:active { transform: translateY(-4px) scale(0.97); }
+
+  .product:hover .product-frame img { filter: grayscale(0%) brightness(0.94); transform: scale(1.05); }
 }
 
 .product-frame {
@@ -981,7 +1026,6 @@
   transition: filter 0.35s var(--ease), transform 0.45s var(--ease);
 }
 
-.product:hover .product-frame img { filter: grayscale(0%) brightness(0.94); transform: scale(1.05); }
 .product-frame img.img-missing { opacity: 0; }
 
 .sold-badge {
@@ -1019,6 +1063,15 @@
   .sold-badge { font-size: 0.72rem; padding: 0.25rem 0.6rem; border-width: 1px; }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  /* Colour and shadow still answer the pointer; nothing moves. */
+  .product,
+  .product:hover,
+  .product:active,
+  .product:hover:active,
+  .product:hover .product-frame img { transform: none; }
+}
+
 /* ==========================================================================
    Sold-out modal
    ========================================================================== */
@@ -1032,7 +1085,9 @@
   align-items: center;
   justify-content: center;
   padding: var(--sp-6);
-  animation: fadeIn 0.3s var(--ease);
+  /* Opacity only. The overlay is the whole viewport; sliding it moves the
+     backdrop, which reads as the page lurching rather than a dialog arriving. */
+  animation: modalFade 250ms var(--ease);
 }
 
 .modal-box {
@@ -1045,9 +1100,52 @@
   width: 100%;
   text-align: center;
   box-shadow: var(--shadow-lg);
+  /* The box is the thing arriving, so it carries its own entrance: a short
+     scale up from just under size, about its own centre. */
+  transform-origin: center;
+  animation: modalIn 250ms var(--ease);
 }
 
-.modal-eyebrow { font-size: 2rem; margin: 0 0 var(--sp-3); color: var(--accent); font-family: var(--font-display); }
+/* The punchline lands like a rubber stamp, a beat after the box is there to
+   receive it. `both` holds it invisible through the delay. */
+.modal-eyebrow {
+  font-size: 2rem;
+  margin: 0 0 var(--sp-3);
+  color: var(--accent);
+  font-family: var(--font-display);
+  animation: modalStamp 220ms var(--ease) 120ms both;
+}
+
+/* Leaving. Shorter than arriving: the visitor has already decided to go, so
+   the exit only has to confirm it. SoldOutModal unmounts on the box's
+   animationend. */
+.modal-overlay[data-closing] { animation: modalFadeOut 180ms var(--ease) forwards; }
+.modal-overlay[data-closing] .modal-box { animation: modalOut 180ms var(--ease) forwards; }
+
+@keyframes modalFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes modalOut {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: scale(0.96); }
+}
+
+@keyframes modalStamp {
+  from { opacity: 0; transform: scale(1.15) rotate(-4deg); }
+  to { opacity: 1; transform: none; }
+}
 
 .modal-gif {
   width: 100%;
@@ -1084,6 +1182,13 @@
 }
 
 .modal-close:hover { color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  /* Still a fade in, so the dialog does not blink into existence; nothing
+     scales or tilts. SoldOutModal skips the exit and unmounts at once. */
+  .modal-box { animation-name: modalFade; }
+  .modal-eyebrow { animation-name: modalFade; }
+}
 
 /* ==========================================================================
    Contact
@@ -1720,6 +1825,20 @@
   display: block;
   -webkit-user-drag: none;
   /* Neither image is the hit target — .pet-hit is. */
+  pointer-events: none;
+}
+
+.pet-squash {
+  /* Another 0x0 origin marker inside the wrapper, so the sprite's left/top
+     offsets mean exactly what they did and the squash pivots on the anchor.
+     DesktopPet drives it with Web Animations. */
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  display: block;
+  transform-origin: 0 0;
   pointer-events: none;
 }
 
@@ -2400,11 +2519,16 @@
 }
 
 .deck-rail-tick {
-  width: 18px;
+  /* Drawn at the active length and scaled down from the right, so growing it
+     is a transform rather than a width change that relayouts the rail.
+     0.643 ≈ 18/28, the old resting length. */
+  width: 28px;
   height: 2px;
   border-radius: 2px;
   background: var(--border-strong);
-  transition: width var(--dur) var(--ease), background var(--dur) var(--ease);
+  transform: scaleX(0.643);
+  transform-origin: right;
+  transition: transform var(--dur) var(--ease), background var(--dur) var(--ease);
 }
 
 /* The org name is the affordance, not the label: showing six of them at once
@@ -2424,7 +2548,7 @@
 
 .deck-rail button[aria-current='true'] { color: var(--accent); }
 .deck-rail button[aria-current='true'] .deck-rail-tick {
-  width: 28px;
+  transform: scaleX(1);
   background: var(--accent);
 }
 
