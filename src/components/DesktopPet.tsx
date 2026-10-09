@@ -21,6 +21,9 @@ const DUST = 12;
 /** Longest a mote can be in flight — how long the hole lingers after closing. */
 const DUST_MAX_MS = 2400;
 
+/** --ease from global.css, for the Web Animations that cannot read it. */
+const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
+
 /**
  * The second easter egg. A bag hangs off the top-right corner until someone
  * pokes it, then Genova falls in, gets up, and pootles along the bottom of the
@@ -44,6 +47,7 @@ export function DesktopPet() {
   const { pathname } = useLocation();
   const banished = BANISHED.has(pathname);
   const spriteRef = useRef<HTMLImageElement>(null);
+  const squashRef = useRef<HTMLSpanElement>(null);
   const [ash, setAsh] = useState<DissolveShot | null>(null);
 
   /* Whether the walk-away clip has shown its first frame. The idle sprite
@@ -158,6 +162,41 @@ export function DesktopPet() {
     return () => window.clearTimeout(t);
   }, [holeShown]);
 
+  /* Squash and stretch on the two moments he changes hands with the floor. A
+     layer of its own, between the wrapper the loop writes every frame and the
+     <img> that carries its own flip, so neither write clobbers it. Pivots on
+     the wrapper's origin, which is the frame's anchor — his feet on landing,
+     the point he is held by on pick-up.
+     Keyed on `frame` alone, so this only runs on a change of pose. */
+  useEffect(() => {
+    const el = squashRef.current;
+    if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (frame === 'land') {
+      /* The impact flattens him, he rebounds a touch past upright, settles.
+         The curve is on each leg rather than the whole effect: a strong
+         ease-out over the whole thing would spend the squash in the first
+         couple of frames, where nobody sees it. */
+      el.animate(
+        [
+          { transform: 'scale(1, 1)', easing: EASE },
+          { transform: 'scale(1.12, 0.86)', offset: 0.22, easing: EASE },
+          { transform: 'scale(0.97, 1.04)', offset: 0.55, easing: EASE },
+          { transform: 'scale(1, 1)' },
+        ],
+        { duration: 360 },
+      );
+    } else if (frame === 'drag') {
+      /* Pulled up off the floor: a quick stretch along his height. The drag
+         pose is drawn lying down and turned a quarter (DRAG_ROT on the
+         wrapper), so his height runs along this layer's x axis — this is
+         scale(0.94, 1.08) as it lands on screen. */
+      el.animate(
+        [{ transform: 'scale(1.08, 0.94)' }, { transform: 'scale(1, 1)' }],
+        { duration: 200, easing: EASE },
+      );
+    }
+  }, [frame]);
+
   /* Fixed per mount: re-rolling these every render would make the dust jump. */
   const dust = useMemo(
     () =>
@@ -256,27 +295,29 @@ export function DesktopPet() {
         aria-hidden="true"
         {...handlers}
       >
-        <img
-          ref={spriteRef}
-          className="pet-frame"
-          src={FRAME_SRC(frame)}
-          alt=""
-          draggable={false}
-          style={{
-            /* Geometry in CSS rather than width/height attributes so it can be
-               transitioned — see the morph note in components.css. */
-            width: f.w * s,
-            height: f.h * s,
-            left: -f.ax * s,
-            top: -f.ay * s,
-            transitionDuration: isWalk ? '0ms' : undefined,
-            /* About the image's own centre, so the box the engine positions is
-               untouched — this turns the picture over, not the sprite's
-               footprint. */
-            transform: f.flipY ? 'scaleY(-1)' : undefined,
-            visibility: leaving && walkShown ? 'hidden' : undefined,
-          }}
-        />
+        <span ref={squashRef} className="pet-squash">
+          <img
+            ref={spriteRef}
+            className="pet-frame"
+            src={FRAME_SRC(frame)}
+            alt=""
+            draggable={false}
+            style={{
+              /* Geometry in CSS rather than width/height attributes so it can be
+                 transitioned — see the morph note in components.css. */
+              width: f.w * s,
+              height: f.h * s,
+              left: -f.ax * s,
+              top: -f.ay * s,
+              transitionDuration: isWalk ? '0ms' : undefined,
+              /* About the image's own centre, so the box the engine positions is
+                 untouched — this turns the picture over, not the sprite's
+                 footprint. */
+              transform: f.flipY ? 'scaleY(-1)' : undefined,
+              visibility: leaving && walkShown ? 'hidden' : undefined,
+            }}
+          />
+        </span>
         {leaving && (
           <PetWalkAway
             stand={stand}
