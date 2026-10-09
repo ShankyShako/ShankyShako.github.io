@@ -9,6 +9,14 @@ export type Project = {
 
 export const projects: Project[] = [
   {
+    title: 'LegacyScribe: On-Device Dictation for macOS',
+    // href: 'https://github.com/ShankyShako/LegacyScribe',
+    years: '2026',
+    tags: ['Swift', 'SwiftUI', 'Speech Recognition', 'MLX', 'LLMs'],
+    blurb:
+      "A macOS dictation app I use all day: hold a key, talk, and the text is pasted into whatever app has focus. Speech recognition runs on-device, with a choice of engines; Cohere Transcribe on MLX gets 5.3% word error rate on my voice against 8.8% for the default Parakeet, and transcribes 10 seconds of audio in about a third of a second. An optional LLM pass cleans up the transcript or reshapes a long spoken ramble into a structured prompt for a coding agent, and it can merge new dictation into a draft already sitting in the text box. If every model endpoint fails, the raw transcript is pasted anyway, so a bad network never costs a dictation. It also reads back what I actually sent after editing, which feeds vocabulary suggestions, and has a read-aloud practice mode built from 280 sentences covering all 39 English sounds and 881 sound pairs. Written in SwiftUI with The Composable Architecture, as a fork of Kit Langton's open-source Hex.",
+  },
+  {
     title: 'AWS DeepRacer: Reward Shaping',
     years: '2026',
     tags: ['Reinforcement Learning', 'TD3', 'Reward Shaping', 'Docker', 'Simulation'],
