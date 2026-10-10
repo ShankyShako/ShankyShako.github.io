@@ -10,11 +10,19 @@ export type Project = {
 export const projects: Project[] = [
   {
     title: 'LegacyScribe: On-Device Dictation for macOS',
-    // href: 'https://github.com/ShankyShako/LegacyScribe',
+    href: 'https://github.com/ShankyShako/LegacyScribe',
     years: '2026',
     tags: ['Swift', 'SwiftUI', 'Speech Recognition', 'MLX', 'LLMs'],
     blurb:
       "A macOS dictation app I use all day: hold a key, talk, and the text is pasted into whatever app has focus. Speech recognition runs on-device, with a choice of engines; Cohere Transcribe on MLX gets 5.3% word error rate on my voice against 8.8% for the default Parakeet, and transcribes 10 seconds of audio in about a third of a second. An optional LLM pass cleans up the transcript or reshapes a long spoken ramble into a structured prompt for a coding agent, and it can merge new dictation into a draft already sitting in the text box. If every model endpoint fails, the raw transcript is pasted anyway, so a bad network never costs a dictation. It also reads back what I actually sent after editing, which feeds vocabulary suggestions, and has a read-aloud practice mode built from 280 sentences covering all 39 English sounds and 881 sound pairs. Written in SwiftUI with The Composable Architecture, as a fork of Kit Langton's open-source Hex.",
+  },
+  {
+    title: 'Care Beyond: Homelessness Resource Map',
+    href: 'https://www.checkpointkc.com/',
+    years: '2025',
+    tags: ['React', 'Leaflet', 'Node.js', 'Express', 'Geospatial'],
+    blurb:
+      'A live map of food, shelter, clothing, and medical resources from local organizations, so someone with nowhere to sleep tonight can find the nearest shelter from a library computer. Search by street address or ZIP, filter by distance, and read the color-coded markers by resource type. Anyone can read the community feed. Only verified organizations can post, and they sign in with a one-time email code instead of a password.',
   },
   {
     title: 'AWS DeepRacer: Reward Shaping',
@@ -52,14 +60,6 @@ export const projects: Project[] = [
   //   blurb:
   //     'A mobile-first spaced-repetition planner for medical students. Each exam is its own study plan: its lectures are scheduled across several review passes, and the next interval adapts to the recall, understanding, and difficulty logged after each session. React 19 and Next.js on a Cloudflare Workers runtime, with Drizzle and a deliberately swappable data adapter.',
   // },
-  {
-    title: 'Care Beyond: Homelessness Resource Map',
-    // href: 'https://github.com/hsaranu5/resourcestracker',
-    years: '2025',
-    tags: ['React', 'Leaflet', 'Node.js', 'Express', 'Geospatial'],
-    blurb:
-      'A live map of food, shelter, clothing, and medical resources from local organizations, so someone with nowhere to sleep tonight can find the nearest shelter from a library computer. Search by street address or ZIP, filter by distance, and read the color-coded markers by resource type. Anyone can read the community feed. Only verified organizations can post, and they sign in with a one-time email code instead of a password.',
-  },
   {
     title: 'Recursive Ray Tracer',
     years: '2025',

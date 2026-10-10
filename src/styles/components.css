@@ -969,6 +969,7 @@
 }
 
 .product {
+  width: 100%;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
@@ -1048,6 +1049,75 @@
 }
 
 :root[data-theme='elmo'] .sold-badge { color: var(--accent); }
+
+/* Clicking a piece stamps it. The stamp takes over from the badge at the
+   moment it hits, so the two never sit on top of each other. The frame is a
+   size container so the stamp can scale with the card; that is also why
+   .product needs its explicit width, since a contained frame no longer lends
+   the button the image's width. */
+.product-frame { container-type: inline-size; }
+
+.product-frame[data-stamped] .sold-badge {
+  opacity: 0;
+  transition: opacity 120ms var(--ease) 190ms;
+}
+
+/* Rubber-stamp ink: outlined block letters in a ruled box, with a noise mask
+   knocking specks out so it reads as ink on paper, not a sticker. Sized off the
+   card (cqi) so it covers the same share of a phone card as a desktop one. */
+.stamp {
+  --stamp-ink: #e0242f;
+  --stamp-edge: #f5f1e8;
+  --stamp-at: translate(-50%, -50%) translate(var(--x, 0px), var(--y, 0px)) rotate(var(--rot, -8deg));
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  padding: 0.12em 0.42em 0.08em;
+  border: 0.1em solid var(--stamp-ink);
+  border-radius: 0.14em;
+  box-shadow: 0 0 0 0.035em var(--stamp-edge), inset 0 0 0 0.035em var(--stamp-edge),
+    0 0.08em 0.4em rgba(0, 0, 0, 0.45);
+  color: var(--stamp-ink);
+  font-family: Impact, 'Anton', 'Haettenschweiler', 'Arial Narrow Bold', 'Arial Black', sans-serif;
+  font-weight: 900;
+  font-size: 15cqi;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  -webkit-text-stroke: 0.07em var(--stamp-edge);
+  paint-order: stroke fill;
+  -webkit-mask-image: var(--stamp-grain);
+  mask-image: var(--stamp-grain);
+  -webkit-mask-size: 140px 140px;
+  mask-size: 140px 140px;
+  pointer-events: none;
+  transform: var(--stamp-at);
+  /* Falls from above, accelerating into the card, squashes on contact and
+     settles. The impact lands at 55%, which Shop.tsx times the card's dip to. */
+  animation: stampSlam 340ms both;
+  --stamp-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -4.2 0 0 0 3.3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@keyframes stampSlam {
+  0% {
+    opacity: 0;
+    transform: var(--stamp-at) scale(2.4);
+    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45);
+  }
+  30% { opacity: 1; }
+  55% {
+    transform: var(--stamp-at) scale(0.9);
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  100% { opacity: 1; transform: var(--stamp-at); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* No fall, no squash: the stamp fades in where it lands. */
+  .stamp { animation: modalFade 150ms var(--ease) both; }
+  .product-frame[data-stamped] .sold-badge { transition-delay: 0ms; }
+}
 
 .product-info { padding: 1rem 1.15rem 1.15rem; }
 .product-info h3 { margin: 0 0 0.25rem; font-size: 0.95rem; color: var(--text-light); font-weight: 600; }
