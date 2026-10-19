@@ -5,7 +5,7 @@
  * baked in. Vercel serves the static file when it exists; React hydrates and
  * takes over from there. Also emits sitemap.xml and robots.txt.
  */
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -19,6 +19,10 @@ const routes = [...siteSrc.matchAll(
   /\{\s*path:\s*'([^']+)',\s*label:\s*'[^']+',\s*title:\s*'([^']+)',\s*\n?\s*description:\s*'([^']+)'\s*\}/g,
 )].map(([, path, title, description]) => ({ path, title, description }));
 
+/* Routes with their own social card. Applied only once the PNG exists in dist,
+   so a route without its image keeps the site default instead of a dead link. */
+const OG_IMAGES = { '/LegacyScribe': ORIGIN + '/image/legacyscribe-og.png' };
+
 if (routes.length === 0) {
   console.error('prerender-meta: no routes parsed from src/data/site.ts');
   process.exit(1);
@@ -29,7 +33,7 @@ const esc = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g
 
 for (const route of routes) {
   const url = ORIGIN + route.path;
-  const html = template
+  let html = template
     .replace(/<title>[^<]*<\/title>/, `<title>${esc(route.title)}</title>`)
     .replace(
       /(<meta name="description" content=")[^"]*(")/,
@@ -47,6 +51,13 @@ for (const route of routes) {
       `$1${esc(route.description)}$2`,
     )
     .replace(/(<link rel="canonical" href=")[^"]*(")/, `$1${url}$2`);
+
+  const og = OG_IMAGES[route.path];
+  if (og && existsSync(join(dist, og.slice(ORIGIN.length)))) {
+    html = html
+      .replace(/(<meta property="og:image" content=")[^"]*(")/, `$1${og}$2`)
+      .replace(/(<meta name="twitter:image" content=")[^"]*(")/, `$1${og}$2`);
+  }
 
   if (route.path === '/') {
     writeFileSync(join(dist, 'index.html'), html);

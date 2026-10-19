@@ -32,3 +32,11 @@ export const nav: NavItem[] = [
   { path: '/contact', label: 'Contact', title: 'Contact | Genova Mongalo',
     description: 'Get in touch with Genova Mongalo.' },
 ];
+
+/* Routes that exist and are indexed but are not tabs in the nav (the product
+   page has its own chrome). Same entry shape as `nav`: scripts/prerender-meta.mjs
+   reads this file with a regex and bakes each entry into its own HTML. */
+export const extraRoutes: NavItem[] = [
+  { path: '/LegacyScribe', label: 'LegacyScribe', title: 'LegacyScribe | Free, open-source dictation for your Mac',
+    description: 'Hold a key, talk, let go: clean text in any app. Speech recognition and the AI run on your Mac. Free, MIT, Apple Silicon.' },
+];

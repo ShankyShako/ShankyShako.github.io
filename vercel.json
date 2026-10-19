@@ -3,6 +3,11 @@
   "framework": "vite",
   "routes": [
     {
+      "src": "/[Ll]egacy[Ss]cribe/install",
+      "status": 307,
+      "headers": { "Location": "https://raw.githubusercontent.com/ShankyShako/LegacyScribe/main/install.sh" }
+    },
+    {
       "src": "/bot/(.*)",
       "dest": "https://bot.gmango.dev/$1",
       "transforms": [
@@ -17,7 +22,7 @@
     }
   ],
   "rewrites": [
-    { "source": "/((?!api/|bot/|assets/|image/|audio/|files/|fonts/|plane-send\\.js).*)", "destination": "/index.html" }
+    { "source": "/((?![Ll]egacy[Ss]cribe/install|api/|bot/|assets/|image/|audio/|files/|fonts/|plane-send\\.js).*)", "destination": "/index.html" }
   ],
   "headers": [
     {

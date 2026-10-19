@@ -5,12 +5,15 @@ export type Project = {
   years: string;
   blurb: string;
   tags: string[];
+  /** Internal route of a dedicated page for this project. */
+  page?: string;
 };
 
 export const projects: Project[] = [
   {
     title: 'LegacyScribe: On-Device Dictation for macOS',
     href: 'https://github.com/ShankyShako/LegacyScribe',
+    page: '/LegacyScribe',
     years: '2026',
     tags: ['Swift', 'SwiftUI', 'Speech Recognition', 'MLX', 'LLMs'],
     blurb:

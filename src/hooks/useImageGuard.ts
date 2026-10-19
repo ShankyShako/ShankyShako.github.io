@@ -5,8 +5,9 @@ import { useEffect } from 'react';
  * portraits. Deliberately not a security control — it stops the accidental
  * grab, nothing more.
  */
-export function useImageGuard() {
+export function useImageGuard(enabled = true) {
   useEffect(() => {
+    if (!enabled) return;
     const block = (e: Event) => {
       if (e.target instanceof HTMLImageElement) e.preventDefault();
     };
@@ -16,5 +17,5 @@ export function useImageGuard() {
       document.removeEventListener('contextmenu', block);
       document.removeEventListener('dragstart', block);
     };
-  }, []);
+  }, [enabled]);
 }

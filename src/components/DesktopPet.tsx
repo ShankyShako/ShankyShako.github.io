@@ -14,7 +14,9 @@ import { EFFECTS, FRAMES, FRAME_SRC, PET_IMAGES } from './petFrames';
  * that get read rather than played with, and a man striking JoJo poses along
  * the bottom of a page about ransomware detection is the wrong register.
  */
-const BANISHED = new Set(['/research', '/experience']);
+const BANISHED = new Set(['/research', '/experience', '/legacyscribe']);
+/** Routes are matched case-insensitively: /LegacyScribe and /legacyscribe are one page. */
+const isBanished = (path: string) => BANISHED.has(path.toLowerCase().replace(/(.)\/$/, '$1'));
 
 /** How many motes get pulled into the hole. */
 const DUST = 12;
@@ -45,7 +47,7 @@ export function DesktopPet() {
   } = usePetEngine();
 
   const { pathname } = useLocation();
-  const banished = BANISHED.has(pathname);
+  const banished = isBanished(pathname);
   const spriteRef = useRef<HTMLImageElement>(null);
   const squashRef = useRef<HTMLSpanElement>(null);
   const [ash, setAsh] = useState<DissolveShot | null>(null);
@@ -90,7 +92,7 @@ export function DesktopPet() {
      the markup straight off the route would unmount him — nulling both refs —
      before any effect got the chance. So the banished route renders him once
      more, this runs before the browser paints it, and only then does he go. */
-  const [gone, setGone] = useState(() => BANISHED.has(pathname));
+  const [gone, setGone] = useState(() => isBanished(pathname));
 
   /* Position anything that just mounted before the browser paints it. Without
      this the overlay flashes once at the window's top-left corner, because the

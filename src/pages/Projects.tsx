@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 import { projects, research as researchItems } from '../data/projects';
 import { publications, cite } from '../data/publications';
@@ -22,6 +22,11 @@ export function ProjectCard({ project, anchor }: { project: Project; anchor?: st
         <span className="project-years">{project.years}</span>
       </div>
       <p>{project.blurb}</p>
+      {project.page && (
+        <p>
+          <Link to={project.page}>Product page →</Link>
+        </p>
+      )}
       <div className="project-tags">
         {project.tags.map((t) => (
           <span key={t} className="tag tag-static">

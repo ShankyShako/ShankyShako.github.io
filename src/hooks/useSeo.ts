@@ -16,7 +16,12 @@ function upsertMeta(selector: string, attr: 'name' | 'property', key: string, co
  * The build also bakes these into per-route HTML (scripts/prerender-meta.mjs)
  * so social scrapers, which don't run JS, see the right tags.
  */
-export function useSeo(title: string, description: string, path: string) {
+export function useSeo(
+  title: string,
+  description: string,
+  path: string,
+  image: string = site.ogImage,
+) {
   useEffect(() => {
     document.title = title;
 
@@ -26,6 +31,8 @@ export function useSeo(title: string, description: string, path: string) {
     upsertMeta('meta[property="og:url"]', 'property', 'og:url', site.url + path);
     upsertMeta('meta[name="twitter:title"]', 'name', 'twitter:title', title);
     upsertMeta('meta[name="twitter:description"]', 'name', 'twitter:description', description);
+    upsertMeta('meta[property="og:image"]', 'property', 'og:image', image);
+    upsertMeta('meta[name="twitter:image"]', 'name', 'twitter:image', image);
 
     let link = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     if (!link) {
@@ -34,5 +41,5 @@ export function useSeo(title: string, description: string, path: string) {
       document.head.appendChild(link);
     }
     link.href = site.url + path;
-  }, [title, description, path]);
+  }, [title, description, path, image]);
 }

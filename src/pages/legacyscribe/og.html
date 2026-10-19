@@ -1,0 +1,31 @@
+<!doctype html>
+<!-- Static 1200x630 social card for /LegacyScribe. Not part of the app build.
+     Render to public/image/legacyscribe-og.png (e.g. headless Chrome with
+     --window-size=1200,630 --screenshot). -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>LegacyScribe social card</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1200px; height: 630px; }
+  body {
+    background: #fff; color: #1d1d1f; overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    display: flex; flex-direction: column; justify-content: center; padding: 0 96px;
+  }
+  .brand { display: flex; align-items: center; gap: 22px; }
+  .brand img { width: 112px; height: 112px; }
+  .brand span { font-size: 56px; font-weight: 700; letter-spacing: -0.01em; }
+  h1 { margin-top: 56px; font-size: 76px; line-height: 1.08; font-weight: 700; letter-spacing: -0.015em; max-width: 14ch; }
+  p { margin-top: 36px; font-size: 32px; color: #6e6e73; }
+  .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 12px; background: #0071e3; }
+</style>
+</head>
+<body>
+  <div class="brand"><img src="../../../public/image/legacyscribe-icon.png" alt=""><span>LegacyScribe</span></div>
+  <h1>Talk, and it's typed. On your Mac.</h1>
+  <p>Free · Open source · Runs on your Mac</p>
+  <div class="bar"></div>
+</body>
+</html>
