@@ -1,6 +1,6 @@
 export const site = {
   name: 'Genova Mongalo',
-  role: 'Software Engineer',
+  role: 'ML Engineer & Founding Engineer',
   url: 'https://gmango.dev',
   email: 'genova@gmango.dev',
   phone: '(510) 274-1272',
@@ -13,10 +13,10 @@ export const site = {
 export type NavItem = { path: string; label: string; title: string; description: string };
 
 export const nav: NavItem[] = [
-  { path: '/', label: 'Home', title: 'Genova Mongalo | Software Engineer',
-    description: 'Software engineer building systems, research, and on-device applications.' },
+  { path: '/', label: 'Home', title: 'Genova Mongalo | ML Engineer & Founding Engineer',
+    description: 'I build machine learning into products people use. Founding engineer at Geometry Health, maker of LegacyScribe, M.S. at Georgia Tech.' },
   { path: '/resume', label: 'Resume', title: 'Resume | Genova Mongalo',
-    description: 'Resume of Genova Mongalo, software engineer.' },
+    description: 'Resume of Genova Mongalo, ML and founding engineer.' },
   { path: '/education', label: 'Education', title: 'Education | Genova Mongalo',
     description: 'B.S. Computer Science (summa cum laude, UMKC) and M.S. Computer Science (Georgia Tech).' },
   { path: '/skills', label: 'Skills', title: 'Skills | Genova Mongalo',

@@ -9,9 +9,6 @@ bullets), so the page never switches renderers. There is no static resume
 PDF: the chat bot's "Download the resume" link goes to `/resume?download`,
 which saves the default version once it is typeset.
 
-The template engine is ported from Resumator
-(`../Resumator/resumator/docs/resume-templates.md`), LaTeX template only.
-
 ## How it works
 
 ```
@@ -34,7 +31,7 @@ Enter skips both waits. Typing again aborts a rewrite in progress.
 | `src/lib/resume/match.ts` | Query → requirements → ranking (greedy weighted set cover) → chips. |
 | `src/lib/resume/fit.ts` | Adds bullets in rank order while the real layout still fits one page. |
 | `src/lib/resume/layout.ts` | Template spec, layout plan, PDF export. Lazy-loaded with pdf-lib and fontkit (~520 KB gzipped) when a visitor hovers or focuses the stage. |
-| `src/lib/resume/verify.ts` | Rewrite checks, from Resumator's `verify.js`. |
+| `src/lib/resume/verify.ts` | Rewrite checks. |
 | `src/lib/resume/tailor.ts` | Client for `/tailor`. |
 | `src/components/resume/*` | Stage, heap, paper. |
 | `bot/server.mjs` `handleTailor` | The endpoint. `bot/modes/tailor.md` is its prompt. |
@@ -55,7 +52,7 @@ Enter skips both waits. Typing again aborts a rewrite in progress.
 
 ## Rules that keep the PDF right
 
-These carry over from Resumator. Each one fixes a failure that was seen there.
+Each one fixes a failure that was seen before.
 
 - **One plan, two renderers.** The SVG preview and the PDF draw the same
   commands, so there is no HTML layout to drift from the PDF.

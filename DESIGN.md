@@ -2,6 +2,14 @@
 
 Design decisions for gmango.dev that are expensive to reverse. Each entry is dated; later entries may supersede earlier ones and must say so.
 
+## Home hero (2026-10-21)
+
+**Decision.** The home hero is a statement, not a bio. Small Playfair name (`h1`, 1.5rem, the site's white-to-gold gradient), the statement "I build machine learning into products people use." (2.5rem/650, 22ch, balanced wrap; 1.875rem under 620px), one supporting line (1.125rem, 52ch) naming only Geometry Health, LegacyScribe and Georgia Tech, then three actions in this order: View résumé (solid gold, the only element with depth), Get in touch (outline), Experience (quiet). Three stats sit under the portrait on desktop, stacked and left-aligned to the photo's edge; under 940px they become a row of three after the buttons, with shorter phone wording under 620px. No title label above the name, and no entrance motion beyond the existing route fade.
+
+Why: the old hero was ~120 words of jargon before the first button and read like an interview answer to new visitors. "Software Engineer" was dropped from the hero and from the home title/description because the owner is aiming at both founding-engineer and ML-engineer roles; the title is now "Genova Mongalo | ML Engineer & Founding Engineer", which keeps both search terms.
+
+Colour: secondary text uses `--text-soft` (#f2d4cf) and `--text-caption` (#e6b4ad), hand-picked from the red rather than white at 72%/50% (the 50% one was 3:1 on the light end of the gradient; these are 6.1:1 and 4.6:1). Elmo mode has its own values for both. Only the buttons use gold; the name and stats deliberately do not compete with them.
+
 ## LegacyScribe page (2026-10-17)
 
 **Decision.** `/LegacyScribe` is a standalone light product page in the SPA, not a portfolio page: hero option A's look (white, SF stack, system blue, no Playfair, no red/gold), rendered without the portfolio nav, chat widget or pet, tied back to the portfolio by one "← gmango.dev" link. Eight sections, six of them with a small demo that plays once on scroll-in and is static under Reduce Motion. Every number comes from `docs/bench-results.md` or `CLAUDE.md` in the LegacyScribe repo and is labelled "on my voice, on an M5"; the release version and zip size are read live from the GitHub releases API, never typed in.

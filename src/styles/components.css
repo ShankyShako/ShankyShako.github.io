@@ -1,10 +1,14 @@
 /* ==========================================================================
    Home — a single-screen hero
 
-   The old home page was a full-width paragraph stack that ran 220px past the
-   fold to end on a portrait nobody scrolled to. Two columns, a capped measure,
-   and three numbers instead of three paragraphs put the whole introduction —
-   face included — inside the first screen.
+   One statement, one supporting line, three actions. The old hero was two
+   paragraphs (~120 words) before the first button; a visitor read it as an
+   interview answer. The headline now carries the page and everything else
+   is quieter than it: the name is small, the facts sit under the portrait.
+
+   Grid areas rather than DOM order: on a desktop the stats belong to the
+   portrait column, on a phone they go last so the face and the headline are
+   both on the first screen.
 
    `min-height` rather than a fixed height: on a short laptop the content wins
    and the section simply grows.
@@ -12,91 +16,143 @@
 .hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 300px;
-  gap: 4rem;
-  align-items: center;
+  grid-template-areas:
+    'copy photo'
+    'copy stats';
+  column-gap: 4rem;
+  row-gap: var(--sp-5);
+  align-content: center;
   min-height: calc(100vh - 8.5rem);
   padding: var(--sp-6) 0 var(--sp-4);
 }
 
-.hero-copy { min-width: 0; }
+.hero-copy { grid-area: copy; align-self: center; min-width: 0; }
 
-/* The page-level h1 is centred with generous margins because every other page
-   uses it as a banner. Here it is the top line of a paragraph block. */
+/* Every other page uses h1 as a centred banner. Here the name is a label
+   above the statement, so it keeps the display face and gradient but steps
+   down to a size that does not compete with it. */
 .hero h1 {
   text-align: left;
   margin: 0 0 var(--sp-4);
-  font-size: clamp(2.4rem, 4.4vw, 3.4rem);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
-.hero-lede {
-  font-size: 1.14rem;
-  line-height: 1.6;
-  max-width: 34em;
+.hero-statement {
+  font-size: 2.5rem;
+  line-height: 1.15;
+  font-weight: 650;
+  letter-spacing: -0.02em;
   color: var(--text-light);
+  max-width: 22ch;
   margin-bottom: var(--sp-4);
+  text-wrap: balance;
 }
 
-.hero-sub {
-  font-size: 0.97rem;
-  line-height: 1.68;
-  max-width: 36em;
-  color: var(--text-muted);
-  margin-bottom: var(--sp-5);
+.hero-line {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  max-width: 52ch;
+  color: var(--text-soft);
+  margin-bottom: var(--sp-6);
+  text-wrap: balance;
 }
 
-/* A row of three on a wide screen, a stack on a narrow one, with hairline
-   rules between them instead of boxes — three more cards next to the portrait
-   would be one bordered rectangle too many. */
+.hero-actions { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+
+/* Lit from above: a hairline highlight on the top edge, a tight contact
+   shadow and a wide soft one. Only the primary action gets depth. */
+.hero .btn-solid {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 1px 2px rgba(42, 18, 6, 0.35),
+    0 4px 12px rgba(42, 18, 6, 0.25);
+}
+
+.hero .btn-solid:hover {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 2px 4px rgba(42, 18, 6, 0.35),
+    0 8px 20px rgba(42, 18, 6, 0.3);
+}
+
+.hero .btn-quiet { color: var(--text-soft); }
+
+.hero-portrait { grid-area: photo; justify-self: center; align-self: end; }
+
+.hero .profile-container { width: 240px; height: 240px; }
+
+/* The caption repeats the name a few lines above it, and its spot is where
+   the stats go. */
+.hero .profile-hint { display: none; }
+
+/* Same width as the photo and centred like it, so the stats share its left
+   edge. No rule above them: the gap does the separating. */
 .hero-stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0 var(--sp-5);
+  grid-area: stats;
+  justify-self: center;
+  align-self: start;
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
   list-style: none;
-  margin: 0 0 var(--sp-5);
-  padding-top: var(--sp-4);
-  border-top: 1px solid var(--border);
 }
 
 .hero-stats li { display: flex; flex-direction: column; gap: 0.15rem; }
 
 .hero-stats strong {
-  font-size: 0.98rem;
+  font-size: 1rem;
+  line-height: 1.3;
   font-weight: 650;
   letter-spacing: -0.01em;
-  color: var(--accent);
-  transition: color var(--dur-slow) ease;
+  color: var(--text-light);
 }
 
 .hero-stats span {
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
   line-height: 1.45;
-  color: var(--text-faint);
+  color: var(--text-caption);
 }
 
-.hero-actions { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
-
-.hero-portrait { justify-self: center; }
+.hero-stats .short { display: none; }
 
 @media (max-width: 940px) {
   .hero {
-    grid-template-columns: 1fr;
-    gap: var(--sp-6);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'photo'
+      'copy'
+      'stats';
+    row-gap: var(--sp-6);
     min-height: 0;
     text-align: center;
   }
   .hero h1 { text-align: center; }
-  .hero-lede,
-  .hero-sub { max-width: 100%; }
+  .hero-statement,
+  .hero-line { margin-inline: auto; }
   .hero-actions { justify-content: center; }
-  /* Face first on a phone: it is the fastest thing to take in, and the copy
-     below it is now short enough that it does not push it off screen. */
-  .hero-portrait { order: -1; }
+  .hero-portrait { align-self: auto; }
+
+  /* Under the buttons now, so a row of three with a hairline above it. */
+  .hero-stats {
+    width: 100%;
+    max-width: 36rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-4);
+    padding-top: var(--sp-5);
+    border-top: 1px solid var(--border);
+  }
 }
 
+/* Tighter scale on a phone rather than the desktop one shrunk evenly. */
 @media (max-width: 620px) {
-  .hero-stats { grid-template-columns: 1fr; gap: var(--sp-3); }
-  .hero-stats li { flex-direction: row; align-items: baseline; gap: var(--sp-2); }
-  .hero-stats span { text-align: left; }
+  .hero h1 { font-size: 1.25rem; margin-bottom: var(--sp-3); }
+  .hero-statement { font-size: 1.875rem; line-height: 1.18; margin-bottom: var(--sp-3); }
+  .hero-line { font-size: 1rem; margin-bottom: var(--sp-5); }
+  .hero .profile-container { width: 176px; height: 176px; }
+  .hero-stats { gap: var(--sp-2); }
+  .hero-stats strong { font-size: 0.9375rem; }
+  .hero-stats .long { display: none; }
+  .hero-stats .short { display: block; }
 }
 
 /* ==========================================================================

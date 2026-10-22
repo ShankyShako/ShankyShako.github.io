@@ -6,9 +6,9 @@
  * pdf-lib. Both read the same numbers, so the page you watch assemble is the
  * page you download. The fit loop measures the plan, not the screen.
  *
- * Ported from Resumator (engine/templates.js + engine/pdf.js), LaTeX template
- * only: the sb2nov / Jake Gutierrez layout that resume/resume.tex uses. The
- * rules that make its PDFs parse cleanly are kept, and noted where they bite:
+ * LaTeX template only: the sb2nov / Jake Gutierrez layout that
+ * resume/resume.tex uses. The rules that make its PDFs parse cleanly are kept,
+ * and noted where they bite:
  * see docs/RESUME-PERSONALIZER.md.
  *
  * Loaded on demand (pdf-lib + fontkit + four fonts is ~1 MB), never on first

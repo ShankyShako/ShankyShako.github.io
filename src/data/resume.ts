@@ -10,7 +10,7 @@
  * bot/server.mjs imports this file too (Node strips the types), so the tailor
  * endpoint only ever rewrites bullets that exist here, looked up by id.
  *
- * Shape follows Resumator's library (meta, sections, entries, fragments). See
+ * Shape: meta, sections, entries, fragments. See
  * docs/RESUME-PERSONALIZER.md.
  */
 import { site } from './site.ts';

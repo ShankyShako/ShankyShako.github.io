@@ -2,8 +2,6 @@
  * Checks a model's rewrite of a bullet before it can reach the page. Any
  * failure rejects the rewrite and the original bullet stays. The prompt asks
  * for the same rules, but a prompt is not enforcement; this is.
- *
- * Ported from Resumator's engine/verify.js.
  */
 import type { Fragment } from '../../data/resume.ts';
 import { extractNumbers, norm } from './text.ts';

@@ -1,5 +1,4 @@
-/* Text helpers shared by matching and verification. Ported from Resumator's
-   engine/util.js. */
+/* Text helpers shared by matching and verification. */
 
 const STOPWORDS = new Set([
   'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'have', 'in', 'into', 'is', 'it', 'its',

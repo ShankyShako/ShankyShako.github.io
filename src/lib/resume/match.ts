@@ -3,11 +3,11 @@
  * keystroke. No model is involved: this is what the page shows the moment you
  * type, and what it falls back to when the bot is offline.
  *
- * Scoring follows Resumator (engine/scoring.js): skill overlap, TF-IDF cosine,
- * and priority. A domain term is added because a query here is often three
- * words ("health startup") rather than a posting, and three words rarely name
- * a tool. Ranking is Resumator's greedy weighted set cover (engine/select.js),
- * without its line budget: the fit loop in layout.ts decides how many fit.
+ * Scoring is skill overlap, TF-IDF cosine, and priority. A domain term is
+ * added because a query here is often three words ("health startup") rather
+ * than a posting, and three words rarely name a tool. Ranking is a greedy
+ * weighted set cover with no line budget: the fit loop in layout.ts decides
+ * how many fit.
  */
 import { DOMAINS, defaultBullets, entries, fragments, sections, type Fragment, type SkillLine } from '../../data/resume.ts';
 import { buildIdf, cosine, extractNumbers, hasPhrase, norm, tf, tokenize, type Tf } from './text.ts';
