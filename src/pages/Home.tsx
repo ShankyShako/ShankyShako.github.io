@@ -22,7 +22,9 @@ export function Home() {
     <section className="hero">
       <div className="hero-copy">
         <h1>Genova Mongalo</h1>
-        <p className="hero-statement">I build machine learning into products people use.</p>
+        <p className="hero-statement">
+          I build machine learning <span className="hero-statement-accent">into products people use.</span>
+        </p>
         <p className="hero-line">
           Founding engineer at Geometry Health. Maker of LegacyScribe. M.S. at Georgia Tech.
         </p>

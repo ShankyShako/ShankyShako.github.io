@@ -29,8 +29,8 @@
 .hero-copy { grid-area: copy; align-self: center; min-width: 0; }
 
 /* Every other page uses h1 as a centred banner. Here the name is a label
-   above the statement, so it keeps the display face and gradient but steps
-   down to a size that does not compete with it. */
+   above the statement, so it keeps the display face but steps down to a size that does not compete with it: the ruby belongs
+   to the second half of the statement. */
 .hero h1 {
   text-align: left;
   margin: 0 0 var(--sp-4);
@@ -50,6 +50,10 @@
   text-wrap: balance;
 }
 
+/* The second half carries the site accent, so the eye lands on the outcome
+   rather than the skill. A token, not a hex, so the Elmo theme turns it red. */
+.hero-statement-accent { color: var(--accent); }
+
 .hero-line {
   font-size: 1.125rem;
   line-height: 1.6;
@@ -64,20 +68,33 @@
 /* Lit from above: a hairline highlight on the top edge, a tight contact
    shadow and a wide soft one. Only the primary action gets depth. */
 .hero .btn-solid {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 1px 2px rgba(42, 18, 6, 0.35),
-    0 4px 12px rgba(42, 18, 6, 0.25);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 1px 2px rgba(0, 0, 0, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .hero .btn-solid:hover {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 2px 4px rgba(42, 18, 6, 0.35),
-    0 8px 20px rgba(42, 18, 6, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 4px rgba(0, 0, 0, 0.4),
+    0 8px 20px rgba(0, 0, 0, 0.35);
 }
 
 .hero .btn-quiet { color: var(--text-soft); }
 
 .hero-portrait { grid-area: photo; justify-self: center; align-self: end; }
 
-.hero .profile-container { width: 240px; height: 240px; }
+.hero .profile-container { width: 240px; height: 240px; isolation: isolate; }
+
+/* The page's one glow, anchored to the portrait so it groups the photo with
+   the stats under it instead of floating in a corner of the screen. */
+.hero .profile-container::before {
+  content: '';
+  position: absolute;
+  inset: -100px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--portrait-glow), transparent);
+  pointer-events: none;
+  z-index: -1;
+  transition: background var(--dur-slow) ease;
+}
 
 /* The caption repeats the name a few lines above it, and its spot is where
    the stats go. */
@@ -185,15 +202,24 @@
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  /* A ring set off from the photo rather than painted on it — the gap is what
-     stops a 5px gold band from reading as a sticker. */
-  border: 1px solid var(--accent-soft);
-  outline: 6px solid color-mix(in srgb, var(--accent) 14%, transparent);
-  outline-offset: 4px;
+  /* Two neutral hairlines, concentric, with a gap between them. The ruby
+     band this replaced read as muddy brown on the ink canvas; the colour now
+     comes from the glow behind the photo (DESIGN.md, "Hero finishing"). */
+  border: 1px solid var(--border-strong);
+  outline: 1px solid var(--border);
+  outline-offset: 6px;
   box-shadow: var(--shadow-lg);
   transition: opacity 0.35s var(--ease), transform var(--dur) var(--ease),
-    border-color var(--dur-slow) ease, outline-color var(--dur-slow) ease;
+    border-color var(--dur-slow) ease, outline-color var(--dur-slow) ease,
+    box-shadow var(--dur-slow) ease;
   -webkit-user-drag: none;
+}
+
+:root[data-theme='elmo'] .profile-image,
+:root[data-theme='elmo'] .decoy-image {
+  border-color: var(--elmo-ring);
+  outline-color: transparent;
+  box-shadow: 0 0 0 6px var(--elmo-ring), 0 0 0 16px rgba(255, 45, 45, 0.28), var(--shadow-lg);
 }
 
 .profile-container:hover .profile-image,
@@ -226,9 +252,9 @@
   justify-content: center;
   padding: 0.6rem 1.3rem;
   border-radius: var(--r-pill);
-  border: 1px solid var(--accent-soft);
+  border: 1px solid var(--border-strong);
   background: transparent;
-  color: var(--accent);
+  color: var(--text-light);
   font: inherit;
   font-size: 0.9rem;
   font-weight: 550;
@@ -242,8 +268,8 @@
 }
 
 .btn:hover {
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  border-color: var(--accent);
+  background: var(--surface-hover);
+  border-color: var(--text-faint);
   transform: translateY(-1px);
 }
 
@@ -251,15 +277,15 @@
 .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 
 .btn-solid {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
-  border-color: var(--accent);
+  border-color: var(--accent-fill);
   box-shadow: var(--shadow-sm);
 }
 
 .btn-solid:hover {
-  background: var(--accent-strong);
-  border-color: var(--accent-strong);
+  background: var(--accent-fill-strong);
+  border-color: var(--accent-fill-strong);
   color: var(--on-accent);
   box-shadow: var(--shadow);
 }
@@ -430,7 +456,7 @@
 .glyph-number {
   padding: 0.3rem 0.8rem;
   border-radius: 46% 54% 52% 48% / 58% 44% 56% 42%;
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
   font-size: 16px;
   font-style: italic;
@@ -479,7 +505,7 @@
 
 .resume-paper text { fill: #000; white-space: pre; }
 .resume-paper .paper-move { transition: transform 0.45s var(--ease); }
-.resume-paper a:hover text { fill: var(--primary-red); }
+.resume-paper a:hover text { fill: var(--paper-link); }
 
 /* Side by side (set from JS, ≥1000px wide): stage on the left, the page on
    the right at full height, the whole row sized to end at the viewport's
@@ -769,9 +795,9 @@
 .tag:hover { border-color: var(--accent-soft); color: var(--text-light); }
 
 .tag.active {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
-  border-color: var(--accent);
+  border-color: var(--accent-fill);
   font-weight: 600;
 }
 
@@ -1090,7 +1116,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%) rotate(-8deg);
-  background: color-mix(in srgb, var(--primary-red) 55%, transparent);
+  background: color-mix(in srgb, var(--canvas-top) 55%, transparent);
   backdrop-filter: blur(4px);
   color: var(--text-light);
   font-family: var(--font-display);
@@ -1104,7 +1130,11 @@
   pointer-events: none;
 }
 
-:root[data-theme='elmo'] .sold-badge { color: var(--accent); }
+:root[data-theme='elmo'] .sold-badge {
+  color: var(--accent);
+  /* Darker glass: at 55% the orange fell to 3.5:1 over the brightest photo. */
+  background: color-mix(in srgb, var(--canvas-bottom) 78%, transparent);
+}
 
 /* Clicking a piece stamps it. The stamp takes over from the badge at the
    moment it hits, so the two never sit on top of each other. The frame is a
@@ -1218,7 +1248,7 @@
 
 .modal-box {
   position: relative;
-  background: linear-gradient(150deg, var(--primary-red), var(--dark-red));
+  background: linear-gradient(150deg, var(--canvas-top), var(--canvas-bottom));
   border: 1px solid var(--accent-soft);
   border-radius: var(--r-lg);
   padding: var(--sp-6);
@@ -1400,9 +1430,9 @@
 
 .form-status { margin-top: var(--sp-3); font-size: 0.9rem; }
 
-.form-status.ok { color: var(--accent); }
-.form-status.err { color: #ff9a9a; }
-.field-error { color: #ff9a9a; font-size: 0.8rem; margin-top: 0.3rem; display: block; }
+.form-status.ok { color: var(--success); }
+.form-status.err { color: var(--danger); }
+.field-error { color: var(--danger); font-size: 0.8rem; margin-top: 0.3rem; display: block; }
 
 /* ---- paper-plane send (plane-send.js) ----
    Two inert proxies the engine measures and never shows. `visibility: hidden`
@@ -1595,9 +1625,9 @@
 }
 
 .chat-badge.is-count {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
-  border-color: var(--accent);
+  border-color: var(--accent-fill);
 }
 
 .chat-panel {
@@ -1684,7 +1714,7 @@
 
 .chat-msg.me {
   align-self: flex-end;
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
   border-bottom-right-radius: 4px;
 }
@@ -1854,7 +1884,7 @@
   height: 36px;
   border-radius: 50%;
   border: none;
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
   display: grid;
   place-items: center;
@@ -2145,7 +2175,7 @@
 
 :root[data-theme='elmo'] .pet-counter {
   color: var(--accent);
-  /* Red on black reads dimmer than dark on light at the same alpha. */
+  /* Orange on red reads dimmer than dark on light at the same alpha. */
   opacity: 0.28;
 }
 
@@ -2304,10 +2334,9 @@
    Flat ends and mitred corners come for free with a polygon. */
 .deck-cracks path { stroke: none; }
 
-/* Near-black desaturated maroon, taken down from the page's own ground rather
-   than warmed towards brown. Brown reads as wood; this has to read as the
-   absence of floor. */
-.deck-crack-core { fill: #150407; }
+/* Darker than the page's own ground (--canvas-bottom), and no more saturated:
+   brown reads as wood; this has to read as the absence of floor. */
+.deck-crack-core { fill: #0f0a09; }
 
 /* The near wall, in shade, inside the groove. */
 .deck-crack-shadow {
@@ -2402,7 +2431,8 @@
   height: clamp(440px, 52vh, 470px);
   box-sizing: border-box;
   padding: var(--sp-5) var(--sp-6) 1.6rem;
-  background-color: #232323;
+  /* Warm, to sit on the palette B ink rather than read as a grey slab. */
+  background-color: #221a18;
   /* A faint top-lit falloff and a lit top edge, so the card reads as a slab
      with a face rather than a flat panel. */
   background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0) 45%, rgba(0, 0, 0, 0.1));
@@ -2486,7 +2516,7 @@
   position: absolute;
   inset: 0;
   border-radius: var(--r-md);
-  background: #0d0d0d;
+  background: #0f0b0a;
   pointer-events: none;
   transition: opacity 0.44s var(--ease);
 }

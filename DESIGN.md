@@ -4,11 +4,41 @@ Design decisions for gmango.dev that are expensive to reverse. Each entry is dat
 
 ## Home hero (2026-10-21)
 
-**Decision.** The home hero is a statement, not a bio. Small Playfair name (`h1`, 1.5rem, the site's white-to-gold gradient), the statement "I build machine learning into products people use." (2.5rem/650, 22ch, balanced wrap; 1.875rem under 620px), one supporting line (1.125rem, 52ch) naming only Geometry Health, LegacyScribe and Georgia Tech, then three actions in this order: View résumé (solid gold, the only element with depth), Get in touch (outline), Experience (quiet). Three stats sit under the portrait on desktop, stacked and left-aligned to the photo's edge; under 940px they become a row of three after the buttons, with shorter phone wording under 620px. No title label above the name, and no entrance motion beyond the existing route fade.
+**Decision.** The home hero is a statement, not a bio. Small Playfair name (`h1`, 1.5rem, the site's white-to-gold gradient), the statement "I build machine learning into products people use." (white up to "learning", then "into products people use." in `var(--accent)` so the outcome carries the colour; 2.5rem/650, 22ch, balanced wrap; 1.875rem under 620px), one supporting line (1.125rem, 52ch) naming only Geometry Health, LegacyScribe and Georgia Tech, then three actions in this order: View résumé (solid gold, the only element with depth), Get in touch (outline), Experience (quiet). Three stats sit under the portrait on desktop, stacked and left-aligned to the photo's edge; under 940px they become a row of three after the buttons, with shorter phone wording under 620px. No title label above the name, and no entrance motion beyond the existing route fade.
 
 Why: the old hero was ~120 words of jargon before the first button and read like an interview answer to new visitors. "Software Engineer" was dropped from the hero and from the home title/description because the owner is aiming at both founding-engineer and ML-engineer roles; the title is now "Genova Mongalo | ML Engineer & Founding Engineer", which keeps both search terms.
 
-Colour: secondary text uses `--text-soft` (#f2d4cf) and `--text-caption` (#e6b4ad), hand-picked from the red rather than white at 72%/50% (the 50% one was 3:1 on the light end of the gradient; these are 6.1:1 and 4.6:1). Elmo mode has its own values for both. Only the buttons use gold; the name and stats deliberately do not compete with them.
+Colour: superseded by "Palette B" below.
+
+## Palette B: warm ink with a ruby accent (2026-10-24)
+
+**Decision.** Supersedes the red-gradient/gold palette sitewide (`global.css` tokens; for Elmo mode see "Elmo mode: the red room"). Canvas `--canvas-top` #1c1513 to `--canvas-bottom` #0f0b0a. Text `--text-light` #f5efe9, `--text-muted`/`--text-soft` #c9b8b1, `--text-faint`/`--text-caption` #a8968f. Ruby comes in two tokens: `--accent` #ef6b62 for text and small marks on the canvas (hover `--accent-strong` #f58e86), and `--accent-fill` #b3172a for solid backgrounds with white `--on-accent` text (hover `--accent-fill-strong` #c42236). On the home hero the accent appears only in "into products people use." and the View résumé button. The active nav tab, outline buttons and all `h1`s are neutral (no gold, no gradient). The only glow is a faint ruby one in the bottom-right (`--glow`).
+
+Why: the old full-bleed saturated red left nothing able to stand out, and gold appeared in five places on the home hero, so the headline accent and the primary button competed. Option B was picked over "oxblood" (same red, darker) and "cream editorial" (light theme) because it reads most like an engineering portfolio.
+
+Contrast (measured): text-light 15.8:1 on #1c1513; text-muted 9.4:1; text-faint 6.4:1 on #1c1513 and 6.9:1 on #0f0b0a; accent 6.0:1 on #1c1513 and 5.3:1 on #2a1f1c; white on accent-fill 6.8:1, on accent-fill-strong 5.8:1.
+
+## Hero finishing (2026-10-24)
+
+**Decision.** Option B of three. The portrait ring is two neutral concentric hairlines (border 1px `--border-strong`, outline 1px `--border` at 6px offset) instead of the ruby band. The page's one glow sits behind the portrait (`.hero .profile-container::before`, `--portrait-glow` rgba(179,23,42,0.3); transparent in Elmo mode, where the red ring already marks it), and the corner glow is dropped on the home page (`body:has(.hero)::before`). The nav glass now bleeds to the window edges at every width.
+
+Why: the ruby band read as muddy brown on the ink canvas, and the corner glow belonged to nothing; anchored to the photo, it groups the photo with the stats. Rejected: A, an "Open to founding-engineer and ML roles" status line, because any role label on the site narrows which roles recruiters bring (same reason as no title label in "Home hero"); C, stats in Playfair, because it competes with the name.
+
+States: buttons keep hover (lift, lighter fill), active (scale 0.985) and the global `:focus-visible` ring (2px `--accent`, 3px offset, 6.0:1 on the canvas), checked by keyboard. The hero has no disabled, loading, empty or error states: it is static links.
+
+## Elmo mode: the red room (2026-10-24)
+
+**Decision.** Elmo mode (right-click or long-press the portrait) is the inversion of Palette B. In Palette B, ruby is a small accent on a dark room; in Elmo mode, red is the room and Elmo's nose orange is the accent. Tokens are in `:root[data-theme='elmo']` in `global.css`:
+- Canvas: `--canvas-top` #b00e20 to `--canvas-bottom` #6e0913.
+- Orange: `--accent` #ffcf70 for text, `--accent-fill` #ffc24d for fills, which always carry dark `--on-accent` #2a0a00.
+- Text: white, with `--text-muted`/`--text-soft` #ffe3de and `--text-faint`/`--text-caption` #ffd3cc.
+- Surfaces and borders: white at low alpha; shadows: a deep red-black.
+- The portrait gets a bright red ring: `--elmo-ring` #ff2d2d, 6px solid plus a 16px halo at 28%.
+- `h1` is a white-to-orange gradient.
+
+Why: Palette B took Elmo's old black-and-red as the everyday look, so the old Elmo palette was no longer a change of atmosphere. The user picked option 1 ("Elmo red") with option 3's red ring, over "lights on" (a light theme, too much work) and "spotlight" (still dark next to Palette B).
+
+Contrast (measured): white 7.2:1 on #b00e20; `--accent` 4.9:1 there; soft text 5.9:1; captions 5.3:1; `--on-accent` on the fill 10.5:1.
 
 ## LegacyScribe page (2026-10-17)
 

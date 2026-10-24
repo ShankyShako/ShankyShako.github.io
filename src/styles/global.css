@@ -7,31 +7,45 @@
    one product instead of nine.
    ========================================================================== */
 :root {
-  /* Palette */
-  --primary-red: #9b111e;
-  --dark-red: #620b13;
-  --accent: #e3c46a;
-  --accent-strong: #f0d999;
-  --accent-soft: rgba(227, 196, 106, 0.55);
+  /* Palette. Warm ink canvas with ruby as the one accent (DESIGN.md,
+     "Palette B"). The canvas is near-neutral so the accent is the only
+     saturated thing on screen; it used to be a full-bleed red, which left
+     nothing able to stand out. */
+  --canvas-top: #1c1513;
+  --canvas-bottom: #0f0b0a;
+  /* Two rubies. --accent is for text and small marks on the canvas
+     (6.0:1 on --canvas-top). --accent-fill is for solid backgrounds that
+     carry --on-accent text (white on it is 6.8:1). */
+  --accent: #ef6b62;
+  --accent-strong: #f58e86;
+  --accent-soft: rgba(239, 107, 98, 0.5);
+  --accent-fill: #b3172a;
+  --accent-fill-strong: #c42236;
   --light-cream: #f5f1e8;
   --dark-bg: #1a1a1a;
-  --text-light: #ffffff;
-  --text-muted: rgba(255, 255, 255, 0.72);
-  --text-faint: rgba(255, 255, 255, 0.5);
-  /* Secondary text picked from the red's own hue. White at 72% / 50% goes
-     grey-pink and the 50% one is 3:1 on the light end of the gradient; these
-     are 6.1:1 and 4.6:1 there. */
-  --text-soft: #f2d4cf;
-  --text-caption: #e6b4ad;
+  --text-light: #f5efe9;
+  --text-muted: #c9b8b1;
+  --text-faint: #a8968f;
+  /* Kept as aliases so the hero's names still read; same warm greys. */
+  --text-soft: #c9b8b1;
+  --text-caption: #a8968f;
 
   --surface: rgba(255, 255, 255, 0.055);
   --surface-hover: rgba(255, 255, 255, 0.1);
   --surface-solid: rgba(255, 255, 255, 0.075);
   --border: rgba(255, 255, 255, 0.11);
   --border-strong: rgba(255, 255, 255, 0.2);
-  --nav-bg: rgba(112, 15, 24, 0.72);
-  --glow: rgba(0, 0, 0, 0.2);
-  --on-accent: #2a1206;
+  --nav-bg: rgba(28, 21, 19, 0.72);
+  --glow: rgba(179, 23, 42, 0.16);
+  --portrait-glow: rgba(179, 23, 42, 0.3);
+  --on-accent: #ffffff;
+  /* Form feedback. Success used to be the accent, which next to a salmon
+     error read as two errors. */
+  --success: #7fd99c;
+  --danger: #ff9a9a;
+  /* Links on the cream résumé paper, which stays cream in both themes, so
+     Elmo does not override it (Elmo's orange is 1.5:1 on cream). */
+  --paper-link: #b3172a;
 
   /* Layered rather than one big blur: the tight shadow gives the edge, the
      wide one gives the float. A single 40px blur reads as fog. */
@@ -70,30 +84,46 @@
 }
 
 :root[data-theme='elmo'] {
-  --primary-red: #0a0a0a;
-  --dark-red: #000000;
-  --accent: #ff2d2d;
-  --accent-strong: #ff6b6b;
-  --accent-soft: rgba(255, 45, 45, 0.7);
+  /* Elmo is the inversion of palette B (DESIGN.md, "Elmo mode"): there red
+     is a small accent on a dark room; here red is the room and Elmo's nose
+     orange is the accent. */
+  --canvas-top: #b00e20;
+  --canvas-bottom: #6e0913;
+  /* Text-level orange is 4.9:1 on the light end of the canvas; the fill is a
+     shade deeper and only ever carries dark --on-accent text (10.5:1). */
+  --accent: #ffcf70;
+  --accent-strong: #ffdd94;
+  --accent-soft: rgba(255, 207, 112, 0.55);
+  --accent-fill: #ffc24d;
+  --accent-fill-strong: #ffcf70;
+  --text-light: #ffffff;
   --light-cream: #1a1a1a;
   --dark-bg: #000000;
-  --text-muted: rgba(255, 255, 255, 0.62);
-  --text-faint: rgba(255, 255, 255, 0.42);
-  --text-soft: #e9dcdc;
-  --text-caption: #c4a8a8;
+  --text-muted: #ffe3de;
+  --text-faint: #ffd3cc;
+  --text-soft: #ffe3de;
+  --text-caption: #ffd3cc;
 
-  --surface: rgba(255, 45, 45, 0.09);
-  --surface-hover: rgba(255, 45, 45, 0.18);
-  --surface-solid: rgba(255, 45, 45, 0.1);
-  --border: rgba(255, 45, 45, 0.26);
-  --border-strong: rgba(255, 45, 45, 0.4);
-  --nav-bg: rgba(0, 0, 0, 0.72);
-  --glow: rgba(255, 45, 45, 0.28);
-  --on-accent: #0a0000;
+  --surface: rgba(255, 255, 255, 0.08);
+  --surface-hover: rgba(255, 255, 255, 0.14);
+  --surface-solid: rgba(255, 255, 255, 0.1);
+  --border: rgba(255, 255, 255, 0.16);
+  --border-strong: rgba(255, 255, 255, 0.32);
+  --nav-bg: rgba(110, 9, 19, 0.72);
+  --glow: rgba(255, 194, 77, 0.14);
+  /* Off: the red ring and its halo already mark the portrait. */
+  --portrait-glow: transparent;
+  --on-accent: #2a0a00;
+  /* Green on red reads as Christmas; white and pale yellow on the red card
+     (8.3:1 and 6.4:1). The words carry the meaning either way. */
+  --success: #ffffff;
+  --danger: #ffe08f;
+  /* The red ring around Elmo's portrait (borrowed from the spotlight idea). */
+  --elmo-ring: #ff2d2d;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(255, 45, 45, 0.1);
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 8px 24px rgba(255, 45, 45, 0.16);
-  --shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.5), 0 18px 48px rgba(255, 45, 45, 0.24);
+  --shadow-sm: 0 1px 2px rgba(40, 0, 6, 0.35), 0 2px 8px rgba(40, 0, 6, 0.2);
+  --shadow: 0 1px 2px rgba(40, 0, 6, 0.4), 0 8px 24px rgba(40, 0, 6, 0.3);
+  --shadow-lg: 0 2px 4px rgba(40, 0, 6, 0.4), 0 18px 48px rgba(40, 0, 6, 0.45);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -106,7 +136,7 @@ html {
 body {
   font-family: var(--font-ui);
   font-size: 16px;
-  background: linear-gradient(150deg, var(--primary-red) 0%, var(--dark-red) 100%);
+  background: linear-gradient(150deg, var(--canvas-top) 0%, var(--canvas-bottom) 100%);
   background-attachment: fixed;
   color: var(--text-light);
   line-height: 1.6;
@@ -131,7 +161,12 @@ body::before {
   transition: background var(--dur-slow) ease;
 }
 
-::selection { background: var(--accent); color: var(--on-accent); }
+/* On the home page the glow belongs to the portrait, so the corner one goes. */
+body:has(.hero)::before {
+  background: radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--accent) 10%, transparent) 0%, transparent 46%);
+}
+
+::selection { background: var(--accent-fill); color: var(--on-accent); }
 
 img {
   -webkit-touch-callout: none;
@@ -167,8 +202,11 @@ img {
   position: sticky;
   top: 0;
   z-index: 100;
-  margin: 0 calc(var(--sp-6) * -1);
-  padding: 0 var(--sp-6);
+  /* Bleeds to the window edges: inside the 1120px container the glass and
+     its hairline stopped short on a wide screen and read as cut off. body
+     clips the scrollbar's worth of overflow. */
+  margin: 0 calc(50% - 50vw);
+  padding: 0 calc(50vw - 50%);
   background: var(--nav-bg);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
@@ -204,10 +242,12 @@ img {
 
 .tab:hover { background: var(--surface-hover); color: var(--text-light); }
 
+/* Neutral, not ruby: the accent is kept for the headline and the one
+   primary button, so the nav does not compete with them. */
 .tab.active {
-  background: var(--accent);
-  color: var(--on-accent);
-  border-color: var(--accent);
+  background: var(--surface-hover);
+  color: var(--text-light);
+  border-color: var(--border-strong);
   font-weight: 600;
   box-shadow: var(--shadow-sm);
 }
@@ -222,16 +262,16 @@ h1 {
   line-height: 1.08;
   text-align: center;
   margin: var(--sp-6) 0 var(--sp-5);
-  background: linear-gradient(135deg, var(--text-light) 20%, var(--accent) 110%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  /* Solid in palette B: a white-to-ruby gradient reads as peach. Elmo keeps
+     its gradient below. */
+  color: var(--text-light);
   letter-spacing: -0.022em;
   transition: background var(--dur-slow) ease;
 }
 
 :root[data-theme='elmo'] h1 {
-  background: linear-gradient(135deg, #ff2d2d, #c4a484);
+  /* White into Elmo's nose orange; the old red-to-tan vanished on red. */
+  background: linear-gradient(135deg, #ffffff 30%, var(--accent) 110%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -403,7 +443,6 @@ ul.sub-bullet li::before {
    ========================================================================== */
 @media (max-width: 900px) {
   .container { padding: 0 var(--sp-4) var(--sp-6); }
-  .tab-bar { margin: 0 calc(var(--sp-4) * -1); padding: 0 var(--sp-4); }
   .content-card { padding: var(--sp-5); }
 }
 
