@@ -21,6 +21,8 @@
   --accent-soft: rgba(239, 107, 98, 0.5);
   --accent-fill: #b3172a;
   --accent-fill-strong: #c42236;
+  /* The unfilled part of a progress fill; --on-accent reads on both. */
+  --accent-track: #4a1518;
   --light-cream: #f5f1e8;
   --dark-bg: #1a1a1a;
   --text-light: #f5efe9;
@@ -96,6 +98,7 @@
   --accent-soft: rgba(255, 207, 112, 0.55);
   --accent-fill: #ffc24d;
   --accent-fill-strong: #ffcf70;
+  --accent-track: #ffe3ad;
   --text-light: #ffffff;
   --light-cream: #1a1a1a;
   --dark-bg: #000000;

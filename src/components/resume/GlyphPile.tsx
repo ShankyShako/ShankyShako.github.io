@@ -51,44 +51,55 @@ function heap(sizes: { w: number; h: number }[], width: number, target?: number)
     const a = Math.floor(best.x / COL);
     const b = Math.ceil((best.x + w) / COL);
     for (let c = a; c < b; c++) cols[c] = best.rest + h * stack;
-    out[i] = { x: best.x, y: -best.rest - h, r: (rand() - 0.5) * 56 };
+    /* ±7°: enough to read as a pile, not so much that labels tip over. */
+    out[i] = { x: best.x, y: -best.rest - h, r: (rand() - 0.5) * 14 };
   }
   return out;
 }
 
-/** Lifted chips as centred rows starting at `top`. */
+/* Lifted rows: as many as the room under the examples holds. */
+export const LIFT_ROWS = 2;
+export const LIFT_ROW_H = 42;
+/* How far the pile reaches past the column each side (.glyph-pile inset). */
+const BLEED = 16;
+
+/** Lifted chips as left-aligned rows starting at `top`, under the field. */
 function rows(ids: string[], sizes: Map<string, { w: number; h: number }>, width: number, top: number) {
   const gap = 8;
-  const maxW = Math.min(width - 24, 760);
+  const maxW = width - BLEED * 2;
   const lines: { ids: string[]; w: number }[] = [];
   for (const id of ids) {
     const s = sizes.get(id);
     if (!s) continue;
     const line = lines[lines.length - 1];
     if (line && line.w + gap + s.w <= maxW) { line.ids.push(id); line.w += gap + s.w; }
-    else if (lines.length < 3) lines.push({ ids: [id], w: s.w }); // more would run into the heap
+    else if (lines.length < LIFT_ROWS) lines.push({ ids: [id], w: s.w }); // more would run into the status line
   }
   const out = new Map<string, Pos>();
   lines.forEach((line, n) => {
-    let x = (width - line.w) / 2;
+    let x = BLEED;
     for (const id of line.ids) {
       const s = sizes.get(id)!;
-      out.set(id, { x, y: top + n * 42, r: 0 });
+      out.set(id, { x, y: top + n * LIFT_ROW_H, r: 0 });
       x += s.w + gap;
     }
   });
   return out;
 }
 
+/* Below this much room the heap sinks out of sight rather than flatten. */
+const MIN_ROOM = 72;
+
 /**
- * @param reserve px kept clear at the top for the search field and the lifted
- *                rows. The heap sits below it.
- * @param fill    the stage has a fixed height (side by side with the page):
- *                the heap packs into what is left. Otherwise the stage grows
- *                to fit the heap, which on a phone is several rows deep.
+ * Drawn over the whole controls column; the heap packs into the band from
+ * `reserve` down to the column's foot.
+ *
+ * @param rowTop  where the lifted rows start.
+ * @param reserve px kept clear at the top for the promise, field, examples,
+ *                lifted rows and status. The heap sits below it.
  */
-export function GlyphPile({ chips, lifted, rowTop, reserve, fill = false }: {
-  chips: Chip[]; lifted: string[]; rowTop: number; reserve: number; fill?: boolean;
+export function GlyphPile({ chips, lifted, rowTop, reserve }: {
+  chips: Chip[]; lifted: string[]; rowTop: number; reserve: number;
 }) {
   const box = useRef<HTMLDivElement>(null);
   const tiles = useRef(new Map<string, HTMLSpanElement>());
@@ -135,22 +146,23 @@ export function GlyphPile({ chips, lifted, rowTop, reserve, fill = false }: {
     };
   }, [width, shown]);
 
-  const { pilePos, height } = useMemo(() => {
-    if (!sizes || !width || (fill && !boxH)) return { pilePos: null, height: fill ? undefined : reserve + 200 };
+  const { pilePos, sunk } = useMemo(() => {
+    if (!sizes || !width || !boxH) return { pilePos: null, sunk: false };
     const list = shown.map((c) => sizes.get(c.id) ?? { w: 20, h: 20 });
-    /* In a fixed stage the heap has to fit the room left under the field.
-       Random drops leave hollows, so aim low, then squash if still too deep. */
-    const room = fill ? Math.max(80, boxH - reserve - 12) : undefined;
-    const pos = heap(list, width, room && room * 0.7);
+    /* The heap has to fit the room left under the controls. Random drops
+       leave hollows, so aim low, then squash if still too deep. */
+    const room = boxH - reserve - 12;
+    const sunk = room < MIN_ROOM;
+    const pos = heap(list, width, Math.max(MIN_ROOM, room) * 0.7);
     const depth = Math.max(...pos.map((p) => -p.y));
-    const squash = room && depth > room ? room / depth : 1;
-    const height = fill ? boxH : Math.round(reserve + depth + 8);
-    const floor = height - 6;
+    const squash = depth > room ? Math.max(MIN_ROOM, room) / depth : 1;
+    /* Sunk: the heap drops below the floor, where the mask hides it. */
+    const floor = sunk ? boxH + depth : boxH - 6;
     return {
       pilePos: new Map(shown.map((c, i) => [c.id, { ...pos[i], y: floor + pos[i].y * squash }])),
-      height: fill ? undefined : height,
+      sunk,
     };
-  }, [sizes, width, boxH, fill, shown, reserve]);
+  }, [sizes, width, boxH, shown, reserve]);
 
   const liftPos = useMemo(
     () => (sizes && width ? rows(lifted, sizes, width, rowTop) : new Map<string, Pos>()),
@@ -172,14 +184,14 @@ export function GlyphPile({ chips, lifted, rowTop, reserve, fill = false }: {
   }, [phase]);
 
   return (
-    <div className={`glyph-pile${fill ? ' is-fill' : ''}`} ref={box} style={{ height }} aria-hidden="true">
+    <div className={`glyph-pile${sunk ? ' is-sunk' : ''}`} ref={box} aria-hidden="true">
       {shown.map((c, i) => {
         const up = liftPos.get(c.id);
         const p = up ?? pilePos?.get(c.id);
         const style = p
           ? {
               transform: phase === 'start' && !up
-                ? `translate(${p.x}px, ${p.y - (height ?? boxH) - 80}px) rotate(${p.r * 2}deg)`
+                ? `translate(${p.x}px, ${p.y - boxH - 80}px) rotate(${p.r * 2}deg)`
                 : `translate(${p.x}px, ${p.y}px) rotate(${p.r}deg)${up ? ' scale(1.06)' : ''}`,
               transitionDelay: phase === 'settled' ? `${up ? lifted.indexOf(c.id) * 28 : 0}ms` : `${(i * 37) % 700}ms`,
             }

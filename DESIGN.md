@@ -129,3 +129,50 @@ One column everywhere under 900 px; the hero demo window sits under the copy; th
 - `useDevtoolsTrap` and `useImageGuard` are off on this route (an open-source product page must not bounce a developer who opens the inspector); they stay on everywhere else.
 - Accepted as built: hero highlight settles at frame A's 12 % tint instead of fading out; marked fillers in the coach demo stay at full opacity; no Replay under Reduce Motion; §7 `h2` "A few more things."; struck words transition `color` (the spec asked for it); hero script runs ~5 s, not 4.6.
 - Copy fixes: "Who made it?" uses the README's words (no job title); "Apple Speech and Parakeet use under 100 MB of memory" (the download is larger).
+
+## Résumé section: what it is made of (2026-10-24)
+
+**Decision.** The `/resume` personalizer keeps these pieces and only these:
+1. A one-line promise above the field: what you get ("rewritten for your role, still one page, ready as a PDF"), not how it works.
+2. Example queries that stay visible after typing, so roles can be compared with one click.
+3. Changes marked on the page: a margin bar beside each reworded bullet, a dotted one beside a bullet whose rewrite was rejected; hovering a marked bullet shows the original wording.
+4. A two-way switch, **Original | Tailored**, shown once a query is active. Never echo the query or a role in the label.
+5. The lifting chips, with the heap made smaller so it no longer outsizes the page.
+7. A "nothing invented" line: every fact comes from the published résumé, and code rejects a rewrite that drops a number, adds a tool or claims more.
+8. The four steps (Match, Fit, Reword, Check) with real counts, folded behind "How this works".
+9. Download stays the one solid button and names no role ("Download this version" / "Download PDF").
+
+Rejected: a match score (a visitor typing a role the owner doesn't fit would see the site grade its owner low), a shareable `?for=` link (rewording re-runs on open and depends on the bot being up), and "For <role>" on the switch or the button (puts a role label on the site; see "Home hero" and `site-positioning`).
+
+Why: the section worked but gave no reason to start and no proof it had done anything. The pieces split into invite (1, 2), reward (3, 4, 5), trust (7, 8) and take-away (9).
+
+**Layout (2026-10-24).** Option A of three: on desktop, the controls sit in the left column in this order: promise, field, examples, lifted chips, status line + "How this works", a smaller heap, then the trust line. The Original | Tailored switch and Download sit in a toolbar directly above the page on the right. Rejected B (all controls on the left, so the eye crosses over to act on the page) and C (field across the top, page centred, which needs a scroll to see the page change). Phone order for any option: promise, field, examples, chips, toolbar, page, trust line. Built (2026-10-24): the heap fills whatever height the left column has left and sinks out of sight when "How this works" is open; the open steps make the section taller instead of scrolling in a box, and the page keeps its size. Lifted chips are capped at two rows, left-aligned with the field.
+
+**Density (2026-10-24).** Chosen: Balanced, with Compact's example chips. Promise `h2` 30px (24px under 620px); sub-line 16px on a 28px line; field text 20px on a 28px line (18px on phones); status, "How this works", switch and trust line 14px, step tags 12px. Example chips are 12px with 4px/10px padding and a 6px gap, so they sit on two rows instead of three. Spacing: promise to field 24px, field to chips 12px, chips to lifted row 16px; grid gaps 24px between rows and 32px between columns. Rejected: Compact overall (12px text everywhere reads as an admin tool) and Generous (the left column fills up and the heap sinks out of sight on a 1440×1000 screen).
+
+**Heap (2026-10-24).** Chosen: "Quiet" with less tilt. Resting heap pieces are solid and dim:
+- Skill chips: #2b221f with a #3a2f2b edge and #8a7a73 labels.
+- Number blobs: #4d161c with #c9a7a2 labels.
+- Loose letters: #3d322e.
+
+Solid fills, so overlapping pieces hide one another instead of muddying. A chip turns paper (and a number turns ruby) only when it lifts, so brightness means "relevant to this role". The colours crossfade over `--dur`. Tilt is ±7° (it was ±28°). Every piece and the loose letters stay. The tokens are `--heap-*` on `.tailor`, with darker-red values under Elmo. The heap is `aria-hidden`, so its labels are decoration and need no text contrast. Rejected: "Tidy" alone (it calms the shape but stays the loudest thing on the left) and "Quiet + tidy" with the loose letters removed (it reads as a list, not a pile).
+
+**States and finishing (2026-10-24).**
+- **State fixes.** The field placeholder is #75665c (5.2:1 on the paper; it is the field's only visible label). A selected example chip gets a ✓, brighter text and a `--text-faint` edge (6.4:1), so it differs from hover by more than colour. The unselected half of Original | Tailored lights up on hover.
+- **Change marks.** Reworded bullets get a ruby bar (`--paper-mark` #b3172a, 6.8:1 on the paper); kept bullets keep a dotted grey one (`--paper-mark-kept` #6b655f), so shape differs as well as colour.
+- **Tooltip** (option C of three). Hovering or tapping a reworded bullet shows "Changed from the original" with a word-level diff (`src/lib/resume/diff.ts`): struck words were dropped, tinted words are new. Below that, a "Checked:" line lists the bullet's figures and named tools (`extractNumbers`, `technologiesOf`) as still present, plus "no new tools · no bigger claims". That line restates checks `verify.ts` already passed and never comes from the model. Kept bullets keep their one-line reason.
+  - Contrast: struck words 8.7:1, new words 11.1:1, label and facts 8.7:1.
+  - Rejected: a model-written "why it was reworded" note, because it can't be verified, would undercut "nothing invented", and would add latency.
+- **Download while rewording.** The button becomes the progress bar: "Rewording N of M…", with an `--accent-fill` fill over `--accent-track` (#4a1518; Elmo #ffe3ad) and full opacity instead of the faded disabled look. The status line still announces progress.
+- **Rejected:** a change count on the switch ("Tailored · 11"), because the marks already show it.
+
+**Verify (2026-10-24).** The diagnostic scored 10/10 after these fixes:
+- Field radius 22px → `--r-lg`.
+- Panel radius 36px → 24px, so it nests with the page (8px corner + 16px padding).
+- Raw 12px and 16px gaps → spacing tokens.
+- 4rem of bottom room on the stacked layout, so the chat bubble no longer covers the trust line at the end of the page.
+
+Accepted, with reasons:
+- Example chips are 12px and 29px tall on phones (user's choice; above WCAG 2.5.8's 24px, below the 44px platform guideline).
+- Heap tile sizes (15/16/34px) are decorative and `aria-hidden`.
+- The panel keeps its faint top-left highlight inside the shade pool, the one "soft spotlight" item the slop pass flags. It is the panel's light-from-above, and removing it flattens the pool.

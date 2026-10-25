@@ -305,7 +305,7 @@
 /* ==========================================================================
    Resume
    ========================================================================== */
-.resume-frame { display: flex; justify-content: center; margin: var(--sp-5) 0 0; }
+.resume-frame { position: relative; display: flex; justify-content: center; margin: var(--sp-5) 0 0; }
 
 /* Page-shaped while the typesetter loads, so nothing jumps when it lands. */
 .resume-placeholder {
@@ -334,7 +334,39 @@
 .tailor {
   --paper: #fbf8f1;
   --ink: #2a1206;
+  /* Change marks on the page: ruby for reworded (6.8:1 on the paper), so
+     "this changed" reads at a glance; dotted grey for kept as written, so
+     the two differ in shape as well as colour. */
+  --paper-mark: #b3172a;
+  --paper-mark-kept: #6b655f;
+  --tip-bg: #231d1a;
+  --tip-ink: #f5efe9;
+  --switch-line: rgba(245, 239, 233, 0.22);
+  --switch-on-bg: #f5efe9;
+  --switch-on-ink: #231d1a;
+  /* The heap at rest: solid (so overlaps hide each other instead of muddying)
+     and dim, so it reads as texture behind the controls. A chip turns paper
+     only when it lifts, so brightness means "relevant to this role". The
+     heap is aria-hidden, so its labels are decoration, not text to read. */
+  --heap-chip: #2b221f;
+  --heap-chip-edge: #3a2f2b;
+  --heap-chip-ink: #8a7a73;
+  --heap-num: #4d161c;
+  --heap-num-edge: #5e1d24;
+  --heap-num-ink: #c9a7a2;
+  --heap-glyph: #3d322e;
   margin-top: var(--sp-5);
+}
+
+/* Elmo: the same idea on the red room, a shade darker than the canvas. */
+:root[data-theme='elmo'] .tailor {
+  --heap-chip: #7d0a17;
+  --heap-chip-edge: #930f1e;
+  --heap-chip-ink: #e39a98;
+  --heap-num: #5a0712;
+  --heap-num-edge: #6e0b18;
+  --heap-num-ink: #f0b9a8;
+  --heap-glyph: #8a0c1a;
 }
 
 .visually-hidden {
@@ -345,26 +377,28 @@
   white-space: nowrap;
 }
 
-.tailor-stage {
-  position: relative;
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  background:
-    radial-gradient(120% 70% at 50% 0%, rgba(255, 255, 255, 0.06), transparent 60%),
-    rgba(0, 0, 0, 0.24);
-  box-shadow: inset 0 -30px 60px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
+/* The controls column: promise, field, examples, the lifted row, status,
+   "How this works", and the heap at its foot. The heap is drawn over the
+   whole column, behind the controls. */
+.tailor-main { position: relative; display: flex; flex-direction: column; min-width: 0; }
+.tailor-main > :not(.glyph-pile) { position: relative; z-index: 1; }
+
+.tailor-intro h2 {
+  margin: 0;
+  color: var(--text-light);
+  font-family: var(--font-display);
+  font-size: 1.875rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
 }
+.tailor-intro p { max-width: 44ch; margin: var(--sp-2) 0 0; color: var(--text-muted); line-height: 1.75rem; text-wrap: pretty; }
 
 .tailor-field {
-  position: absolute;
-  z-index: 3;
-  top: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(640px, calc(100% - 32px));
+  margin-top: var(--sp-5);
   background: var(--paper);
-  border-radius: 22px;
+  border-radius: var(--r-lg);
   box-shadow: var(--shadow-lg);
   transition: box-shadow var(--dur) var(--ease);
 }
@@ -374,22 +408,24 @@
 .tailor-field textarea {
   display: block;
   width: 100%;
-  padding: 1rem 3rem 1rem 1.35rem;
+  padding: 0.875rem 3rem 0.875rem 1.25rem;
   border: 0;
   outline: 0;
   resize: none;
   background: transparent;
   color: var(--ink);
-  font: 500 1.3rem/1.35 var(--font-ui);
+  font: 500 1.25rem/1.75rem var(--font-ui);
   letter-spacing: -0.01em;
 }
 
-.tailor-field textarea::placeholder { color: rgba(42, 18, 6, 0.42); }
+/* The placeholder is the field's only visible label, so it is held to body
+   contrast: 5.2:1 on the paper (it was 2.7:1). */
+.tailor-field textarea::placeholder { color: #75665c; }
 
 .tailor-clear {
   position: absolute;
-  top: 0.7rem;
-  right: 0.7rem;
+  top: 0.6rem;
+  right: 0.6rem;
   width: 2rem;
   height: 2rem;
   border: 0;
@@ -403,32 +439,46 @@
 
 .tailor-clear:hover { background: rgba(42, 18, 6, 0.08); color: var(--ink); }
 
-.tailor-examples {
-  position: absolute;
-  z-index: 3;
-  left: 16px;
-  right: 16px;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--sp-2);
-}
+/* Compact chips inside the balanced set (DESIGN.md, "Résumé density"): two
+   rows instead of three, so the examples stay one quiet group. */
+.tailor-examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--sp-3); }
 
 .tailor-examples button {
-  padding: 0.3rem 0.8rem;
+  padding: 0.25rem 0.625rem;
   border: 1px solid var(--border);
   border-radius: var(--r-pill);
   background: var(--surface);
   color: var(--text-muted);
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.75rem;
   cursor: pointer;
-  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 
 .tailor-examples button:hover { background: var(--surface-hover); color: var(--text-light); }
+/* Selected differs from hovered by more than colour: a tick, a brighter text
+   and a 6.4:1 edge (the ruby edge it had was 2.4:1). */
+.tailor-examples button[aria-pressed='true'] { border-color: var(--text-faint); background: var(--surface-hover); color: var(--text-light); }
+.tailor-examples button[aria-pressed='true']::before { content: '✓'; margin-right: 0.3em; }
 
-.glyph-pile { position: relative; pointer-events: none; }
+/* Room for the lifted rows (height set from JS), then the status line. */
+.tailor-lift { flex: none; margin-top: var(--sp-4); }
+.tailor-status { min-height: 1.4em; margin: var(--sp-2) 0 0; color: var(--text-muted); font-size: 0.875rem; line-height: 1.4; }
+.tailor-heap { flex: none; height: 140px; }
+
+/* Bleeds 16px past the column each side (GlyphPile's BLEED), fading there,
+   so the heap has soft edges and the lifted rows still line up with the field. */
+.glyph-pile {
+  position: absolute;
+  inset: 0 -16px;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent),
+    linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent),
+    linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+  mask-composite: intersect;
+}
 
 .glyph {
   position: absolute;
@@ -474,21 +524,83 @@
 
 .glyph.is-lifted { z-index: 2; box-shadow: 0 0 0 2px var(--accent), 0 10px 24px rgba(0, 0, 0, 0.35); }
 
-.tailor-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-4);
-  max-width: 860px;
-  min-height: 2.75rem;
-  margin: var(--sp-4) auto 0;
+.glyph-skill:not(.is-lifted) {
+  background: var(--heap-chip);
+  color: var(--heap-chip-ink);
+  box-shadow: 0 0 0 1px var(--heap-chip-edge), 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.glyph-number:not(.is-lifted) {
+  background: var(--heap-num);
+  color: var(--heap-num-ink);
+  box-shadow: 0 0 0 1px var(--heap-num-edge), 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.glyph-glyph { color: var(--heap-glyph); text-shadow: none; }
+/* Lifting crossfades the chip from heap colours to paper. */
+.glyph-skill, .glyph-number {
+  transition: transform 0.9s var(--ease), box-shadow var(--dur) var(--ease),
+    background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 
-.tailor-bar p { margin: 0; color: var(--text-muted); font-size: 0.92rem; }
+/* Above the page: Original | Tailored on the left, Download on the right. */
+.tailor-side { display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; }
+.tailor-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--sp-3); min-height: 44px; }
+.tailor-toolbar .tailor-switch { margin-right: auto; }
+/* Download as the progress bar while rewording: the fill grows with each
+   bullet. Not faded like a plain disabled button; it is busy, not broken. */
+.tailor-toolbar .btn-solid { font-variant-numeric: tabular-nums; }
+.tailor-toolbar .btn-solid.is-progress:disabled {
+  opacity: 1;
+  cursor: progress;
+  border-color: var(--accent-fill);
+  background: linear-gradient(90deg, var(--accent-fill) calc(var(--progress, 0) * 100%), var(--accent-track) 0);
+  box-shadow: none;
+  transform: none;
+}
 
-.tailor-kept { max-width: 860px; margin: var(--sp-2) auto 0; color: var(--text-muted); font-size: 0.85rem; }
-.tailor-kept summary { cursor: pointer; }
-.tailor-kept ul { margin: var(--sp-2) 0 0; padding-left: 1.2rem; }
+.tailor-trust { max-width: 60ch; margin: 0; color: var(--text-faint); font-size: 0.875rem; line-height: 1.5; }
+
+/* Original | Tailored */
+.tailor-switch {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--switch-line);
+  border-radius: var(--r-pill);
+}
+.tailor-switch button {
+  padding: 0.375rem 0.875rem;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.tailor-switch button[aria-checked='true'] { background: var(--switch-on-bg); color: var(--switch-on-ink); }
+.tailor-switch button[aria-checked='false']:hover { background: var(--surface-hover); color: var(--text-light); }
+
+/* How this works */
+.tailor-how { margin-top: var(--sp-2); color: var(--text-muted); font-size: 0.875rem; }
+.tailor-how summary { cursor: pointer; }
+.tailor-how ol { list-style: none; margin: var(--sp-3) 0 0; padding: 0; }
+/* A rail of marks down the left; the line joins the steps into one run. */
+.how-step { position: relative; padding: 0 0 var(--sp-4) var(--sp-5); }
+.how-step:not(:last-child)::before {
+  content: ''; position: absolute; left: 5px; top: 14px; bottom: -2px; width: 1px; background: var(--border-strong);
+}
+.how-mark { position: absolute; left: 0; top: 4px; width: 11px; height: 11px; border-radius: 50%; box-sizing: border-box; }
+.how-step.is-done .how-mark { background: var(--text-light); }
+.how-step.is-running .how-mark { border: 2px solid var(--accent); }
+.how-step.is-skipped .how-mark { top: 9px; height: 2px; border-radius: 1px; background: var(--text-faint); }
+.how-step.is-waiting .how-mark { border: 1px solid var(--text-faint); }
+.how-step p { margin: 0; }
+.how-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sp-2); }
+.how-head strong { color: var(--text-light); font-size: 0.875rem; }
+.how-head small { color: var(--text-faint); font-size: 0.75rem; }
+.how-what { margin-top: var(--sp-1) !important; max-width: 60ch; line-height: 1.5; }
+.how-result { margin-top: var(--sp-1) !important; color: var(--text-light); }
+.how-step.is-waiting .how-result, .how-step.is-skipped .how-result { color: var(--text-faint); }
 
 .resume-paper {
   display: block;
@@ -507,62 +619,99 @@
 .resume-paper .paper-move { transition: transform 0.45s var(--ease); }
 .resume-paper a:hover text { fill: var(--paper-link); }
 
-/* Side by side (set from JS, ≥1000px wide): stage on the left, the page on
-   the right at full height, the whole row sized to end at the viewport's
-   bottom edge so neither needs a scroll. */
-/* One panel, no border: a pool of shade that dissolves into the page at its
-   edges, with the heap fading out the same way and the page floating on it. */
+/* Change marks live in the SVG only; the PDF never draws them. */
+.resume-paper .paper-mark {
+  stroke: var(--paper-mark);
+  animation: mark-in 200ms var(--ease) both;
+  pointer-events: none;
+}
+.resume-paper .paper-mark.is-reworded { fill: var(--paper-mark); stroke: none; }
+.resume-paper .paper-mark.is-kept { stroke: var(--paper-mark-kept); }
+.resume-paper[data-hover] { cursor: help; }
+@keyframes mark-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .resume-paper .paper-mark { animation: none; } }
+
+.paper-tip {
+  position: absolute;
+  z-index: 4;
+  max-width: min(46ch, calc(100% - 16px));
+  padding: var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--tip-bg);
+  color: var(--tip-ink);
+  box-shadow: var(--shadow);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  pointer-events: none;
+}
+/* Reworded: what changed (struck = dropped, tinted = new), then the check
+   verify.ts ran. Struck words keep a readable colour (9.4:1) so the diff can
+   be read, not just seen. */
+.paper-tip .tip-label { display: block; margin-bottom: var(--sp-1); color: #c9b8b1; font-size: 0.75rem; }
+.paper-tip .tip-diff { display: block; }
+.paper-tip del { color: #c9b8b1; text-decoration: line-through; text-decoration-color: #ef6b62; }
+.paper-tip ins { padding: 0 2px; border-radius: 3px; background: rgba(179, 23, 42, 0.55); color: #fff; text-decoration: none; }
+.paper-tip .tip-facts {
+  display: block;
+  margin-top: var(--sp-2);
+  padding-top: var(--sp-2);
+  border-top: 1px solid rgba(245, 239, 233, 0.14);
+  color: #c9b8b1;
+  font-size: 0.75rem;
+}
+.paper-tip .tip-facts b { color: var(--tip-ink); font-weight: 600; }
+
+/* Side by side (set from JS, ≥1000px wide): controls on the left, the page
+   on the right at full height under its toolbar, the whole row sized to end
+   at the viewport's bottom edge so neither needs a scroll. One panel, no
+   border: a pool of shade that dissolves at its edges, the page floating on it. */
 .tailor.is-side {
   display: grid;
-  grid-template-columns: minmax(360px, 1fr) minmax(0, var(--page-w));
-  gap: var(--sp-5);
+  grid-template-columns: minmax(340px, 1fr) minmax(0, var(--page-w));
+  grid-template-rows: 1fr auto;
+  gap: var(--sp-5) var(--sp-6);
   padding: var(--sp-4);
-  border-radius: 36px;
+  /* Concentric with the page inside it: 8px corner + 16px padding. */
+  border-radius: 24px;
   background:
     radial-gradient(70% 55% at 28% 18%, rgba(255, 255, 255, 0.055), transparent 70%),
     radial-gradient(75% 80% at 50% 55%, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.16) 58%, transparent 100%);
 }
 
-.tailor.is-side .tailor-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
-.tailor.is-side .tailor-stage {
-  flex: 1;
-  min-height: 0;
-  border: 0;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-}
-.tailor.is-side .glyph-pile.is-fill {
-  position: absolute;
-  inset: 0;
-  /* Soft edges left, right, and at the floor, instead of a clipped box. */
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent),
-    linear-gradient(to bottom, #000 88%, transparent);
-  -webkit-mask-composite: source-in;
-  mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent),
-    linear-gradient(to bottom, #000 88%, transparent);
-  mask-composite: intersect;
-}
-.tailor.is-side .tailor-bar { max-width: none; margin: var(--sp-3) 0 0; padding: 0 var(--sp-2); flex-wrap: wrap; }
-.tailor.is-side .tailor-kept { max-width: none; max-height: 9rem; overflow: auto; margin: var(--sp-2) 0 0; padding: 0 var(--sp-2); }
-.tailor.is-side .resume-frame { margin: 0; min-height: 0; align-items: flex-start; }
+.tailor.is-side .tailor-main { grid-area: 1 / 1; padding-top: var(--sp-3); }
+.tailor.is-side .tailor-side { grid-area: 1 / 2 / 3 / 3; align-self: start; }
+.tailor.is-side .tailor-trust { grid-area: 2 / 1; }
+/* The heap takes what is left. "How this works", once open, takes that room
+   back and, if it needs more, makes the section taller; the page keeps its
+   size. */
+.tailor.is-side .tailor-heap { flex: 1 1 0; min-height: 0; height: auto; }
+.tailor.is-side .resume-frame { height: var(--page-h); margin: 0; align-items: flex-start; }
 .tailor.is-side .resume-paper {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
   border: 0;
   border-radius: 8px;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 2px 6px rgba(0, 0, 0, 0.25), 0 28px 60px -18px rgba(0, 0, 0, 0.6);
 }
 .tailor.is-side .resume-placeholder { width: auto; height: 100%; max-width: 100%; }
-.tailor.is-side .resume-paper { width: auto; height: 100%; max-width: 100%; }
+
+/* Stacked: promise, field, examples, chips, status, toolbar, page, trust line. */
+/* The bottom room lets the trust line scroll clear of the chat bubble
+   (fixed, 54px, 19px from the corner), which otherwise sits on its last line. */
+.tailor:not(.is-side) { display: flex; flex-direction: column; gap: var(--sp-5); overflow-x: clip; padding-bottom: 4rem; }
+.tailor:not(.is-side) .resume-frame { margin: 0; }
 
 @media (max-width: 620px) {
-  .tailor-field textarea { font-size: 1.08rem; padding: 0.85rem 2.8rem 0.85rem 1.1rem; }
+  .tailor-intro h2 { font-size: 1.5rem; }
+  .tailor-field textarea { font-size: 1.125rem; padding: 0.75rem 2.75rem 0.75rem 1rem; }
   /* One swipeable row rather than four stacked ones. */
-  .tailor-examples { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; }
+  .tailor-examples { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
   .tailor-examples button { flex: none; }
+  .tailor-heap { height: 110px; }
   .glyph-skill { font-size: 13px; padding: 0.25rem 0.6rem; }
   .glyph-number { font-size: 14px; }
   .glyph-glyph { font-size: 26px; }
-  .tailor-bar { flex-direction: column; align-items: stretch; text-align: center; }
 }
 
 @media (prefers-reduced-motion: reduce) {

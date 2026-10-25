@@ -2,12 +2,13 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { fragments } from '../../data/resume';
 import { CHIPS, DEFAULT_RANKING, fragById, liftedChips, parseQuery, rank, tailorSkillLines } from '../../lib/resume/match';
-import { normalizeRewrite, verifyRewrite } from '../../lib/resume/verify';
+import { normalizeRewrite, technologiesOf, verifyRewrite } from '../../lib/resume/verify';
+import { extractNumbers } from '../../lib/resume/text';
 import { tailorStream } from '../../lib/resume/tailor';
 import type { Typesetter } from '../../lib/resume/layout';
 import type { fit as fitFn } from '../../lib/resume/fit';
 import { useBotStatus } from '../../hooks/useBotStatus';
-import { GlyphPile } from './GlyphPile';
+import { GlyphPile, LIFT_ROWS, LIFT_ROW_H } from './GlyphPile';
 import { ResumePaper } from './ResumePaper';
 
 /**
@@ -17,7 +18,7 @@ import { ResumePaper } from './ResumePaper';
  *     chips out of the pile (match.ts). Works with no network at all.
  *  2. a beat later: the typesetter fills exactly one page in that order
  *     (fit.ts, layout.ts) and the preview re-sets itself.
- *  3. after a pause, if the chat bot is up: a free model rewords the chosen
+ *  3. after a pause, if the chat bot is up: a language model rewords the chosen
  *     bullets (bot /tailor). verify.ts rejects any rewrite that changes a
  *     fact, and the original bullet stays.
  *
@@ -39,17 +40,16 @@ function loadEngine(): Promise<Engine> {
 }
 
 const EXAMPLES = ['ML engineer at a health startup', 'computer vision research', 'LLM apps, full-stack', 'reinforcement learning'];
-/* The lifted row sits under the field, which grows when a posting is pasted. */
-const FIELD_TOP = 30;
-const RESERVE = 290;
 const ORIGINAL = Object.fromEntries(fragments.map((f) => [f.id, f.text]));
 
 /* Side by side needs room for a readable stage next to a full-height page. */
 const SIDE_QUERY = '(min-width: 1000px)';
 const PAGE_RATIO = 8.5 / 11;
+/* Above the page: the section's padding twice, the toolbar, and its gap. */
+const PAGE_CHROME = 16 * 2 + 44 + 12;
 
 /**
- * Stage and page side by side, sized so both fit the window without
+ * Controls and page side by side, sized so both fit the window without
  * scrolling: the row runs from where it starts to the bottom of the viewport.
  * Measured from the document top (offsetTop, not the bounding box), because
  * the Reveal wrapper animates a transform on mount.
@@ -76,6 +76,33 @@ function useSideBySide(ref: React.RefObject<HTMLElement | null>) {
   return height;
 }
 
+/**
+ * Where the lifted chips land and where the heap starts, measured from the top
+ * of the controls column the heap is drawn over. Both move when the field
+ * grows, the examples wrap, or "How this works" opens.
+ */
+function useHeapGeometry(
+  box: React.RefObject<HTMLElement | null>,
+  lift: React.RefObject<HTMLElement | null>,
+  floor: React.RefObject<HTMLElement | null>,
+) {
+  const [geo, setGeo] = useState({ rowTop: 0, heapTop: 0 });
+  useLayoutEffect(() => {
+    const els = [box.current, lift.current, floor.current];
+    if (els.some((el) => !el)) return;
+    const measure = () => {
+      const rowTop = lift.current!.offsetTop;
+      const heapTop = floor.current!.offsetTop;
+      setGeo((g) => (g.rowTop === rowTop && g.heapTop === heapTop ? g : { rowTop, heapTop }));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    for (const el of els) ro.observe(el!);
+    return () => ro.disconnect();
+  }, [box, lift, floor]);
+  return geo;
+}
+
 export function Personalizer() {
   const [query, setQuery] = useState('');
   const [settled, setSettled] = useState('');
@@ -92,7 +119,10 @@ export function Personalizer() {
   /* Finished rewrites per query, so going back to a role does not ask again. */
   const cache = useRef(new Map<string, Record<string, Rewrite>>());
   const field = useRef<HTMLTextAreaElement>(null);
-  const [fieldH, setFieldH] = useState(58);
+  const main = useRef<HTMLDivElement>(null);
+  const liftRow = useRef<HTMLDivElement>(null);
+  const heapBand = useRef<HTMLDivElement>(null);
+  const { rowTop, heapTop } = useHeapGeometry(main, liftRow, heapBand);
   const { status, botUrl } = useBotStatus();
   const section = useRef<HTMLElement>(null);
   const sideH = useSideBySide(section);
@@ -143,6 +173,16 @@ export function Personalizer() {
   );
   const fittedRef = useRef(fitted);
   fittedRef.current = fitted;
+
+  /* Original | Tailored. The choice belongs to one settled query, so a new
+     query starts on Tailored again. */
+  const [viewState, setViewState] = useState<{ q: string; v: 'tailored' | 'original' }>({ q: '', v: 'tailored' });
+  const view = active && viewState.q === settled ? viewState.v : 'tailored';
+  const originalFit = useMemo(
+    () => (engine ? engine.fit(engine.ts, DEFAULT_RANKING, ORIGINAL, tailorSkillLines('')) : null),
+    [engine],
+  );
+  const shown = view === 'original' && originalFit ? originalFit : fitted;
 
   /* 3. Rewording, once per finished query. Typing again aborts it. */
   const canRewrite = status === 'online' && !!engine && finished.length >= 4 && finished === settled;
@@ -205,17 +245,16 @@ export function Personalizer() {
     if (!el) return;
     el.style.height = 'auto';
     el.style.height = `${Math.min(el.scrollHeight, 132)}px`;
-    setFieldH(el.offsetHeight);
   }, [query]);
 
   const download = async () => {
-    if (!engine || !fitted) return;
+    if (!engine || !shown) return;
     setSaving(true);
     try {
-      const bytes = await engine.ts.pdf(fitted.page, fitted.scale);
+      const bytes = await engine.ts.pdf(shown.page, shown.scale);
       const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'application/pdf' }));
       const slug = settled.toLowerCase().replace(/[^a-z0-9]+/g, '-').split('-').filter(Boolean).slice(0, 4).join('-');
-      const name = active && slug ? `Genova-Mongalo-Resume-${slug}.pdf` : 'Genova-Mongalo-Resume.pdf';
+      const name = active && view === 'tailored' && slug ? `Genova-Mongalo-Resume-${slug}.pdf` : 'Genova-Mongalo-Resume.pdf';
       const a = Object.assign(document.createElement('a'), { href: url, download: name });
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 10_000);
@@ -238,6 +277,81 @@ export function Personalizer() {
   const tailorable = fitted?.ids.filter((id) => !fragById.get(id)!.fixed).length ?? 0;
   const done = rewrites.query === settled ? Object.values(rewrites.byId) : [];
   const kept = done.filter((r) => !r.ok && r.why.length);
+  const okCount = done.filter((r) => r.ok).length;
+
+  const marks: Record<string, 'reworded' | 'kept'> = {};
+  const whys: Record<string, string> = {};
+  /* For the reworded tooltip: the new wording (diffed against the original
+     there) and the figures and tools verify.ts made sure survived. */
+  const changes: Record<string, { after: string; facts: string[] }> = {};
+  if (view === 'tailored' && rewrites.query === settled) {
+    for (const [id, r] of Object.entries(rewrites.byId)) {
+      if (r.ok) {
+        marks[id] = 'reworded';
+        const f = fragById.get(id)!;
+        changes[id] = { after: r.text, facts: [...new Set([...extractNumbers(f.text), ...technologiesOf(f)])].slice(0, 6) };
+      } else if (r.why.length) {
+        marks[id] = 'kept';
+        whys[id] = r.why.join(', ');
+      }
+    }
+  }
+
+  /* Step counts for "How this works". */
+  const loose = fragments.filter((f) => !f.fixed);
+  const answering = loose.filter((f) => (ranking.score.get(f.id) ?? 0) > 0.12).length;
+  const rewordLine =
+    status !== 'online'
+      ? 'the rewording model is offline, so bullets stay as written'
+      : phase === 'rewriting'
+        ? 'rewording…'
+        : phase === 'done'
+          ? `${okCount} ${okCount === 1 ? 'bullet' : 'bullets'} reworded`
+          : phase === 'failed'
+            ? `${okCount} reworded; the model stopped answering, so the rest stay as written`
+            : 'waiting for you to stop typing';
+  const checkLine = kept.length
+    ? `${kept.length} kept as written: the rewrite ${[...kept][0].why[0]}`
+    : phase === 'done' && okCount
+      ? 'every rewrite kept its facts'
+      : status !== 'online'
+        ? 'nothing to check, since nothing was reworded'
+        : 'nothing to check yet';
+  /* Each step's mark has its own shape, so state does not rest on colour:
+     filled = done, ring = running, dash = skipped, hollow = not yet. */
+  type StepState = 'done' | 'running' | 'skipped' | 'waiting';
+  const idle = 'type a role to see this';
+  const steps: { name: string; where: string; what: string; result: string; state: StepState }[] = [
+    {
+      name: 'Match',
+      where: 'in your browser, on every keystroke',
+      what: 'Scores every bullet against what you typed: shared tools, shared wording, and the kind of work (health, mobile, LLMs, signal processing).',
+      result: active ? `${answering} of ${loose.length} bullets answer this` : idle,
+      state: active ? 'done' : 'waiting',
+    },
+    {
+      name: 'Fit',
+      where: 'a real typesetter, one page',
+      what: 'Sets the page exactly as the PDF prints it and adds bullets, best first, until the page is full. A bullet too long for the space left is skipped for a shorter one.',
+      result: !active ? idle : fitted ? `${tailorable} fit on one page` : 'setting type…',
+      state: !active ? 'waiting' : fitted ? 'done' : 'running',
+    },
+    {
+      name: 'Reword',
+      where: 'on a server, after you stop typing',
+      what: 'A language model rewrites the chosen bullets to lead with what this role cares about.',
+      result: active ? rewordLine : idle,
+      state: !active ? 'waiting' : status !== 'online' ? 'skipped' : phase === 'rewriting' ? 'running' : phase === 'done' || phase === 'failed' ? 'done' : 'waiting',
+    },
+    {
+      name: 'Check',
+      where: 'code, not a prompt',
+      what: 'Code compares each rewrite with the original and throws it out if a number or tool goes missing, a new tool appears, or "built" becomes "led".',
+      result: active ? checkLine : idle,
+      state: !active ? 'waiting' : status !== 'online' ? 'skipped' : phase === 'done' || (phase === 'failed' && done.length) ? 'done' : phase === 'rewriting' ? 'running' : 'waiting',
+    },
+  ];
+
   const note = engineFailed
     ? 'The resume did not load. Reload to try again.'
     : !active
@@ -261,11 +375,13 @@ export function Personalizer() {
       ref={section}
       className={`tailor${sideH ? ' is-side' : ''}`}
       aria-labelledby="tailor-title"
-      style={sideH ? ({ height: sideH, '--page-w': `${Math.round(sideH * PAGE_RATIO)}px` } as React.CSSProperties) : undefined}
+      style={sideH ? ({ minHeight: sideH, '--page-h': `${sideH - PAGE_CHROME}px`, '--page-w': `${Math.round((sideH - PAGE_CHROME) * PAGE_RATIO)}px` } as React.CSSProperties) : undefined}
     >
-      <div className="tailor-main">
-      <div className="tailor-stage" onPointerEnter={warm}>
-        <h2 id="tailor-title" className="visually-hidden">Tailor this resume</h2>
+      <div className="tailor-main" ref={main} onPointerEnter={warm}>
+        <header className="tailor-intro">
+          <h2 id="tailor-title">Get this résumé rewritten for your role.</h2>
+          <p>Type a job title or paste the whole post. It still fits on one page, ready as a PDF.</p>
+        </header>
         <div className="tailor-field">
           <textarea
             ref={field}
@@ -275,7 +391,7 @@ export function Personalizer() {
             onFocus={warm}
             onBlur={() => finish(query.trim())}
             onKeyDown={onKey}
-            placeholder="Tailor it to a role or job post"
+            placeholder="A job title or a job post"
             aria-label="Role or job description to tailor the resume to"
             spellCheck={false}
           />
@@ -293,58 +409,102 @@ export function Personalizer() {
             </button>
           )}
         </div>
-        {!query && (
-          <div className="tailor-examples" style={{ top: FIELD_TOP + fieldH + 14 }}>
-            {EXAMPLES.map((ex) => (
-              <button key={ex} type="button" onClick={() => { warm(); setQuery(ex); finish(ex); }}>
-                {ex}
-              </button>
-            ))}
-          </div>
-        )}
-        <GlyphPile chips={CHIPS} lifted={lifted} rowTop={FIELD_TOP + fieldH + 22} reserve={RESERVE} fill={!!sideH} />
-      </div>
-
-      <div className="tailor-bar" aria-live="polite">
-        <p>
+        {/* Stay put after typing, so roles compare with one click each. */}
+        <div className="tailor-examples" role="group" aria-label="Examples">
+          {EXAMPLES.map((ex) => (
+            <button
+              key={ex}
+              type="button"
+              aria-pressed={query.trim() === ex}
+              onClick={() => { warm(); setQuery(ex); finish(ex); }}
+            >
+              {ex}
+            </button>
+          ))}
+        </div>
+        <div className="tailor-lift" ref={liftRow} style={{ height: (LIFT_ROWS - 1) * LIFT_ROW_H + 34 }} aria-hidden="true" />
+        <p className="tailor-status" aria-live="polite">
           {note}
           {/* Progress is shown, not announced: one update per bullet is noise. */}
           {phase === 'rewriting' && <span aria-hidden="true"> {done.length} of {tailorable}</span>}
         </p>
-        {fitted && (
-          <button type="button" className="btn btn-solid" onClick={download} disabled={saving || phase === 'rewriting'}>
-            {saving ? 'Saving…' : active ? 'Download this version' : 'Download PDF'}
-          </button>
-        )}
-      </div>
-      {phase === 'done' && kept.length > 0 && (
-        <details className="tailor-kept">
-          <summary>What was kept, and why</summary>
-          <ul>
-            {Object.entries(rewrites.byId)
-              .filter(([, r]) => !r.ok && r.why.length)
-              .map(([id, r]) => (
-                <li key={id}>
-                  <q>{fragById.get(id)!.text.slice(0, 70)}…</q> the rewrite {r.why.join(', ')}.
-                </li>
-              ))}
-          </ul>
+        <details className="tailor-how">
+          <summary>How this works</summary>
+          <ol>
+            {steps.map((st) => (
+              <li key={st.name} className={`how-step is-${st.state}`}>
+                <span className="how-mark" aria-hidden="true" />
+                <p className="how-head">
+                  <strong>{st.name}</strong> <small>{st.where}</small>
+                </p>
+                <p className="how-what">{st.what}</p>
+                <p className="how-result">
+                  <span className="visually-hidden">{st.state === 'skipped' ? 'Skipped: ' : st.state === 'running' ? 'Running: ' : ''}</span>
+                  {st.result}
+                </p>
+              </li>
+            ))}
+          </ol>
         </details>
-      )}
+        <div className="tailor-heap" ref={heapBand} aria-hidden="true" />
+        <GlyphPile chips={CHIPS} lifted={lifted} rowTop={rowTop} reserve={heapTop} />
       </div>
 
-      <div className="resume-frame">
-        {fitted ? (
-          <ResumePaper
-            plan={fitted.plan}
-            label={active ? `Resume tailored to: ${settled.slice(0, 80)}` : 'Resume of Genova Mongalo'}
-          />
-        ) : (
-          <div className="resume-placeholder" aria-busy="true">
-            {engineFailed ? 'The resume did not load.' : 'Setting type…'}
-          </div>
-        )}
+      <div className="tailor-side">
+        <div className="tailor-toolbar">
+          {active && fitted && (
+            <div className="tailor-switch" role="radiogroup" aria-label="Which version to show">
+              {(['original', 'tailored'] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  role="radio"
+                  aria-checked={view === v}
+                  onClick={() => setViewState({ q: settled, v })}
+                >
+                  {v === 'original' ? 'Original' : 'Tailored'}
+                </button>
+              ))}
+            </div>
+          )}
+          {/* While rewording, the button is the progress bar: the eye is already
+              here, waiting to download. The status line announces it. */}
+          <button
+            type="button"
+            className={`btn btn-solid${phase === 'rewriting' ? ' is-progress' : ''}`}
+            onClick={download}
+            disabled={!fitted || saving || phase === 'rewriting'}
+            style={phase === 'rewriting' ? ({ '--progress': tailorable ? done.length / tailorable : 0 } as React.CSSProperties) : undefined}
+          >
+            {saving
+              ? 'Saving…'
+              : phase === 'rewriting'
+                ? `Rewording ${done.length} of ${tailorable}…`
+                : active ? 'Download this version' : 'Download PDF'}
+          </button>
+        </div>
+        <div className="resume-frame">
+          {shown ? (
+            <ResumePaper
+              plan={shown.plan}
+              marks={marks}
+              originals={ORIGINAL}
+              whys={whys}
+              changes={changes}
+              label={active && view === 'tailored' ? `Resume tailored to: ${settled.slice(0, 80)}` : 'Resume of Genova Mongalo'}
+            />
+          ) : (
+            <div className="resume-placeholder" aria-busy="true">
+              {engineFailed ? 'The resume did not load.' : 'Setting type…'}
+            </div>
+          )}
+        </div>
       </div>
+
+      <p className="tailor-trust">
+        Nothing is invented. Every fact comes from the published résumé, and code throws out any rewrite that drops a
+        number, adds a tool or claims more.
+      </p>
     </section>
   );
 }
