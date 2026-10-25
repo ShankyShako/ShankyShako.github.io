@@ -1,4 +1,13 @@
-export type Product = { title: string; short: string; price: string; image: string; alt: string };
+export type Product = {
+  title: string; short: string; price: string; image: string; alt: string;
+  /** Leads the page, large, above the grid of single pieces. */
+  featured?: true;
+  /** One line under a featured piece's title. */
+  note?: string;
+  /** Where the square crop centres (CSS object-position), for art whose
+      subject is off-centre. */
+  focus?: string;
+};
 
 export const products: Product[] = [
   { title: 'Smurfed (Handcut Felt Sticker)', short: 'Smurfed', price: '$14',
@@ -15,7 +24,11 @@ export const products: Product[] = [
     image: '/image/store/fpdd.jpg', alt: 'FOOD digital illustration' },
   { title: 'Paradise (Oil on Canvas)', short: 'Paradise', price: '$750',
     image: '/image/store/paradise.jpg', alt: 'Palm tree paradise oil painting' },
-  { title: 'The Whole Collection', short: 'The Whole Collection', price: '$1,999',
+  { title: 'Not My Problem (Digital Collage, 1 of 1)', short: 'Not My Problem', price: '$999',
+    image: '/image/store/not-my-problem.jpg', focus: '84% 50%',
+    alt: 'Digital collage: Genova in sunglasses, eating an ice cream, walking away from a burning car' },
+  { title: 'The Whole Collection', short: 'The Whole Collection', price: '$1,999', featured: true,
+    note: 'All eight pieces, in one lot.',
     image: '/image/store/collection.jpg', alt: 'The full collection bundle' },
 ];
 

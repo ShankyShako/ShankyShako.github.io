@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { products, soldOutGifs } from '../data/shop';
+import type { Product } from '../data/shop';
 import { SoldOutModal } from '../components/SoldOutModal';
 import { Reveal } from '../components/Reveal';
 
@@ -14,6 +15,55 @@ const MAX_STAMPS = 3;
 type Stamp = { id: number; rot: number; x: number; y: number };
 
 const between = (lo: number, hi: number) => lo + Math.random() * (hi - lo);
+
+const featured = products.find((p) => p.featured);
+const singles = products.filter((p) => !p.featured);
+
+/* The art is the content, so nothing sits on it until it is clicked: "Sold
+   out" lives on the price line, and the stamp is the payoff. Titles are spans,
+   not headings, because the whole card is a button and a button may not hold
+   a heading. */
+function ProductCard({
+  product: p,
+  stamps,
+  onOpen,
+  large = false,
+}: {
+  product: Product;
+  stamps?: Stamp[];
+  onOpen: (short: string, e: MouseEvent<HTMLButtonElement>) => void;
+  large?: boolean;
+}) {
+  return (
+    <button type="button" className={large ? 'product is-featured' : 'product'} onClick={(e) => onOpen(p.short, e)}>
+      <div className="product-frame">
+        <img
+          src={p.image}
+          alt={p.alt}
+          style={p.focus ? { objectPosition: p.focus } : undefined}
+          onError={(e) => e.currentTarget.classList.add('img-missing')}
+        />
+        {stamps?.map((s) => (
+          <span
+            key={s.id}
+            className="stamp"
+            aria-hidden="true"
+            style={{ '--rot': `${s.rot}deg`, '--x': `${s.x}px`, '--y': `${s.y}px` } as React.CSSProperties}
+          >
+            Too late
+          </span>
+        ))}
+      </div>
+      <div className="product-info">
+        <span className="product-title">{p.title}</span>
+        {p.note && <span className="product-note">{p.note}</span>}
+        <span className="price">
+          <s>{p.price}</s> · Sold out
+        </span>
+      </div>
+    </button>
+  );
+}
 
 export function Shop() {
   const [modal, setModal] = useState<{ item: string; gif: string } | null>(null);
@@ -64,41 +114,16 @@ export function Shop() {
         <span className="shop-tagline">Every piece is sold out. Restocking soon.</span>
       </p>
 
+      {featured && (
+        <Reveal>
+          <ProductCard product={featured} stamps={stamps[featured.short]} onOpen={open} large />
+        </Reveal>
+      )}
+
       <div className="shop-grid">
-        {products.map((p, i) => (
+        {singles.map((p, i) => (
           <Reveal key={p.title} delay={i * 40}>
-            <button type="button" className="product" onClick={(e) => open(p.short, e)}>
-              <div className="product-frame" data-stamped={stamps[p.short]?.length ? true : undefined}>
-                <img
-                  src={p.image}
-                  alt={p.alt}
-                  onError={(e) => e.currentTarget.classList.add('img-missing')}
-                />
-                <span className="sold-badge">SOLD OUT</span>
-                {stamps[p.short]?.map((s) => (
-                  <span
-                    key={s.id}
-                    className="stamp"
-                    aria-hidden="true"
-                    style={
-                      {
-                        '--rot': `${s.rot}deg`,
-                        '--x': `${s.x}px`,
-                        '--y': `${s.y}px`,
-                      } as React.CSSProperties
-                    }
-                  >
-                    Too late
-                  </span>
-                ))}
-              </div>
-              <div className="product-info">
-                <h3>{p.title}</h3>
-                <p className="price">
-                  <s>{p.price}</s>
-                </p>
-              </div>
-            </button>
+            <ProductCard product={p} stamps={stamps[p.short]} onOpen={open} />
           </Reveal>
         ))}
       </div>

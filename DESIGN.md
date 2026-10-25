@@ -103,6 +103,30 @@ Why: every item was weighted the same (LegacyScribe got the same card as the pho
 - The filter's first chip reads "All (9)", counting the index it filters. Tag hover is neutral.
 - The real anchor for the conversational-design study is `#cognitive-load-aware`.
 
+**Verify (2026-10-25).** The diagnostic scored 10/10 after these fixes:
+- Elmo links and tag text moved a step lighter on the cards (they were 4.42:1 and 4.18:1).
+- Links and More reach a 24px target.
+- `.feat` lost its glass blur and shadow, keeping the hairline only.
+- Featured, row and skill prose is capped at `--measure` (it ran to about 130 characters).
+
+Measured by script on all four pages in both themes:
+- Lowest contrast 4.71:1 (normal) and 4.68:1 (Elmo).
+- One `h1` per page, no skipped heading levels, no load errors.
+- No horizontal scroll at 390px; expandable rows are 99px+ tall there.
+
+Blur and grayscale tests were run on Projects. The row-title buttons measure under 24px on their own, but their `::after` covers the whole row, so the target is the row.
+
+## Shop (2026-10-25)
+
+**Decision.**
+- **New piece:** "Not My Problem (Digital Collage, 1 of 1)", $999, sold out like the rest. It's the owner's photo of themself walking away from a burning car with an ice cream. Its square crop centres right (`focus: '84% 50%'`) so the subject isn't cut off. It lives only here, where the shop's sold-out joke gives it context, not anywhere a visitor meets it cold.
+- **Featured lot:** The Whole Collection leads the page as a wide card (art 3fr, text 2fr) with "All eight pieces, in one lot." The eight singles sit below in a 4 × 2 grid (2 × 4 on phones), with rows of equal height.
+- **"Sold out" moved off the art** onto the price line ("~~$120~~ · Sold out"), since the art is the content. The click stamp stays as the payoff. The resting dim eased from grayscale 40% / brightness 0.76 to 15% / 0.9.
+- **Tagline** is neutral (`--text-muted`), since ruby is for links and the primary action.
+- **Card titles** are spans, not headings, because the card is a button.
+
+Measured: lowest contrast 5.54:1 (normal theme) and 4.73:1 (Elmo), no horizontal scroll at 390px.
+
 ## LegacyScribe page (2026-10-17)
 
 **Decision.** `/LegacyScribe` is a standalone light product page in the SPA, not a portfolio page: hero option A's look (white, SF stack, system blue, no Playfair, no red/gold), rendered without the portfolio nav, chat widget or pet, tied back to the portfolio by one "← gmango.dev" link. Eight sections, six of them with a small demo that plays once on scroll-in and is static under Reduce Motion. Every number comes from `docs/bench-results.md` or `CLAUDE.md` in the LegacyScribe repo and is labelled "on my voice, on an M5"; the release version and zip size are read live from the GitHub releases API, never typed in.

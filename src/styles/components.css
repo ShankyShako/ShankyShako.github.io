@@ -758,12 +758,11 @@
 .feat {
   min-width: 0;
   padding: var(--sp-5);
+  /* One edge, not three: on the dark canvas a hairline reads where a shadow
+     barely shows, and the glass blur had nothing behind it to blur. */
   background: var(--surface);
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
-  box-shadow: var(--shadow-sm);
 }
 
 .feat.is-large { grid-column: 1 / -1; }
@@ -810,6 +809,19 @@
   text-decoration-color: var(--border-strong);
 }
 .feat-more:hover { color: var(--text-light); }
+
+/* Small targets reach 24px (WCAG 2.5.8) without growing the type. */
+.links a, .links button, .feat-more { display: inline-flex; align-items: center; min-height: 24px; }
+
+/* Prose keeps to the site measure even in the wide featured card and the
+   full-width rows (they ran to ~130 characters a line). */
+.feat-blurb, .idx-summary, .idx-blurb, .skill-rows dd { max-width: var(--measure); }
+
+/* Elmo: cards are lighter than the red canvas, so orange links and tag text
+   move a step lighter to keep 4.5:1 on them (they were 4.42 and 4.18). */
+:root[data-theme='elmo'] .fx .links a,
+:root[data-theme='elmo'] .fx .links button { color: var(--accent-strong); }
+:root[data-theme='elmo'] .fx .tag-static { color: var(--text-muted); }
 
 /* Links: the only ruby text on these pages. */
 .links {
@@ -1208,18 +1220,44 @@
 .shop-tagline {
   display: block;
   margin-top: var(--sp-2);
-  color: var(--accent);
-  font-weight: 600;
-  font-size: 0.9rem;
-  letter-spacing: 0.01em;
+  /* Neutral: ruby is kept for links and the one primary action. */
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.875rem;
 }
 
 .shop-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  /* Four across: eight single pieces make a full 4 × 2, no orphan row
+     (and 2 × 4 on a phone). */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--sp-5);
   margin: var(--sp-5) 0 0;
 }
+
+/* Rows line up: a two-line title makes its whole row taller, not one card. */
+.shop-grid > * { display: flex; }
+.shop-grid .product { display: flex; flex-direction: column; }
+.shop-grid .product-info { flex: 1; }
+
+/* The Whole Collection leads: the art large on the left, the lot on the right.
+   Same card, same stamp and modal, just given room. */
+.product.is-featured {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  align-items: center;
+  margin-top: var(--sp-5);
+}
+.product.is-featured .product-frame { aspect-ratio: 4 / 3; }
+.product.is-featured .product-info { padding: var(--sp-6); }
+.product.is-featured .product-title {
+  font-family: var(--font-display);
+  font-size: 1.875rem;
+  font-weight: 600;
+  line-height: 1.15;
+}
+.product.is-featured .product-note { margin-top: var(--sp-2); font-size: 1rem; }
+.product.is-featured .price { margin-top: var(--sp-4); font-size: 1rem; }
 
 .product {
   width: 100%;
@@ -1276,48 +1314,22 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: grayscale(40%) brightness(0.76);
+  /* A light "unavailable" dim, not a veil: with the badge gone the art is
+     what the card is for. Hover still brings it to full. */
+  filter: grayscale(15%) brightness(0.9);
   transition: filter 0.35s var(--ease), transform 0.45s var(--ease);
 }
 
 .product-frame img.img-missing { opacity: 0; }
 
-.sold-badge {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) rotate(-8deg);
-  background: color-mix(in srgb, var(--canvas-top) 55%, transparent);
-  backdrop-filter: blur(4px);
-  color: var(--text-light);
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: 1.15rem;
-  letter-spacing: 0.12em;
-  padding: 0.4rem 1.1rem;
-  border: 2px solid var(--accent);
-  border-radius: var(--r-sm);
-  box-shadow: var(--shadow);
-  pointer-events: none;
-}
 
-:root[data-theme='elmo'] .sold-badge {
-  color: var(--accent);
-  /* Darker glass: at 55% the orange fell to 3.5:1 over the brightest photo. */
-  background: color-mix(in srgb, var(--canvas-bottom) 78%, transparent);
-}
 
-/* Clicking a piece stamps it. The stamp takes over from the badge at the
-   moment it hits, so the two never sit on top of each other. The frame is a
-   size container so the stamp can scale with the card; that is also why
+/* Clicking a piece stamps it. The frame is a size container so the stamp can
+   scale with the card; that is also why
    .product needs its explicit width, since a contained frame no longer lends
    the button the image's width. */
 .product-frame { container-type: inline-size; }
 
-.product-frame[data-stamped] .sold-badge {
-  opacity: 0;
-  transition: opacity 120ms var(--ease) 190ms;
-}
 
 /* Rubber-stamp ink: outlined block letters in a ruled box, with a noise mask
    knocking specks out so it reads as ink on paper, not a sticker. Sized off the
@@ -1373,12 +1385,14 @@
 @media (prefers-reduced-motion: reduce) {
   /* No fall, no squash: the stamp fades in where it lands. */
   .stamp { animation: modalFade 150ms var(--ease) both; }
-  .product-frame[data-stamped] .sold-badge { transition-delay: 0ms; }
 }
 
 .product-info { padding: 1rem 1.15rem 1.15rem; }
-.product-info h3 { margin: 0 0 0.25rem; font-size: 0.95rem; color: var(--text-light); font-weight: 600; }
-.product-info .price { margin: 0; color: var(--text-faint); font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+.product-info { display: flex; flex-direction: column; }
+.product-title { color: var(--text-light); font-size: 0.875rem; font-weight: 600; line-height: 1.4; }
+.product-note { color: var(--text-muted); font-size: 0.875rem; line-height: 1.5; }
+/* "Sold out" lives here now, off the art: the struck price says why. */
+.product-info .price { margin-top: var(--sp-1); color: var(--text-muted); font-size: 0.875rem; font-variant-numeric: tabular-nums; }
 .product-info .price s { color: var(--text-faint); }
 
 /* Two up on a phone. At one column each square runs the full width of the
@@ -1386,8 +1400,10 @@
 @media (max-width: 560px) {
   .shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); }
   .product-info { padding: 0.7rem 0.8rem 0.85rem; }
-  .product-info h3 { font-size: 0.83rem; }
-  .sold-badge { font-size: 0.72rem; padding: 0.25rem 0.6rem; border-width: 1px; }
+  .product-title { font-size: 0.8125rem; }
+  .product.is-featured { grid-template-columns: 1fr; }
+  .product.is-featured .product-info { padding: var(--sp-4); }
+  .product.is-featured .product-title { font-size: 1.5rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
