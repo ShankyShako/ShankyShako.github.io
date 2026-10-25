@@ -96,7 +96,7 @@ export function ContactForm() {
           not affected, so email still reaches me normally.
         </p>
         <a
-          className="btn btn-solid"
+          className="btn"
           href={`mailto:${site.email}?subject=${encodeURIComponent('Portfolio contact')}`}
         >
           Email {site.email}
@@ -148,7 +148,7 @@ export function ContactForm() {
       <button
         ref={sendBtn}
         type="submit"
-        className="btn btn-solid btn-plane"
+        className="btn btn-plane"
         disabled={status.kind === 'sending'}
       >
         {status.kind === 'sending' ? 'Sending…' : 'Send message'}

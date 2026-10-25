@@ -127,6 +127,22 @@ Blur and grayscale tests were run on Projects. The row-title buttons measure und
 
 Measured: lowest contrast 5.54:1 (normal theme) and 4.73:1 (Elmo), no horizontal scroll at 390px.
 
+## Contact (2026-10-25)
+
+**Decision.** Option A of three, email first.
+- **Layout:** one column, 34rem wide. The address is the focal element (30px, 24px on phones), with "Email me" as the one solid button and "Copy address" as the outline button (it confirms "Copied" in place).
+- **Links:** LinkedIn and GitHub links with their marks (`SocialIcon`, Simple Icons paths, CC0) and the phone number sit in a quiet row with no labels.
+- **Form:** after a hairline, an `h2` "Or send a message" and the form. Its labels are sentence case, and Send is an outline button (the paper plane is unchanged).
+- **Copy:** the intro drops "Open to AI/ML engineering and research roles", since no role labels go on the site (see `site-positioning`).
+
+Rejected: side by side, rebalanced (it stacks into this on phones anyway), and form first (it contradicts "email is the fastest way").
+
+Density: Balanced, the site standard.
+
+**Icons (Gate 3, option B of three):** a ruby `--accent-fill` tile (26px, 8px corners) around a 14px mark in `--on-accent`, which is white normally and near-black on Elmo's orange. The marks themselves keep brand-allowed colours; LinkedIn's and GitHub's guidelines ask that the logos not be recoloured. Hover deepens the tile to `--accent-fill-strong`. Mark contrast is 6.8:1 normally and 11.5:1 on Elmo. Rejected: neutral marks (no custom colour) and recoloured ruby marks (against both guidelines).
+
+**Phone number:** it stays public. It's a Google Voice number, so it has spam filtering and is easy to replace.
+
 ## LegacyScribe page (2026-10-17)
 
 **Decision.** `/LegacyScribe` is a standalone light product page in the SPA, not a portfolio page: hero option A's look (white, SF stack, system blue, no Playfair, no red/gold), rendered without the portfolio nav, chat widget or pet, tied back to the portfolio by one "← gmango.dev" link. Eight sections, six of them with a small demo that plays once on scroll-in and is static under Reduce Motion. Every number comes from `docs/bench-results.md` or `CLAUDE.md` in the LegacyScribe repo and is labelled "on my voice, on an M5"; the release version and zip size are read live from the GitHub releases API, never typed in.

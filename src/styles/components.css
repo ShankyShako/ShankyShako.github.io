@@ -1536,56 +1536,82 @@
 /* ==========================================================================
    Contact
    ========================================================================== */
-.contact-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-  gap: var(--sp-5);
-  align-items: start;
-  margin-top: var(--sp-5);
+/* Email first: one column, the address as the focal element, links in a
+   quiet row, the form after a hairline as the alternative. */
+.contact-main { max-width: 34rem; margin: var(--sp-6) auto 0; }
+
+.contact-email {
+  margin: 0;
+  color: var(--text-light);
+  font-size: 1.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
 }
 
-@media (max-width: 860px) {
-  .contact-grid { grid-template-columns: 1fr; }
+.contact-actions { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-4); }
+
+.contact-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-5);
+  margin: var(--sp-5) 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-muted);
+  font-size: 0.875rem;
 }
 
-.contact-grid .content-card { margin: 0; }
+.contact-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 24px;
+  color: var(--text-light);
+  text-decoration: none;
+  transition: color var(--dur) var(--ease);
+}
+.contact-links a:hover { text-decoration: underline; text-underline-offset: 3px; }
 
-.contact-info dl { margin: 0; }
+/* The colour sits on a tile around each mark; the mark itself stays white
+   (near-black on Elmo's orange), which both brands' guidelines allow.
+   14px mark + 6px padding = a 26px tile, 8px corners. */
+.contact-links svg {
+  box-sizing: content-box;
+  flex: none;
+  padding: 6px;
+  border-radius: 8px;
+  background: var(--accent-fill);
+  color: var(--on-accent);
+  transition: background var(--dur) var(--ease);
+}
+.contact-links a:hover svg { background: var(--accent-fill-strong); }
 
-.contact-info dt {
-  font-size: 0.72rem;
-  font-weight: 650;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  margin-top: var(--sp-4);
+.contact-form-head {
+  margin: var(--sp-6) 0 var(--sp-4);
+  padding-top: var(--sp-6);
+  border-top: 1px solid var(--border);
+  color: var(--text-light);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 600;
 }
 
-.contact-info dt:first-of-type { margin-top: 0; }
-
-.contact-info dd { margin: 0.15rem 0 0; font-size: 0.98rem; }
-.contact-info a { color: var(--accent); text-decoration: none; transition: color var(--dur) var(--ease); }
-.contact-info a:hover { color: var(--accent-strong); text-decoration: underline; }
-
-.card-title {
-  margin: 0 0 var(--sp-4);
-  font-size: 0.76rem;
-  font-weight: 650;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--accent);
+@media (max-width: 620px) {
+  .contact-email { font-size: 1.5rem; }
 }
 
 .form-field { display: block; margin-bottom: var(--sp-4); }
 
+/* Sentence case, quieter than the input it names. */
 .form-field span {
   display: block;
-  margin-bottom: 0.35rem;
-  font-size: 0.74rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-faint);
+  margin-bottom: var(--sp-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
 }
 
 .form-field input,
