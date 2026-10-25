@@ -71,7 +71,7 @@ I built generative models for AFRL and DoD priorities. The goal was a CNN classi
 ### AI/ML Engineer Intern — NSF REU AI-Empowered Cybersecurity, University of Missouri Kansas City
 *June 2024 – December 2024*
 
-Built a large language model that detects ransomware inside industrial control systems: 99% accuracy telling malicious from benign, 91% naming the specific family. The work was accepted at IEEE Big Data 2024, and I presented it in Washington, D.C. as the solo author, with mentor guidance.
+Built a large language model that detects ransomware inside industrial control systems: 99% accuracy telling malicious from benign, 91% naming the specific family. I presented it at IEEE Big Data 2024 in Washington, D.C. as the solo author, with mentor guidance, and the paper has since been accepted for publication at IEEE Big Data 2026.
 
 ### Research Intern — NSF REU in Consumer Networking, University of Missouri Columbia
 *May 2023 – July 2023*
@@ -203,6 +203,7 @@ the joke and it is not going to change. Listed prices:
 - Plumber, Abstracted (Original) — $140
 - FOOD (Digital Original) — $180
 - Paradise (Oil on Canvas) — $750
+- Not My Problem (Digital Collage, 1 of 1) — $999
 - The Whole Collection — $1,999
 
 ## Links you can attach

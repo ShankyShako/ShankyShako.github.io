@@ -143,6 +143,19 @@ Density: Balanced, the site standard.
 
 **Phone number:** it stays public. It's a Google Voice number, so it has spam filtering and is easy to replace.
 
+## Experience (2026-10-25)
+
+**Fix route, not a redesign.** The deck (desktops ≥ 900px with a mouse and motion allowed) and the timeline (everyone else) are both kept. The check scored about 6/10 before these fixes:
+- Role headings are `h2` in both versions (they skipped from `h1` to `h3`).
+- Role titles go from ruby to `--text-light`, with the organisation in `--text-muted`. The Elmo role title had been 4.42:1.
+- The deck's organisation line and bullets are neutral.
+- Timeline dots are `--text-faint`. Ruby marks only "where you are": the current role (`.is-current`), the linked or hovered card (a ring, no glow), and the rail's active year.
+- The timeline cards lost their glass blur and shadow (hairline only, as on the featured cards).
+- Text sizes are on the scale (1rem, 0.875rem, 0.75rem and 1.125rem), and paragraphs are capped at `--measure`.
+- The 2024 REU entry now says the work was presented at IEEE Big Data 2024 and accepted for publication at IEEE Big Data 2026. The bot knowledge was rebuilt.
+
+Measured after the fixes: lowest contrast 5.54:1 (normal) and 4.73:1 (Elmo) across the deck, the reduced-motion timeline and the phone timeline. No heading skips, no errors, no overflow; rail buttons are 30px.
+
 ## LegacyScribe page (2026-10-17)
 
 **Decision.** `/LegacyScribe` is a standalone light product page in the SPA, not a portfolio page: hero option A's look (white, SF stack, system blue, no Playfair, no red/gold), rendered without the portfolio nav, chat widget or pet, tied back to the portfolio by one "← gmango.dev" link. Eight sections, six of them with a small demo that plays once on scroll-in and is static under Reduce Motion. Every number comes from `docs/bench-results.md` or `CLAUDE.md` in the LegacyScribe repo and is labelled "on my voice, on an M5"; the release version and zip size are read live from the GitHub releases API, never typed in.

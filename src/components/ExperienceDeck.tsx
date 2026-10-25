@@ -514,7 +514,7 @@ export function ExperienceDeck({ heading }: { heading: ReactNode }) {
                 {/* Only when the band showed marks. Where the band already set
                     the name, repeating it here is the same words twice. */}
                 {role.logos?.length ? <p className="deck-org">{role.short ?? role.org}</p> : null}
-                <h3 className="deck-title">{role.title}</h3>
+                <h2 className="deck-title">{role.title}</h2>
                 <p className="deck-date">{role.date}</p>
                 {role.tagline ? <p className="deck-tagline">{role.tagline}</p> : null}
 

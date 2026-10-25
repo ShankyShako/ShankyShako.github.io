@@ -32,10 +32,13 @@ export function Experience() {
       <div className="timeline">
         {experience.map((role, i) => (
           <Reveal key={role.org} delay={i * 50}>
-            <article className="experience-item" id={anchors.experience.get(role.org)}>
-              <h3>
+            <article
+              className={`experience-item${role.date.includes('Present') ? ' is-current' : ''}`}
+              id={anchors.experience.get(role.org)}
+            >
+              <h2>
                 {role.org} · <u>{role.title}</u>
-              </h3>
+              </h2>
               <span className="experience-date">{role.date}</span>
               <p>{role.blurb}</p>
             </article>
