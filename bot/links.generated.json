@@ -85,6 +85,18 @@
       "label": "Ransomware Detection for Critical Infrastructures (repo)"
     },
     {
+      "key": "legacyscribe-on",
+      "kind": "external",
+      "href": "https://github.com/ShankyShako/LegacyScribe",
+      "label": "LegacyScribe: On-Device Dictation for macOS (repo)"
+    },
+    {
+      "key": "care-beyond",
+      "kind": "external",
+      "href": "https://www.checkpointkc.com/",
+      "label": "Care Beyond: Homelessness Resource Map (repo)"
+    },
+    {
       "key": "federated-blockchain",
       "kind": "external",
       "href": "https://github.com/ShankyShako/Federated-BlockChain",
@@ -151,6 +163,12 @@
       "label": "SPCN - 2020 and IEEE Brain Initiative BDBC Conference"
     },
     {
+      "key": "/research#explainable-machine-learning",
+      "kind": "route",
+      "href": "/research#explainable-machine-learning",
+      "label": "An Explainable Machine Learning Approach and Provenance Registry for Real-Time Ransomware Detection in ICS"
+    },
+    {
       "key": "/research#securing-virtual-reality",
       "kind": "route",
       "href": "/research#securing-virtual-reality",
@@ -175,6 +193,18 @@
       "label": "Cognitive-Load-Aware Conversational Design"
     },
     {
+      "key": "/projects#legacyscribe-device-dictation",
+      "kind": "route",
+      "href": "/projects#legacyscribe-device-dictation",
+      "label": "LegacyScribe: On-Device Dictation for macOS"
+    },
+    {
+      "key": "/projects#care-beyond-homelessness",
+      "kind": "route",
+      "href": "/projects#care-beyond-homelessness",
+      "label": "Care Beyond: Homelessness Resource Map"
+    },
+    {
       "key": "/projects#aws-deepracer-reward",
       "kind": "route",
       "href": "/projects#aws-deepracer-reward",
@@ -197,12 +227,6 @@
       "kind": "route",
       "href": "/projects#classical-ai-algorithm",
       "label": "Classical AI Algorithm Suite"
-    },
-    {
-      "key": "/projects#care-beyond-homelessness",
-      "kind": "route",
-      "href": "/projects#care-beyond-homelessness",
-      "label": "Care Beyond: Homelessness Resource Map"
     },
     {
       "key": "/projects#recursive-ray-tracer",

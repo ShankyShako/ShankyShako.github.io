@@ -719,163 +719,265 @@
 }
 
 /* ==========================================================================
-   Skills
+   Featured + index (Education, Skills, Projects, Research)
+
+   A page leads with its two or three strongest items given room (.feat), and
+   everything else is a compact row (.idx-row) that opens in place. Ruby is on
+   links and the active filter chip only; headings, labels and bullets are
+   neutral. No hover lift, no expand animation.
    ========================================================================== */
-.skills-grid {
+.fx h2,
+.fx h3 { color: var(--text-light); }
+.fx ul.bullet-list > li::before { background: var(--text-faint); }
+.fx ul.sub-bullet li::before { background: var(--border-strong); }
+
+.fx-heading {
+  margin: var(--sp-6) 0 var(--sp-4);
+  font-size: 1.5rem;
+  line-height: 1.2;
+  text-align: left;
+}
+
+.fx-heading small {
+  margin-left: var(--sp-3);
+  color: var(--text-faint);
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.feat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr));
   gap: var(--sp-5);
-  margin: var(--sp-5) 0 0;
-}
-
-/* Stretch so the Reveal wrapper — a real grid item — hands its full height to
-   the card inside it; otherwise every card is only as tall as its own text and
-   the row bottoms zig-zag. */
-.skills-grid > * { display: flex; }
-.skills-grid > .is-wide { grid-column: 1 / -1; }
-
-/* As a strip, the label sits beside its contents rather than above them —
-   a full-width card with one short line under a heading is mostly air. */
-.is-wide .skill-card { display: flex; align-items: baseline; gap: var(--sp-5); }
-.is-wide .skill-card h3 { margin: 0; flex: none; }
-.is-wide .skill-card p { margin: 0; }
-
-.skill-card {
-  flex: 1;
-  background: var(--surface);
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  padding: var(--sp-5) 1.6rem;
-  border-radius: var(--r-md);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
-  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease),
-    transform 0.24s var(--ease), box-shadow var(--dur) var(--ease);
-}
-
-.skill-card:hover {
-  transform: translateY(-3px);
-  background: var(--surface-hover);
-  border-color: var(--accent-soft);
-  box-shadow: var(--shadow);
-}
-
-.skill-card h3 {
-  margin: 0 0 var(--sp-3);
-  font-size: 0.76rem;
-  font-weight: 650;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.skill-card p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.65; }
-.skill-card ul.bullet-list { margin: 0; }
-
-/* ==========================================================================
-   Projects / research
-
-   Cards live directly on the page instead of inside one giant panel. A panel
-   around a list of panels is a border drawn for no reason, and it forced every
-   card to the full container width.
-   ========================================================================== */
-.project-grid {
-  display: grid;
-  /* `min()` on the floor, not a bare 400px: below a ~375px viewport the track
-     would otherwise stay 400px wide and hang off the right edge, which
-     `body { overflow-x: hidden }` then silently clips. */
-  grid-template-columns: repeat(auto-fit, minmax(min(400px, 100%), 1fr));
-  gap: var(--sp-4);
-  align-items: stretch;
+  align-items: start;
   margin-top: var(--sp-5);
 }
 
-.project-grid > * { display: flex; }
-
-.project-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+.feat {
+  min-width: 0;
+  padding: var(--sp-5);
   background: var(--surface);
   backdrop-filter: blur(20px) saturate(140%);
   -webkit-backdrop-filter: blur(20px) saturate(140%);
-  padding: 1.6rem;
-  border-radius: var(--r-md);
   border: 1px solid var(--border);
+  border-radius: var(--r-md);
   box-shadow: var(--shadow-sm);
-  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease),
-    transform 0.24s var(--ease), box-shadow var(--dur) var(--ease);
 }
 
-.project-item:hover {
-  background: var(--surface-hover);
-  border-color: var(--accent-soft);
-  transform: translateY(-3px);
-  box-shadow: var(--shadow);
-}
+.feat.is-large { grid-column: 1 / -1; }
 
-.project-head { display: flex; align-items: baseline; gap: 0.55rem; flex-wrap: wrap; }
-
-.project-item a {
-  color: var(--accent);
-  text-decoration: none;
-  font-size: 1.05rem;
+.feat-title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 1.125rem;
   font-weight: 600;
+  line-height: 1.35;
   letter-spacing: -0.012em;
-  transition: color var(--dur) var(--ease);
-}
-
-.project-item a:hover { color: var(--accent-strong); text-decoration: underline; }
-
-/* Coursework has no public repo, so its title is a <span>. Same weight and
-   size as a linked title, minus the accent colour that promises a link. */
-.project-title {
   color: var(--text-light);
-  font-size: 1.05rem;
-  font-weight: 600;
-  letter-spacing: -0.012em;
 }
 
-.project-years {
+.feat-meta {
+  margin: var(--sp-1) 0 0;
   color: var(--text-faint);
-  font-size: 0.8rem;
+  font-size: 0.875rem;
+  line-height: 22px;
   font-variant-numeric: tabular-nums;
 }
 
-.project-item p {
-  margin: 0.6rem 0 0;
+.feat-blurb {
+  margin: var(--sp-3) 0 0;
   color: var(--text-muted);
-  font-size: 0.93rem;
-  line-height: 1.62;
+  font-size: 1rem;
+  line-height: 26px;
 }
 
-/* Tags sit at the bottom of the card whatever the blurb length, so a row of
-   cards has one tag baseline instead of three. */
-.project-tags {
+.feat ul.bullet-list { margin: var(--sp-3) 0 0; }
+
+/* Featured projects lead with two sentences; the rest opens in place. */
+.feat-more {
+  margin-top: var(--sp-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--border-strong);
+}
+.feat-more:hover { color: var(--text-light); }
+
+/* Links: the only ruby text on these pages. */
+.links {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-top: auto;
-  padding-top: var(--sp-4);
+  align-items: center;
+  gap: var(--sp-4);
+  margin-top: var(--sp-3);
 }
 
-/* --------------------------------------------------------------------------
-   Publications
-
-   Same card shell as a project, with a citation block above the blurb: author
-   line, then venue. Both are set smaller and quieter than the prose so the
-   card still reads title → what it does, with the bibliographic detail
-   available rather than in the way.
-   -------------------------------------------------------------------------- */
-.section-heading {
-  text-align: center;
-  margin-top: var(--sp-6);
+.links a,
+.links button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease);
 }
 
-.pub-authors {
-  margin: 0.7rem 0 0;
+.links a:hover,
+.links button:hover { color: var(--accent-strong); text-decoration: underline; }
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+/* Index rows */
+.idx { list-style: none; margin: 0; padding: 0; }
+.idx-row { border-top: 1px solid var(--border); }
+.idx-row:last-child { border-bottom: 1px solid var(--border); }
+
+.idx-head {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "title meta" "summary more";
+  column-gap: var(--sp-4);
+  row-gap: var(--sp-1);
+  align-items: baseline;
+  min-height: 44px;
+  padding: var(--sp-3) 0;
+}
+
+/* The button sits in the heading; its ::after covers the row, so the whole
+   row is the target and the focus ring is drawn around the row. */
+.idx-toggle {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.idx-toggle::after { content: ''; position: absolute; inset: 0; }
+.idx-toggle:focus-visible { outline: none; }
+.idx-head:has(.idx-toggle:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+.idx-title {
+  grid-area: title;
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  color: var(--text-light);
+}
+
+.idx-meta,
+.idx-more {
+  font-size: 0.875rem;
+  line-height: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.idx-meta { grid-area: meta; color: var(--text-faint); }
+
+.idx-summary {
+  grid-area: summary;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
   color: var(--text-muted);
-  font-size: 0.86rem;
-  line-height: 1.5;
+  font-size: 0.875rem;
+  line-height: 22px;
+}
+
+.idx-more {
+  grid-area: more;
+  justify-self: end;
+  color: var(--text-muted);
+  transition: color var(--dur) var(--ease);
+}
+
+.idx-head.is-expandable:hover .idx-more { color: var(--text-light); }
+
+.idx-panel { padding: 0 0 var(--sp-4); }
+
+.idx-blurb {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  line-height: 22px;
+}
+
+.idx-panel ul.bullet-list { margin: 0; }
+.idx-panel ul.bullet-list > li { font-size: 0.875rem; line-height: 22px; }
+
+/* Skills: the compact rows under the two featured groups. */
+.skill-rows { margin: var(--sp-6) 0 0; }
+
+.skill-rows > div {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: var(--sp-4);
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--border);
+}
+
+.skill-rows > div:last-child { border-bottom: 1px solid var(--border); }
+
+.skill-rows dt {
+  color: var(--text-light);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.skill-rows dd {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  line-height: 22px;
+}
+
+@media (max-width: 620px) {
+  .feat { padding: var(--sp-4); }
+  .fx-heading { font-size: 1.25rem; }
+
+  .idx-head { grid-template-areas: "title more" "meta meta" "summary summary"; }
+  .idx-summary { -webkit-line-clamp: 3; }
+
+  .skill-rows > div { display: block; }
+  .skill-rows dt { margin-bottom: 2px; }
+}
+
+/* Publications: citation block above the blurb, quieter than the prose. */
+.pub-authors {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  line-height: 22px;
 }
 
 .pub-authors strong {
@@ -884,64 +986,37 @@
 }
 
 .pub-venue {
-  margin: 0.2rem 0 0;
+  margin: 2px 0 0;
   color: var(--text-faint);
-  font-size: 0.82rem;
+  font-size: 0.875rem;
+  line-height: 22px;
   font-style: italic;
 }
-
-/* The blurb keeps a little more air here than on a project card, because two
-   lines of citation sit directly above it. */
-.pub-item > p:last-of-type { margin-top: 0.85rem; }
-
-.pub-links {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.9rem;
-  margin-top: 0.9rem;
-}
-
-.pub-links a,
-.pub-links button {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--accent);
-  background: none;
-  border: 0;
-  padding: 0;
-  font-family: inherit;
-  cursor: pointer;
-  transition: color var(--dur) var(--ease);
-}
-
-.pub-links a:hover,
-.pub-links button:hover { color: var(--accent-strong); text-decoration: underline; }
 
 /* Tag filter */
 .tag-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
-  justify-content: center;
+  gap: 6px;
+  justify-content: flex-start;
   margin-bottom: var(--sp-4);
 }
 
 .tag {
-  padding: 0.28rem 0.75rem;
+  padding: 4px 10px;
   border-radius: var(--r-pill);
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text-muted);
   font: inherit;
-  font-size: 0.76rem;
+  font-size: 0.75rem;
   letter-spacing: 0;
   cursor: pointer;
   transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease),
     background var(--dur) var(--ease);
 }
 
-.tag:hover { border-color: var(--accent-soft); color: var(--text-light); }
+.tag:hover { border-color: var(--border-strong); color: var(--text-light); }
 
 .tag.active {
   background: var(--accent-fill);
@@ -950,7 +1025,7 @@
   font-weight: 600;
 }
 
-.tag-static { cursor: default; font-size: 0.7rem; color: var(--text-faint); }
+.tag-static { cursor: default; font-size: 0.75rem; color: var(--text-faint); }
 .tag-static:hover { border-color: var(--border); color: var(--text-faint); }
 
 .empty-note {
@@ -1087,98 +1162,45 @@
 
 /* ==========================================================================
    Education
+
+   Degrees are .feat cards (see "Featured + index"); coursework is index rows.
+   Undergraduate stays as area lines in a single column.
    ========================================================================== */
-.degree-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: var(--sp-4);
-  margin-top: var(--sp-5);
-}
-
-.degree-card {
-  padding: var(--sp-5) 1.6rem;
-  background: var(--surface);
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  box-shadow: var(--shadow-sm);
-}
-
-.degree-card h2 {
-  margin: 0 0 0.35rem;
-  font-family: var(--font-ui);
-  font-size: 1.02rem;
-  font-weight: 600;
+.feat-degree {
+  margin: var(--sp-2) 0 0;
   color: var(--text-light);
-  letter-spacing: -0.012em;
-}
-
-.degree-card .degree-name { margin: 0; color: var(--accent); font-size: 0.93rem; font-weight: 550; }
-.degree-card .degree-date {
-  margin: 0.3rem 0 0;
-  color: var(--text-faint);
-  font-size: 0.79rem;
-  font-variant-numeric: tabular-nums;
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 /* Honours and GPA sit under a hairline so the card reads as two registers:
    what the degree is, then how it went. */
-.degree-card .degree-note {
-  margin: 0.6rem 0 0;
-  padding-top: 0.6rem;
+.feat-note {
+  margin: var(--sp-3) 0 0;
+  padding-top: var(--sp-3);
   border-top: 1px solid var(--border);
   color: var(--text-muted);
-  font-size: 0.8rem;
-  line-height: 1.5;
+  font-size: 0.875rem;
+  line-height: 22px;
 }
 
-/* Two columns of courses rather than one 2,100px column. Each course keeps its
-   own sub-points, so the unit that must not break is the <li>. */
-.course-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 0 var(--sp-6);
-  margin: 0;
-}
-
-.course-grid > li { break-inside: avoid; }
-
-/* Undergrad: an area heading over a run of course names. Same two-column
-   measure as .course-grid so the two sections line up down the page. */
-.course-groups {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: var(--sp-4) var(--sp-6);
-}
+.course-groups { display: grid; gap: var(--sp-4); }
 
 .course-groups h3 {
-  margin: 0 0 0.35rem;
+  margin: 0 0 2px;
   font-family: var(--font-ui);
-  font-size: 0.83rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--accent);
+  line-height: 1.4;
+  color: var(--text-light);
 }
 
 .course-groups p {
   margin: 0;
   color: var(--text-muted);
-  font-size: 0.9rem;
-  line-height: 1.65;
+  font-size: 0.875rem;
+  line-height: 22px;
 }
-
-.section-head {
-  display: flex;
-  align-items: baseline;
-  gap: var(--sp-3);
-  flex-wrap: wrap;
-  margin: var(--sp-6) 0 var(--sp-4);
-}
-
-.section-head h2 { margin: 0; }
-.section-head span { color: var(--text-faint); font-size: 0.85rem; }
 
 /* ==========================================================================
    Shop
@@ -1675,7 +1697,8 @@
    target announces itself, then gets out of the way.
    ========================================================================== */
 .experience-item[id],
-.project-item[id] {
+.feat[id],
+.idx-row[id] {
   /* Clear the sticky tab bar, which would otherwise sit over the heading. */
   scroll-margin-top: 5.5rem;
 }
@@ -2068,7 +2091,7 @@
   color: var(--text-faint);
 }
 
-.tag-more:hover { border-style: dashed; color: var(--accent); border-color: var(--accent-soft); }
+.tag-more:hover { border-style: dashed; color: var(--text-light); border-color: var(--border-strong); }
 
 /* ==========================================================================
    Desktop pet

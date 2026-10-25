@@ -6,15 +6,35 @@ export type Publication = {
   /** Volume / issue / pages / date, as a journal would print it. */
   where: string;
   year: string;
-  /** Bare DOI. The card builds the doi.org link from it. */
-  doi: string;
+  /** Bare DOI. The card builds the doi.org link from it. None until the
+      paper is out. */
+  doi?: string;
+  /** Accepted but not yet published: shown as "Accepted", with no DOI link. */
+  status?: 'accepted';
+  /** One line on the work's earlier life (where it was first presented). */
+  history?: string;
   /** Open-access preprint, where one exists — IEEE Xplore is paywalled. */
   preprint?: string;
   tags: string[];
   blurb: string;
 };
 
+/* Newest first. An accepted paper is listed once, at its latest stage, with
+   its earlier presentation as a line inside it rather than a second entry. */
 export const publications: Publication[] = [
+  {
+    title:
+      'An Explainable Machine Learning Approach and Provenance Registry for Real-Time Ransomware Detection in ICS',
+    authors: ['Genova Mongalo'],
+    venue: 'IEEE International Conference on Big Data',
+    where: 'to appear, December 2026',
+    year: '2026',
+    status: 'accepted',
+    history: 'First presented at IEEE Big Data 2024, Washington, D.C.',
+    tags: ['Explainable ML', 'Ransomware Detection', 'ICS Security', 'Provenance'],
+    blurb:
+      'Detects ransomware inside industrial control systems, the computers that run power plants and water treatment: 99% accuracy telling malicious from benign, 91% naming the specific family.',
+  },
   {
     title:
       'Securing Virtual Reality Experiences: Unveiling and Tackling Cybersickness Attacks With Explainable AI',
@@ -48,5 +68,7 @@ export function cite(p: Publication): string {
       ? `${initialled.slice(0, -1).join(', ')} and ${initialled.at(-1)}`
       : initialled[0];
 
-  return `${authors}, "${p.title}," ${p.venue}, ${p.where}, ${p.year}, doi: ${p.doi}.`;
+  return p.doi
+    ? `${authors}, "${p.title}," ${p.venue}, ${p.where}, ${p.year}, doi: ${p.doi}.`
+    : `${authors}, "${p.title}," ${p.venue}, ${p.where}.`;
 }

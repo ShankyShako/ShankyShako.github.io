@@ -7,11 +7,14 @@ export type Project = {
   tags: string[];
   /** Internal route of a dedicated page for this project. */
   page?: string;
+  /** Given room at the top of the Projects page; everything else is an index row. */
+  featured?: true;
 };
 
 export const projects: Project[] = [
   {
     title: 'LegacyScribe: On-Device Dictation for macOS',
+    featured: true,
     href: 'https://github.com/ShankyShako/LegacyScribe',
     page: '/LegacyScribe',
     years: '2026',
@@ -21,6 +24,7 @@ export const projects: Project[] = [
   },
   {
     title: 'Care Beyond: Homelessness Resource Map',
+    featured: true,
     href: 'https://www.checkpointkc.com/',
     years: '2025',
     tags: ['React', 'Leaflet', 'Node.js', 'Express', 'Geospatial'],
@@ -29,6 +33,7 @@ export const projects: Project[] = [
   },
   {
     title: 'AWS DeepRacer: Reward Shaping',
+    featured: true,
     years: '2026',
     tags: ['Reinforcement Learning', 'TD3', 'Reward Shaping', 'Docker', 'Simulation'],
     blurb:

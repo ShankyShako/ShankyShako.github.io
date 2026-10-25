@@ -40,6 +40,69 @@ Why: Palette B took Elmo's old black-and-red as the everyday look, so the old El
 
 Contrast (measured): white 7.2:1 on #b00e20; `--accent` 4.9:1 there; soft text 5.9:1; captions 5.3:1; `--on-accent` on the fill 10.5:1.
 
+## Education, Skills, Projects, Research: featured + index (2026-10-24)
+
+**Decision.** All four pages share one structure, option A of three ("featured + index"): a page leads with its two or three strongest items given room, and everything else is a compact index row (title, years, first sentence) that opens in place to the full write-up. Picks:
+- **Projects:** LegacyScribe (large, with its product-page link), AWS DeepRacer and Care Beyond featured; the other nine are index rows. The tag filter stays, quieter, above the index.
+- **Research:** the publications featured; the research projects are index rows.
+- **Education:** the two degrees featured; in-progress and graduate courses are index rows; undergraduate stays as area lines. The single card that wrapped the page goes.
+- **Skills:** ML & Data and Specialized Skills featured; the rest are compact rows.
+
+Rules for all four:
+- Balanced density, as on the résumé section.
+- Palette B, with ruby only on links and the one primary action. Section headings, labels and bullets go neutral.
+- Cards never stretch to a taller neighbour.
+- A chat-bot deep link (`#anchor`) opens its row.
+
+Rejected: "grouped by theme" (the strongest argument, but it merges Skills into Projects and changes the nav) and a one-column ledger by year (calm, but features nothing).
+
+Why: every item was weighted the same (LegacyScribe got the same card as the phonebook app), write-ups ran 40–300 words with no line to scan, and the accent was on every heading, label and bullet.
+
+### Build spec (2026-10-24)
+
+**Shared pieces** (new files; `ProjectCard` is imported only inside `Projects.tsx`, so it is deleted, not kept).
+- `src/lib/firstSentence.ts`: `firstSentence(text)` returns `text.match(/^.*?[.!?](?=\s|$)/)?.[0] ?? text`. Decimal points ("5.3%", "0.809") are followed by a digit, so they survive. Never hand-written copy.
+- `src/components/Featured.tsx`: `<Featured as='h2'|'h3' id? title meta? large?>children</Featured>` → `<article class="feat" id>` with the title as the given heading level (`.feat-title`, font-ui 18px/600 `--text-light`), `.feat-meta` 14px `--text-faint` tabular, then children. No `href` on the title: links live in a `.links` row.
+- `src/components/IndexRow.tsx`: `<IndexList>` = `<ul class="idx">`; `<IndexRow id? title meta? summary>children</IndexRow>` = `<li class="idx-row" id>` holding one `<button type="button" class="idx-toggle" aria-expanded aria-controls>` whose contents are `<h3 class="idx-title">`, `.idx-meta`, `.idx-summary` (`-webkit-line-clamp: 2`), and `.idx-more` text "More"/"Less"; then `<div id=… class="idx-panel" hidden={!open}>children</div>`. Initial `open` = `useLocation().hash === '#'+id`; an effect re-opens the row when the hash changes to it. No expand animation; colour transitions only.
+- `.links`: 14px/600 `--accent` (hover `--accent-strong` underline), gap `--sp-4`. Labels: "GitHub", "Product page →", "DOI", "Preprint (arXiv)", "Copy citation", "Live site" for Care Beyond.
+- Tags: existing `.tag-static` (12px, `--text-faint`), gap `--sp-2`.
+
+**Type and spacing** (Balanced scale). Section `h2.fx-heading`: Playfair 24px/1.2 `--text-light`, left-aligned, margin `--sp-6 0 --sp-4`, with an optional `<small>` 14px `--text-faint` (term, school line). Featured blurb 16px/26px `--text-muted`. Row title 16px/600; summary, meta, More/Less and expanded blurb 14px/22px; tags 12px. `.feat` padding `--sp-5`, `--surface`, 1px `--border`, `--r-md`, `--shadow-sm`, no hover lift or border tint. `.feat-grid`: `repeat(auto-fit, minmax(min(360px,100%),1fr))`, gap `--sp-5`, `align-items: start`; `.feat.is-large { grid-column: 1 / -1 }`. Rows: padding `--sp-3 0`, `border-top: 1px solid var(--border)`, last row also border-bottom; the button fills the row, min-height 44px, `text-align: left`; head grid desktop `"title meta" / "summary more"` with `minmax(0,1fr) auto`. Panel padding `0 0 --sp-4`; blurb, then links (margin-top `--sp-3`), then tags (margin-top `--sp-3`). Pages wrap their content in `<div class="fx">`; `components.css` adds `.fx h2, .fx h3 { color: var(--text-light) }`, `.fx ul.bullet-list > li::before { background: var(--text-faint) }`, `.fx ul.sub-bullet li::before { background: var(--border-strong) }`. `global.css` is not edited.
+
+**Per page.**
+- *Projects:* `featured?: true` on LegacyScribe, DeepRacer, Care Beyond in `projects.ts`. Order: h1, intro, `.feat-grid` (LegacyScribe `large`, h2 titles), `h2.fx-heading` "All projects", tag row, `IndexList` of the non-featured nine in data order (h3 rows). Filter: `.tag-row` left-aligned, 12px, padding 4px 10px, gap 6px; active chip keeps `--accent-fill`/`--on-accent` (the page's one solid). With a tag active the featured block stays as is and the index lists *every* match, featured included, so the count is honest and nothing above the chips moves. Hash still clears the filter.
+- *Research:* h2 "Publications" → `Featured as='h3'` per paper (authors, venue, blurb, links DOI/Preprint/Copy citation, tags). h2 "Research projects" → rows.
+- *Education:* `.feat-grid` of the two degrees (h2 school; degree 16px `--text-light`, not ruby; date 14px faint; note 14px muted under a hairline). h2 "In progress" `<small>`=`inProgressTerm`, h2 "Graduate coursework" `<small>`="Georgia Tech, M.S. Computer Science, AI emphasis": rows with `summary = points[0]`, panel = both points as `ul.bullet-list`. h2 "Undergraduate coursework": area `h3` 14px/600 `--text-light` (no uppercase), course line 14px muted, single column. The `.content-card` wrapper goes.
+- *Skills:* `featured?: true` on ML & Data and Specialized Skills (replace `wide`); each a `Featured as='h2'` with items as `ul.bullet-list`. The other five are a `<dl class="skill-rows">`: desktop grid `160px 1fr`, `dt` 14px/600 `--text-light`, `dd` 14px muted items joined by " · ", hairline between rows. No expand.
+
+**Deep links.** `useHashHighlight` (App) keeps scrolling and flashing; change the selector at `components.css` ~1677 from `.project-item[id]` to `.feat[id], .idx-row[id]` (scroll-margin-top 5.5rem). Rows open themselves (above); featured items carry the same `anchors.*` id, so every key the bot can emit lands.
+
+**≤620px.** One column everywhere; `.feat` padding `--sp-4`; `fx-heading` 20px; row head grid `"title more" / "meta meta" / "summary summary"`, summary clamp 3; `.skill-rows` stacks `dt` over `dd`; tag row wraps left.
+
+**Motion.** One `Reveal` per section, no per-card delay. No hover lift anywhere on these pages. Reduced motion needs nothing new: `.reveal`, `.is-target` and `scrollIntoView` already honour it.
+
+**Removed from `components.css`:** `.skills-grid*`, `.is-wide*`, `.skill-card*`, `.project-grid*`, `.project-item*`, `.project-head`, `.project-title`, `.project-years`, `.project-tags`, `.section-heading`, `.pub-item > p:last-of-type`, `.degree-grid`, `.degree-card*`, `.course-grid*`, `.section-head*`; `.course-groups h3` loses uppercase and ruby. Kept: `.pub-authors`, `.pub-venue`, `.pub-links` (restyled as `.links`), `.tag*`, `.empty-note`.
+
+**Acceptance.**
+1. `npm run typecheck` and `npm run build` pass; `ProjectCard` no longer exists.
+2. Each page: ruby appears only on `.links`, the active filter chip, and focus rings. Headings, bullets, degree names, area labels are neutral.
+3. Side-by-side cards end at their own content (DeepRacer taller than Care Beyond).
+4. Every index summary equals `firstSentence(blurb)` or `points[0]`; no text in the DOM that is not in `src/data`, apart from "More", "Less", "All projects", link labels.
+5. Keyboard: Tab reaches each row button, Enter/Space toggles, `aria-expanded` flips, panel content is hidden when collapsed.
+6. `/projects#unbound-family-portal`, `/research#cognitive-load-aware-conversational`, `/research#securing-virtual-reality` open the row (or land on the featured card), scroll under the nav, and flash once.
+7. Clicking "Reinforcement Learning" lists DeepRacer, LunarLander, Overcooked as rows while the featured block does not move; "All" restores nine rows.
+8. Heading order per page is h1 → h2 → h3 with no skips (axe or Lighthouse ≥ 95).
+9. At 390px: no horizontal scroll, row buttons ≥ 44px tall.
+10. Reduce Motion: no transitions on open/close, flash is the static ring.
+
+**As built (2026-10-24), changes from the spec:**
+- **Index rows** follow the accordion pattern: `h3 > button`, not a button holding the heading (that is invalid HTML and flattens the heading for screen readers). The button's `::after` covers the row, so anywhere on it toggles, and the focus ring outlines the whole row.
+- **Featured projects and publications** show their first two sentences (`leadSentences`) with a More/Less toggle. The full write-ups (132–166 words) rebuilt the walls of text the change was meant to remove, and two papers side by side need to balance.
+- **Publications** (2026-10-24): an accepted paper is listed once, at its latest stage. Its meta reads "2026 · Accepted", the venue line says "to appear", and its earlier presentation sits on a line inside the entry (`history`), not in a second entry. There is no DOI link until it has one, and the citation drops the DOI. The home stat reads "2 IEEE papers / 2025, and one accepted for 2026"; switch it to "2025 and 2026" once the paper is out in December 2026.
+- **Education course rows** are static, with both points inline joined by " · ". A toggle that revealed one more line was more cost than content (the risk the spec named).
+- The filter's first chip reads "All (9)", counting the index it filters. Tag hover is neutral.
+- The real anchor for the conversational-design study is `#cognitive-load-aware`.
+
 ## LegacyScribe page (2026-10-17)
 
 **Decision.** `/LegacyScribe` is a standalone light product page in the SPA, not a portfolio page: hero option A's look (white, SF stack, system blue, no Playfair, no red/gold), rendered without the portfolio nav, chat widget or pet, tied back to the portfolio by one "← gmango.dev" link. Eight sections, six of them with a small demo that plays once on scroll-in and is static under Reduce Motion. Every number comes from `docs/bench-results.md` or `CLAUDE.md` in the LegacyScribe repo and is labelled "on my voice, on an M5"; the release version and zip size are read live from the GitHub releases API, never typed in.

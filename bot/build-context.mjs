@@ -204,7 +204,7 @@ const links = [
   /* Deep links. Slugs come from src/data/anchors.ts, the same module the
      pages use to write their `id=`, so a link the bot offers always lands on
      a card that exists. */
-  ...publications.map((p) => ({
+  ...publications.filter((p) => p.doi).map((p) => ({ // accepted papers have no DOI yet
     key: slug(p.title),
     kind: 'external',
     href: `https://doi.org/${p.doi}`,

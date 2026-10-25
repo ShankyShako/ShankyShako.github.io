@@ -12,7 +12,7 @@ import { ProfilePhoto } from '../components/ProfilePhoto';
    of the width each, where "classifier accuracy, AFRL" wraps to three lines.
    Only one of the two is displayed, so a screen reader reads one. */
 const highlights = [
-  { stat: '2 IEEE papers', label: '2024 and 2025', short: ['2 IEEE', 'papers'] },
+  { stat: '2 IEEE papers', label: '2025, and one accepted for 2026', short: ['2 IEEE', 'papers'] },
   { stat: '+50 pts', label: 'classifier accuracy, AFRL', short: ['+50 pts', 'at AFRL'] },
   { stat: 'Summa cum laude', label: 'B.S., UMKC', short: ['Summa', 'cum laude'] },
 ];
