@@ -59,7 +59,7 @@
 
 % Sections formatting
 \titleformat{\section}{
-  \vspace{-4pt}\scshape\raggedright\large
+  \vspace{-5pt}\scshape\raggedright\large
 }{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
 
 % Ensure that generate pdf is machine readable/ATS parsable
@@ -89,7 +89,7 @@
 }
 
 \newcommand{\resumeProjectHeading}[2]{
-    \item
+    \vspace{-2pt}\item
     \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
       \small#1 & #2 \\
     \end{tabular*}\vspace{-7pt}
@@ -116,153 +116,135 @@
 \textbf{\Huge \scshape Genova Mongalo}\\
 \small 913-260-8912 $|$ 
 \href{mailto:Genova.Mongalo@gmail.com}{\underline{Genova.Mongalo@gmail.com}} $|$ 
-\href{https://linkedin.com/in/GMongalo}{\underline{linkedin.com/in/GMongalo}}% $|$
-% \href{https://ShankyShako.GitHub.io}{\underline{ShankyShako.GitHub.io}}
+\href{https://linkedin.com/in/GMongalo}{\underline{linkedin.com/in/GMongalo}} $|$
+\href{https://gmango.dev}{\underline{gmango.dev}}
 \end{tabular}
-% &
-% \rlap{\raisebox{-5mm}{\includegraphics[width=30mm]{qr-code.png}}}
 \end{tabular*}
+% The QR code goes to GitHub Pages, the fallback that outlives a lapsed domain.
+% Same site as gmango.dev, so an ATS reading the text still gets a working link.
 \begin{textblock*}{30mm}(178.2mm,8mm)
   \href{https://ShankyShako.GitHub.io}{\includegraphics[width=25mm, trim={4cm 4cm 4cm 4cm},clip]{qr-code.png}}
 \end{textblock*}
-
-
-% \begin{center}
-%     \textbf{\Huge \scshape Genova Mongalo} \\ \vspace{1pt}
-%     \small 913-260-8912 $|$ \href{mailto:Genova.Mongalo@gmail.com}{\underline{Genova.Mongalo@gmail.com}} $|$ 
-%     \href{https://linkedin.com/in/GMongalo}{\underline{linkedin.com/in/GMongalo}} $|$
-%     \href{https://ShankyShako.GitHub.io}{\underline{ShankyShako.GitHub.io}}
-% \end{center}
-
-\section{Relevant Coursework}
-    %\resumeSubHeadingListStart
-        \begin{multicols}{3}
-            \begin{itemize}[itemsep=-5pt, parsep=3pt]
-                \item\small Deep Learning
-                \item Reinforcement Learning
-                \item Artificial Intelligence
-                \item Machine Learning
-                \item Algorithms \& Complexity
-                \item Computer Vision 
-            \end{itemize}
-        \end{multicols}
-        \vspace*{2.0\multicolsep}
-    %\resumeSubHeadingListEnd
 
 %-----------EDUCATION-----------
 \section{Education}
   \resumeSubHeadingListStart
     \resumeSubheading
-      {University of Missouri-Kansas City(UMKC)}{Kansas City, MO}
-      {Bachelor of Science in Computer Science, summa cum laude}{Aug. 2021 -- Dec 2024}
+      {Georgia Institute of Technology}{Atlanta, GA}
+      {Master of Science in Computer Science, emphasis in Artificial Intelligence}{Expected 2027}
     \resumeSubheading
-      {Georgia Tech}{Atlanta, GA}{Masters in Computer Science - Emphasis on Artificial Intelligence}{Expected 2027}
+      {University of Missouri-Kansas City (UMKC)}{Kansas City, MO}
+      {Bachelor of Science in Computer Science, summa cum laude}{Aug. 2021 -- Dec. 2024}
   \resumeSubHeadingListEnd
 
 
 %-----------EXPERIENCE-----------
 \section{Experience}
   \resumeSubHeadingListStart
-  \resumeSubheading
-      {Founding AI\textbackslash ML Product Engineer}{September 2025 -- Present}
+    \resumeSubheading
+      {Founding AI/ML Product Engineer}{September 2025 -- Present}
       {Geometry Health and Wellness}{Kansas City, MO}
       \resumeItemListStart
-        \resumeItem{Ported clinically validated mobility assessments from MATLAB research prototypes to a production iOS app, matching the clinical reference within 0.56\% on a 15-biomarker postural-sway test and reproducing 10-meter-walk gait speed exactly.}
-        \resumeItem{Built the on-device biomarker signal-processing pipeline in Swift: 100 Hz CoreMotion capture, gravity removal, zero-phase Butterworth band-pass filtering, double integration, and PCA into 15 biomarkers with automated quality flags.}
-        \resumeItem{Developed the in-house iOS data-collection app capturing motion, survey, and fall/emergency data, exporting each trial as timestamped JSON to build the labeled datasets that models are validated against.}
-        \resumeItem{Implemented an end-to-end LLM workflow for a context-aware clinical assistant (data prep, patient-context retrieval, PubMed/NCBI evidence via Entrez), deployed on a self-hosted Ollama DeepSeek-V2 16B model with Flask REST + WebSocket streaming under 1s latency.}
-        % \resumeItem{Architected the full-stack platform (Swift/SwiftUI iOS 17 + Python/Flask, SQLite) delivering real-time AI guidance, biomarker tracking, and a clinician communication dashboard.}
-        \resumeItem{Led the product from MVP to production as founding engineer, owning technical architecture, sprint cycles, and cross-functional coordination across clinical, engineering, and product.}
+        \resumeItem{Ported clinically validated mobility assessments from MATLAB prototypes to a production iOS app, within 0.56\% of the clinical reference on a 15-biomarker postural-sway test and exact on 10-meter-walk gait speed.}
+        \resumeItem{Built the on-device biomarker pipeline in Swift: 100 Hz CoreMotion capture, gravity removal, zero-phase Butterworth band-pass filtering, double integration, and PCA into 15 biomarkers with quality flags.}
+        \resumeItem{Built an end-to-end clinical LLM assistant with patient-context retrieval and PubMed evidence via Entrez, self-hosted on Ollama (DeepSeek-V2 16B) and streaming over Flask REST + WebSocket in under 1 s.}
+        % \resumeItem{Built a speech assessment pipeline pairing on-device Apple Speech for live partials with a Whisper backend and LLM transcript normalization, with a patient-review panel, to catch the communication deficits that affect one in three stroke survivors.}
+        % \resumeItem{Built the in-house iOS data-collection app for motion, survey, and fall/emergency data; each trial exports as timestamped JSON into the labeled datasets the models are validated against.}
+        \resumeItem{Led the product from MVP to production as founding engineer, owning the architecture and sprint cycles and keeping the clinical, engineering, and product sides in step.}
       \resumeItemListEnd
     \resumeSubheading
-      {Federal AI\textbackslash ML Research Engineer}{May 2025 -- August 2025}
+      {Federal AI/ML Engineer Contractor}{May 2025 -- August 2025}
       {AFRL Sensors Directorate Contracting Program, University of Dayton}{Dayton, OH}
       \resumeItemListStart
-        \resumeItem{Pioneered the development of generative AI models enabling a CNN classifier to successfully recognize real objects when trained on generated data when utilized in transfer learning framework, addressing AFRL/DoD priorities.}
-       \resumeItem{Using PyTorch, adapted state of the art classifiers to handle novel imaging modalities.}
-       % \resumeItem{Utilize slurm to enable large batches of parallelized computation.}
-       \resumeItem{Created an innovative game theory approach to GAN training, significantly improving the results of the generator’s development, trained at scale using Slurm-parallelized compute.}
-       % \resumeItem{Strategically organized and disseminated code and results through diverse channels of authority, fostering transparent communication and cross-functional alignment.}
-       % \resumeItem{Applied peer-reviewed research into practical solutions, ensuring evidence-based decisions in critical environments.}
-       \resumeItem{The generative model’s output led to an increase of 50 percentage points in the downstream classifier compared to the baseline.}
+        \resumeItem{Built generative AI models that let a CNN classifier recognize real objects after training only on generated data, carried over by transfer learning, for AFRL/DoD.}
+        \resumeItem{Devised a game-theoretic GAN training scheme, run on Slurm-parallelized compute; training on its output raised downstream classifier accuracy 50 percentage points over the baseline.}
+        % \resumeItem{Adapted state-of-the-art PyTorch classifiers to imaging modalities they were not designed for.}
       \resumeItemListEnd
     \resumeSubheading
-      {AI\textbackslash ML Engineer Research Intern}{June 2024 -- Dec 2024}
+      {AI/ML Engineer Research Intern}{June 2024 -- Dec. 2024}
       {NSF REU AI-Empowered Cybersecurity - University of Missouri, Kansas City}{Kansas City, MO}
-      % \resumeItemListStart
-      %   \resumeItem{Engineered a robust Large Language Model to detect ransomware threats within Industrial Control Systems.}
-        % \resumeItem{Achieved 99/91\% accuracy for binary/family classification scale respectively}
-      % \resumeItemListEnd
       \resumeItemListStart
-        \resumeItem{Engineered an LLM to detect ransomware in Industrial Control Systems, achieving 99\%/91\% binary/family classification accuracy; presented at IEEE Big Data 2024 (solo author, mentor-guided).}
+        \resumeItem{Built a transformer-based model that detects ransomware in Industrial Control Systems at 99\% binary and 91\% family classification accuracy; presented it at IEEE Big Data 2024 as solo author, now accepted for publication.}
       \resumeItemListEnd
-      
-% -----------Multiple Positions Heading-----------
-   % \resumeSubSubheading
-   %  {Software Engineer I}{Oct 2014 - Sep 2016}
-   %  \resumeItemListStart
-   %     \resumeItem{Apache Beam}
-   %       {Apache Beam is a unified model for defining both batch and streaming data-parallel processing pipelines}
-   %  \resumeItemListEnd
-   % \resumeSubHeadingListEnd
-% -------------------------------------------
 
-    % \resumeSubSubheading
-    %   %{Undergraduate Research Assistant}
-    %   {NSF REU in Consumer Networking - University of Missouri, Columbia}
-    %   {May 2023 -- July 2023}
-      % \resumeItemListStart
-      %   \resumeItem{Designed a model that detects/predicts cybersickness.}
-      %   \resumeItem{Using a transformer machine learning model.}
-      %   \resumeItem{Succeeded with an accuracy of 85\% from a 1-10 cybersickness severity scale.}
-      % \resumeItemListEnd
+    % \resumeSubheading
+    %   {Research Intern}{May 2023 -- July 2023}
+    %   {NSF REU in Consumer Networking - University of Missouri, Columbia}{Columbia, MO}
+    %   \resumeItemListStart
+    %     \resumeItem{Designed a transformer model that predicts cybersickness severity on a 1-10 scale with 85\% accuracy.}
+    %   \resumeItemListEnd
 
-    % \resumeSubSubheading
-    %   {NASA Missouri Space Grant Consortium}{Dec 2021 -- April 2022}
-      % \resumeItemListStart
-      %   \resumeItem{Engineered an AI-driven simulation of space-bound transmissions as part of a NASA-funded initiative\\ \hspace{20pt}Analyzing signal propagation and identifying optimal frequency bands under varying conditions.}
-      %   \resumeItem{Developed an interactive interface to visualize transmission strength }
-      %   \resumeItem{Provide adaptive frequency recommendations based on environmental parameters.}
-      % \resumeItemListEnd
-
+    % \resumeSubheading
+    %   {Research Intern}{Dec. 2021 -- April 2022}
+    %   {NASA Missouri Space Grant Consortium}{}
+    %   \resumeItemListStart
+    %     \resumeItem{Engineered an AI-driven simulation of space-bound transmissions for a NASA-funded study of signal propagation, finding which frequency bands hold up under which conditions.}
+    %     \resumeItem{Developed an interactive interface that shows transmission strength and recommends a frequency for the environment you give it.}
+    %   \resumeItemListEnd
   \resumeSubHeadingListEnd
 
-%-----------INVOLVEMENT---------------
-% \section{Presentation / Leadership}
-%     \resumeSubHeadingListStart
-%             \resumeItem {Mongalo, G. (Dec. 2024). LLM Based Approach to Real Time Ransomware Detection for Industrial Control Systems. Presented at IEEE Big Data 2024, Washington, D.C. (Presenter \& Author, solo work with mentor guidance).}
-%             \resumeItemListStart
-%                 % \resumeItem{Led the design and implementation of secure communication protocols for global families platform, ensuring safe cross-cultural exchanges.}
-%                 % \resumeItem{Engaged in collaborative development through GitHub/Azure/, ensuring version control, code integrity, and efficient communication across a distributed team.}
-                 
-%             \resumeItemListEnd
-        
-%     \resumeSubHeadingListEnd
 
-
+%-----------PROJECTS-----------
 \section{Projects}
     \resumeSubHeadingListStart
       \resumeProjectHeading
-          {\textbf{AWS DeepRacer} $|$ \emph{Reinforcement Learning, AWS}}{}
+          {\textbf{LegacyScribe} $|$ \emph{Swift, SwiftUI, MLX, Speech Recognition, LLMs}}{}
           \resumeItemListStart
-            \resumeItem{Trained and tuned reinforcement-learning policies for a 1/18-scale autonomous vehicle on AWS, iterating on reward functions and evaluating driving performance --- hands-on autonomous control and cloud-based model training.}
+            \resumeItem{Built an on-device macOS dictation app I use daily (a SwiftUI fork of Hex) with swappable speech engines: 5.3\% word error rate on Cohere Transcribe/MLX vs 8.8\% on Parakeet, 10 s of audio in about 0.33 s.}
+            % \resumeItem{Added an LLM pass that cleans up a transcript or reshapes a spoken ramble into a structured prompt for a coding agent, and pastes the raw transcript if every model endpoint fails.}
+            % Optional (resume.ts: scribe-ondevice, scribe-private, scribe-practice):
+            % \resumeItem{Runs transcript rewriting on-device with Qwen3 4B (4-bit) in 0.4--1.5 s for dictations of up to 55 words; the live caption shows its first word a median 0.74 s after speech starts.}
+            % \resumeItem{Built a private mode that opens zero network connections, verified by a test that samples the app's sockets every 10 ms during a real dictation.}
+            % \resumeItem{Added a read-aloud practice mode built from 280 sentences covering all 39 English sounds and 881 sound pairs, plus vocabulary suggestions drawn from what the user actually sent after editing.}
+          \resumeItemListEnd
+      \resumeProjectHeading
+          {\textbf{Care Beyond (checkpointkc.com)} $|$ \emph{React, Leaflet, Node.js, Express}}{}
+          \resumeItemListStart
+            \resumeItem{Built and deployed a live map of food, shelter, clothing, and medical resources from local organizations, searchable by address or ZIP within a radius; only verified organizations post, signing in with a one-time email code.}
+          \resumeItemListEnd
+      \resumeProjectHeading
+          {\textbf{Dysarthria Speech Understanding} $|$ \emph{PyTorch, Whisper, wav2vec2}}{}
+          \resumeItemListStart
+            \resumeItem{Built the ASR evaluation harness and Whisper multi-task grid for dysarthric speech, run leave-one-speaker-out across 43 speakers: 10.44 MAE on intelligibility and 0.809 quadratic weighted kappa on severity.}
+            % Optional (resume.ts: dys-findings):
+            % \resumeItem{Measured transcription degrading roughly thirteen-fold from control to impaired speakers on identical prompts, with Whisper and wav2vec2 failing in opposite directions: fluent but wrong versus visibly broken.}
           \resumeItemListEnd
       % \resumeProjectHeading
-      %     {\textbf{Phonebook Management System} $|$ \emph{Java, SQL/Postgres}}{}
+      %     {\textbf{AWS DeepRacer} $|$ \emph{Reinforcement Learning, TD3, Docker}}{}
       %     \resumeItemListStart
-      %       \resumeItem{Built a desktop app with a relational backend: secure authentication, CRUD, search, and CSV export --- demonstrating database queries and data-pipeline design.}
+      %       \resumeItem{Hand-shaped the reward for a TD3 policy driving a simulated 1/18-scale car: center-line distance bands, heading toward upcoming waypoints, a speed-versus-steering trade-off, and penalties for leaving the track.}
+      %     \resumeItemListEnd
+      % Optional projects (resume.ts: prj-site, prj-cogload):
+      % \resumeProjectHeading
+      %     {\textbf{gmango.dev} $|$ \emph{React, TypeScript, LLMs}}{}
+      %     \resumeItemListStart
+      %       \resumeItem{Built gmango.dev's r\'esum\'e tailoring: in-browser matching re-ranks a bullet library on every keystroke, a typesetter keeps the page to one sheet, a language model rewords, and a rule-based checker rejects any rewrite that drops a number, adds a tool, or claims more.}
+      %       \resumeItem{Built the site's chat assistant, grounded in a knowledge file generated from the site's own data at build time; it can only attach links from a generated menu, so it never sends a visitor to a page that does not exist.}
+      %     \resumeItemListEnd
+      % \resumeProjectHeading
+      %     {\textbf{Cognitive-Load-Aware Conversational Design} $|$ \emph{HCI, Cognitive Science}}{}
+      %     \resumeItemListStart
+      %       \resumeItem{Analyzed a deployed clinical conversational agent's interface and dialogue against cognitive load theory, Baddeley's working-memory model, dual-process theory, and Levelt's speech-production model (no human subjects).}
       %     \resumeItemListEnd
     \resumeSubHeadingListEnd
-%
+
+
+%-----------PUBLICATIONS-----------
+\section{Publications}
+    \begin{itemize}[leftmargin=0.15in, label={}, itemsep=0pt]
+      \item\small{Mongalo, G. (2026). An Explainable Machine Learning Approach and Provenance Registry for Real-Time Ransomware Detection in ICS. IEEE Big Data 2026, accepted, to appear Dec. 2026 (sole author).}
+      \item\small{Kundu, R. K., Denton, M., Mongalo, G., et al. (2025). Securing Virtual Reality Experiences: Unveiling and Tackling Cybersickness Attacks With Explainable AI. IEEE Trans. Dependable Secure Comput., 22(6).}
+    \end{itemize}
+
+
 %-----------PROGRAMMING SKILLS-----------
 \section{Technical Skills}
  \begin{itemize}[leftmargin=0.15in, label={}]
     \item \small
-    %\textbf{Services}{: Web Development, Web Design,  Software Testing, Information Security, Custom Software Development, AI Engineering, Video Editing, Graphic Design}\\
-     \textbf{Languages}{: Python, C / C++, Swift, SQL (Postgres), Java / C\#, JavaScript}\\
-     \textbf{Frameworks}{: PyTorch, scikit-learn, Flask, SwiftUI, Socket.IO, FastAPI}\\
-     \textbf{Developer Tools}{: Git, Xcode, AWS, Google Cloud Platform, VS Code, Anaconda}\\
-     \textbf{Libraries}{: pandas, NumPy, Matplotlib, PyTorch}
+     \textbf{Languages}{: Python, Swift, C / C++, SQL (Postgres), JavaScript, Java / C\#}\\
+     \textbf{Machine Learning}{: PyTorch, scikit-learn, Hugging Face Transformers, Whisper, pandas, NumPy}\\
+     \textbf{Frameworks}{: SwiftUI, Flask, FastAPI, Socket.IO, React, Node.js}\\
+     \textbf{Developer Tools}{: Git, Docker, Slurm, AWS, Google Cloud Platform, Xcode}
  \end{itemize}
 
 

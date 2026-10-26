@@ -2,8 +2,8 @@
  * The resume as a library of bullets, for the personalizer on /resume.
  *
  * The personalizer picks from here and never writes new facts: every bullet is
- * lifted from resume/resume.tex, the published PDF, or the other files in
- * src/data. A model may reword a bullet, but src/lib/resume/verify.ts rejects
+ * lifted from resume/resume.tex, the published PDF, the other files in
+ * src/data, or the published /LegacyScribe page (its measured numbers). A model may reword a bullet, but src/lib/resume/verify.ts rejects
  * any rewrite that drops a number or a listed skill, adds a tool, or claims
  * more ownership than the source. So a fact has to be in here to reach a page.
  *
@@ -75,33 +75,34 @@ export const meta = {
 export const sections: Section[] = [
   { id: 'education', title: 'Education' },
   { id: 'experience', title: 'Experience' },
-  { id: 'publications', title: 'Publications & Presentations' },
   { id: 'projects', title: 'Projects' },
+  { id: 'publications', title: 'Publications' },
   {
     id: 'skills',
     title: 'Technical Skills',
     lines: [
-      { label: 'Languages', items: ['Python', 'C / C++', 'Swift', 'SQL (Postgres)', 'Java / C#', 'JavaScript'],
-        pool: ['TypeScript', 'Solidity', 'Racket'] },
-      { label: 'Frameworks', items: ['PyTorch', 'scikit-learn', 'Flask', 'SwiftUI', 'Socket.IO', 'FastAPI'],
-        pool: ['Hugging Face Transformers', 'React', 'Node.js', 'Express', 'Hardhat'] },
-      { label: 'Developer Tools', items: ['Git', 'Xcode', 'AWS', 'Google Cloud Platform', 'VS Code', 'Anaconda'],
-        pool: ['Docker', 'Slurm', 'Ollama', 'Weights & Biases', 'Cloudflare Workers'] },
-      { label: 'Libraries', items: ['pandas', 'NumPy', 'Matplotlib'], pool: ['Gymnasium', 'Leaflet'] },
+      { label: 'Languages', items: ['Python', 'Swift', 'C / C++', 'SQL (Postgres)', 'JavaScript', 'Java / C#'],
+        pool: ['TypeScript', 'Solidity'] },
+      { label: 'Machine Learning', items: ['PyTorch', 'scikit-learn', 'Hugging Face Transformers', 'Whisper', 'pandas', 'NumPy'],
+        pool: ['Ollama', 'Gymnasium', 'Weights & Biases', 'Matplotlib'] },
+      { label: 'Frameworks', items: ['SwiftUI', 'Flask', 'FastAPI', 'Socket.IO', 'React', 'Node.js'],
+        pool: ['Express', 'Hardhat', 'Leaflet'] },
+      { label: 'Developer Tools', items: ['Git', 'Docker', 'Slurm', 'AWS', 'Google Cloud Platform', 'Xcode'],
+        pool: ['Cloudflare Workers', 'Anaconda', 'VS Code'] },
     ],
   },
 ];
 
 export const entries: Entry[] = [
   {
+    id: 'edu-gt', section: 'education', always: true, bullets: [],
+    title: 'Georgia Institute of Technology', right: 'Atlanta, GA',
+    sub: 'Master of Science in Computer Science, emphasis in Artificial Intelligence', subRight: 'Expected 2027',
+  },
+  {
     id: 'edu-umkc', section: 'education', always: true, bullets: [],
     title: 'University of Missouri-Kansas City (UMKC)', right: 'Kansas City, MO',
     sub: 'Bachelor of Science in Computer Science, summa cum laude', subRight: 'Aug. 2021 -- Dec. 2024',
-  },
-  {
-    id: 'edu-gt', section: 'education', always: true, bullets: [],
-    title: 'Georgia Tech', right: 'Atlanta, GA',
-    sub: 'Masters in Computer Science - Emphasis on Artificial Intelligence', subRight: 'Expected 2027',
   },
   {
     id: 'exp-ghw', section: 'experience', always: true, min: 2,
@@ -111,9 +112,11 @@ export const entries: Entry[] = [
   },
   {
     id: 'exp-afrl', section: 'experience', always: true, min: 1,
-    title: 'Federal AI/ML Research Engineer', right: 'May 2025 -- August 2025',
+    /* Stated as a contracting role, as on the Experience page; cleared with the
+       AFRL supervisor. Results stay at the level of "+50 points" (CUI). */
+    title: 'Federal AI/ML Engineer Contractor', right: 'May 2025 -- August 2025',
     sub: 'AFRL Sensors Directorate Contracting Program, University of Dayton', subRight: 'Dayton, OH',
-    bullets: ['afrl-gen', 'afrl-gan', 'afrl-result', 'afrl-modal'],
+    bullets: ['afrl-gen', 'afrl-gan', 'afrl-modal'],
   },
   {
     id: 'exp-reu-umkc', section: 'experience', always: true, min: 1,
@@ -139,13 +142,20 @@ export const entries: Entry[] = [
     sub: 'SPCN 2020 and IEEE Brain Initiative BDBC Conference, Taiwan',
     bullets: ['spcn-site'],
   },
-  { id: 'pubs', section: 'publications', headingless: true, bullets: ['pres-bigdata', 'pub-tdsc'] },
-  { id: 'prj-deepracer', section: 'projects', title: 'AWS DeepRacer', tags: 'Reinforcement Learning, AWS',
-    bullets: ['deepracer-train', 'deepracer-reward'] },
+  { id: 'pubs', section: 'publications', headingless: true, bullets: ['pub-bigdata', 'pub-tdsc'] },
+  { id: 'prj-legacyscribe', section: 'projects', title: 'LegacyScribe', tags: 'Swift, SwiftUI, MLX, Speech Recognition, LLMs',
+    bullets: ['scribe-asr', 'scribe-llm', 'scribe-ondevice', 'scribe-private', 'scribe-practice'] },
+  /* This site: the tailoring you are using and the chat assistant. */
+  { id: 'prj-site', section: 'projects', title: 'gmango.dev', tags: 'React, TypeScript, LLMs',
+    bullets: ['site-tailor', 'site-chat'] },
+  { id: 'prj-deepracer', section: 'projects', title: 'AWS DeepRacer', tags: 'Reinforcement Learning, TD3, Docker',
+    bullets: ['deepracer-reward', 'deepracer-train'] },
   { id: 'prj-ransomware', section: 'projects', title: 'Ransomware Detection for Critical Infrastructure',
     tags: 'PyTorch, Transformers', bullets: ['ransom-study'] },
   { id: 'prj-dysarthria', section: 'projects', title: 'Dysarthria Speech Understanding',
-    tags: 'PyTorch, Whisper, wav2vec2', bullets: ['dys-eval'] },
+    tags: 'PyTorch, Whisper, wav2vec2', bullets: ['dys-eval', 'dys-findings'] },
+  { id: 'prj-cogload', section: 'projects', title: 'Cognitive-Load-Aware Conversational Design',
+    tags: 'HCI, Cognitive Science', bullets: ['cogload-analysis'] },
   { id: 'prj-lunar', section: 'projects', title: 'LunarLander Continuous Control',
     tags: 'PyTorch, TD3, Gymnasium', bullets: ['lunar-study'] },
   { id: 'prj-overcooked', section: 'projects', title: 'Overcooked Multi-Agent RL', tags: 'PPO, Python',
@@ -154,13 +164,12 @@ export const entries: Entry[] = [
     bullets: ['classical-suite'] },
   { id: 'prj-blockchain', section: 'projects', title: 'Federated Blockchain Model Registry',
     tags: 'Solidity, React, IPFS', bullets: ['chain-registry'] },
-  { id: 'prj-carebeyond', section: 'projects', title: 'Care Beyond', tags: 'React, Leaflet, Node.js',
+  { id: 'prj-carebeyond', section: 'projects', title: 'Care Beyond (checkpointkc.com)', tags: 'React, Leaflet, Node.js, Express',
     bullets: ['care-map'] },
+  { id: 'prj-unbound', section: 'projects', title: 'Unbound Family Portal', tags: 'ASP.NET Razor, C#, Azure',
+    bullets: ['unbound-portal'] },
   { id: 'prj-raytracer', section: 'projects', title: 'Recursive Ray Tracer', tags: 'Java, Computer Graphics',
     bullets: ['ray-tracer'] },
-  { id: 'prj-racket', section: 'projects', title: 'Racket Parser', tags: 'Racket', bullets: ['racket-parser'] },
-  { id: 'prj-phonebook', section: 'projects', title: 'Phonebook Management System', tags: 'Java, SQL',
-    bullets: ['phonebook'] },
 ];
 
 /**
@@ -169,21 +178,23 @@ export const entries: Entry[] = [
  * smaller rather than lose one (fit.ts).
  */
 export const defaultBullets = [
-  'ghw-port', 'ghw-dsp', 'ghw-speech', 'ghw-llm',
-  'afrl-gen', 'afrl-modal', 'afrl-gan', 'afrl-result',
-  'reu-ics', 'pres-bigdata', 'deepracer-train',
+  'ghw-port', 'ghw-dsp', 'ghw-llm', 'ghw-lead',
+  'afrl-gen', 'afrl-gan',
+  'reu-ics',
+  'scribe-asr', 'care-map', 'dys-eval',
+  'pub-bigdata', 'pub-tdsc',
 ];
 
 export const fragments: Fragment[] = [
   // Geometry Health and Wellness
   { id: 'ghw-port', priority: 5, tags: ['health', 'mobile', 'signal'], skills: ['MATLAB', 'iOS'],
-    text: 'Ported clinically validated mobility assessments from MATLAB research prototypes to a production iOS app, matching the clinical reference within 0.56% on a 15-biomarker postural-sway test and reproducing 10-meter-walk gait speed exactly.' },
+    text: 'Ported clinically validated mobility assessments from MATLAB prototypes to a production iOS app, within 0.56% of the clinical reference on a 15-biomarker postural-sway test and exact on 10-meter-walk gait speed.' },
   { id: 'ghw-dsp', priority: 5, tags: ['health', 'mobile', 'signal'], skills: ['Swift', 'CoreMotion', 'Butterworth filtering', 'PCA'],
-    text: 'Built the on-device biomarker signal-processing pipeline in Swift: 100 Hz CoreMotion capture, gravity removal, zero-phase Butterworth band-pass filtering, double integration, and PCA into 15 biomarkers with automated quality flags.' },
+    text: 'Built the on-device biomarker pipeline in Swift: 100 Hz CoreMotion capture, gravity removal, zero-phase Butterworth band-pass filtering, double integration, and PCA into 15 biomarkers with quality flags.' },
   { id: 'ghw-speech', priority: 4, tags: ['ml', 'health', 'speech', 'llm', 'mobile'], skills: ['Apple Speech', 'Whisper', 'LLM'],
     text: 'Built a speech assessment pipeline pairing on-device Apple Speech for live partials with a Whisper backend and LLM transcript normalization, with a patient-review panel, to catch the communication deficits that affect one in three stroke survivors.' },
   { id: 'ghw-llm', priority: 5, tags: ['ml', 'health', 'llm', 'web'], skills: ['LLM', 'PubMed', 'Entrez', 'Ollama', 'DeepSeek-V2', 'Flask', 'REST', 'WebSocket'],
-    text: 'Implemented an end-to-end LLM workflow for a context-aware clinical assistant (data prep, patient-context retrieval, PubMed/NCBI evidence via Entrez), deployed on a self-hosted Ollama DeepSeek-V2 16B model with Flask REST + WebSocket streaming under 1s latency.' },
+    text: 'Built an end-to-end clinical LLM assistant with patient-context retrieval and PubMed evidence via Entrez, self-hosted on Ollama (DeepSeek-V2 16B) and streaming over Flask REST + WebSocket in under 1 s.' },
   { id: 'ghw-collect', priority: 3, tags: ['health', 'mobile', 'data'], skills: ['iOS', 'JSON'],
     text: 'Built the in-house iOS data-collection app for motion, survey, and fall/emergency data; each trial exports as timestamped JSON into the labeled datasets the models are validated against.' },
   { id: 'ghw-lead', priority: 4, tags: ['lead', 'health'], skills: [],
@@ -193,17 +204,15 @@ export const fragments: Fragment[] = [
 
   // AFRL
   { id: 'afrl-gen', priority: 5, tags: ['ml', 'genai', 'vision', 'defense', 'research'], skills: ['Generative AI', 'CNN', 'Transfer learning'],
-    text: 'Led development of generative AI models that let a CNN classifier recognize real objects after training only on generated data, carried over by transfer learning, for AFRL/DoD priorities.' },
+    text: 'Built generative AI models that let a CNN classifier recognize real objects after training only on generated data, carried over by transfer learning, for AFRL/DoD.' },
   { id: 'afrl-gan', priority: 4, tags: ['ml', 'genai', 'research', 'infra', 'defense'], skills: ['GAN', 'Game theory', 'Slurm'],
-    text: 'Created a game theory approach to GAN training that made the generator far stronger than standard training did, run at scale on Slurm-parallelized compute.' },
-  { id: 'afrl-result', priority: 5, tags: ['ml', 'genai', 'vision', 'research', 'defense'], skills: [],
-    text: 'Training on the generator’s output raised downstream classifier accuracy by 50 percentage points over the baseline.' },
+    text: 'Devised a game-theoretic GAN training scheme, run on Slurm-parallelized compute; training on its output raised downstream classifier accuracy 50 percentage points over the baseline.' },
   { id: 'afrl-modal', priority: 3, tags: ['ml', 'vision', 'research', 'defense'], skills: ['PyTorch'],
     text: 'Adapted state-of-the-art PyTorch classifiers to imaging modalities they were not designed for.' },
 
   // NSF REU, UMKC
-  { id: 'reu-ics', priority: 5, tags: ['ml', 'security', 'llm', 'research'], skills: ['LLM', 'IEEE Big Data'],
-    text: 'Engineered an LLM that detects ransomware in Industrial Control Systems at 99% binary and 91% family classification accuracy; presented it at IEEE Big Data 2024 as solo author, with mentor guidance.' },
+  { id: 'reu-ics', priority: 5, tags: ['ml', 'security', 'llm', 'research'], skills: ['Transformer', 'IEEE Big Data'],
+    text: 'Built a transformer-based model that detects ransomware in Industrial Control Systems at 99% binary and 91% family classification accuracy; presented it at IEEE Big Data 2024 as solo author, now accepted for publication.' },
 
   // NSF REU, Mizzou
   { id: 'mu-cyber', priority: 3, tags: ['ml', 'research', 'xr'], skills: ['Transformer'],
@@ -222,20 +231,38 @@ export const fragments: Fragment[] = [
     text: 'Built and ran the website for the 5th International Symposium on Audio and Video Signal Processing in the Context of Neurotechnology while the conference ran remotely across multiple countries.' },
 
   // Publications and presentations
-  { id: 'pres-bigdata', priority: 4, fixed: true, tags: ['security', 'llm', 'research'], skills: ['IEEE Big Data'],
-    text: 'Mongalo, G. (Dec. 2024). LLM Based Approach to Real Time Ransomware Detection for Industrial Control Systems. Presented at IEEE Big Data 2024, Washington, D.C. (Presenter & Author, solo work with mentor guidance).' },
-  { id: 'pub-tdsc', priority: 3, fixed: true, tags: ['research', 'security', 'xr'], skills: ['Explainable AI'],
-    text: 'Kundu, R. K., Denton, M., Mongalo, G., Calyam, P., Hoque, K. A. (2025). Securing Virtual Reality Experiences: Unveiling and Tackling Cybersickness Attacks With Explainable AI. IEEE Transactions on Dependable and Secure Computing, 22(6).' },
+  { id: 'pub-bigdata', priority: 5, fixed: true, tags: ['ml', 'security', 'research'], skills: ['Explainable AI', 'IEEE Big Data'],
+    text: 'Mongalo, G. (2026). An Explainable Machine Learning Approach and Provenance Registry for Real-Time Ransomware Detection in ICS. IEEE Big Data 2026, accepted, to appear Dec. 2026 (sole author).' },
+  { id: 'pub-tdsc', priority: 4, fixed: true, tags: ['research', 'security', 'xr'], skills: ['Explainable AI'],
+    text: 'Kundu, R. K., Denton, M., Mongalo, G., et al. (2025). Securing Virtual Reality Experiences: Unveiling and Tackling Cybersickness Attacks With Explainable AI. IEEE Trans. Dependable Secure Comput., 22(6).' },
 
   // Projects
-  { id: 'deepracer-train', priority: 4, tags: ['ml', 'rl', 'infra'], skills: ['Reinforcement learning', 'AWS'],
-    text: 'Trained and tuned reinforcement-learning policies for a 1/18-scale autonomous vehicle on AWS, iterating on reward functions and scoring the laps each policy ran.' },
-  { id: 'deepracer-reward', priority: 3, tags: ['ml', 'rl'], skills: ['TD3', 'Reward shaping'],
-    text: 'Designed the reward-shaping scheme for a TD3 policy: center-line distance bands, heading alignment with upcoming waypoints, a speed-versus-steering trade-off, and penalties for leaving the track or crashing.' },
+  { id: 'scribe-asr', priority: 5, tags: ['ml', 'speech', 'mobile'], skills: ['Swift', 'SwiftUI', 'MLX', 'Speech recognition'],
+    text: 'Built an on-device macOS dictation app I use daily (a SwiftUI fork of Hex) with swappable speech engines: 5.3% word error rate on Cohere Transcribe/MLX vs 8.8% on Parakeet, 10 s of audio in about 0.33 s.' },
+  { id: 'scribe-llm', priority: 4, tags: ['llm', 'speech'], skills: ['LLM'],
+    text: 'Added an LLM pass that cleans up a transcript or reshapes a spoken ramble into a structured prompt for a coding agent, and pastes the raw transcript if every model endpoint fails.' },
+  { id: 'scribe-ondevice', priority: 3, tags: ['llm', 'mobile', 'speech'], skills: ['Qwen3', 'On-device inference'],
+    text: 'Runs transcript rewriting on-device with Qwen3 4B (4-bit) in 0.4–1.5 s for dictations of up to 55 words; the live caption shows its first word a median 0.74 s after speech starts.' },
+  { id: 'scribe-private', priority: 3, tags: ['security', 'mobile', 'speech'], skills: [],
+    text: 'Built a private mode that opens zero network connections, verified by a test that samples the app’s sockets every 10 ms during a real dictation.' },
+  { id: 'scribe-practice', priority: 2, tags: ['speech', 'mobile'], skills: [],
+    text: 'Added a read-aloud practice mode built from 280 sentences covering all 39 English sounds and 881 sound pairs, plus vocabulary suggestions drawn from what the user actually sent after editing.' },
+  { id: 'site-tailor', priority: 3, tags: ['llm', 'web', 'ml'], skills: ['React', 'TypeScript', 'LLM'],
+    text: 'Built gmango.dev’s résumé tailoring: in-browser matching re-ranks a bullet library on every keystroke, a typesetter keeps the page to one sheet, a language model rewords, and a rule-based checker rejects any rewrite that drops a number, adds a tool, or claims more.' },
+  { id: 'site-chat', priority: 2, tags: ['llm', 'web'], skills: ['LLM', 'Node.js'],
+    text: 'Built the site’s chat assistant, grounded in a knowledge file generated from the site’s own data at build time; it can only attach links from a generated menu, so it never sends a visitor to a page that does not exist.' },
+  { id: 'deepracer-train', priority: 3, tags: ['ml', 'rl', 'infra'], skills: ['Reinforcement learning', 'Docker'],
+    text: 'Trained a TD3 policy for a simulated 1/18-scale autonomous car in a containerized local DeepRacer stack (Docker), GPU-accelerated on Apple Silicon, scoring the laps each policy ran.' },
+  { id: 'deepracer-reward', priority: 4, tags: ['ml', 'rl'], skills: ['TD3', 'Reward shaping'],
+    text: 'Hand-shaped the reward for a TD3 policy driving a simulated 1/18-scale car: center-line distance bands, heading toward upcoming waypoints, a speed-versus-steering trade-off, and penalties for leaving the track.' },
   { id: 'ransom-study', priority: 3, tags: ['ml', 'security', 'research', 'llm'], skills: ['PyTorch', 'scikit-learn', 'CNN', 'RoBERTa', 'ALBERT'],
     text: 'Compared a DNN, a 1-D CNN, and RoBERTa- and ALBERT-style transformers for ransomware detection from Windows API-call features, cutting ~31,000 features to 1,000 by chi-squared selection; about 98% binary accuracy in PyTorch and scikit-learn.' },
-  { id: 'dys-eval', priority: 3, tags: ['ml', 'speech', 'health', 'research'], skills: ['Whisper', 'wav2vec2', 'Multi-task learning'],
+  { id: 'dys-eval', priority: 4, tags: ['ml', 'speech', 'health', 'research'], skills: ['Whisper', 'wav2vec2', 'Multi-task learning'],
     text: 'Built the ASR evaluation harness and Whisper multi-task grid for dysarthric speech, run leave-one-speaker-out across 43 speakers: 10.44 MAE on intelligibility and 0.809 quadratic weighted kappa on severity.' },
+  { id: 'dys-findings', priority: 3, tags: ['ml', 'speech', 'health', 'research'], skills: ['Whisper', 'wav2vec2'],
+    text: 'Measured transcription degrading roughly thirteen-fold from control to impaired speakers on identical prompts, with Whisper and wav2vec2 failing in opposite directions: fluent but wrong versus visibly broken.' },
+  { id: 'cogload-analysis', priority: 2, tags: ['hci', 'llm', 'health', 'research'], skills: ['HCI', 'Cognitive load theory'],
+    text: 'Analyzed a deployed clinical conversational agent’s interface and dialogue against cognitive load theory, Baddeley’s working-memory model, dual-process theory, and Levelt’s speech-production model (no human subjects).' },
   { id: 'lunar-study', priority: 2, tags: ['ml', 'rl'], skills: ['PyTorch', 'TD3', 'Gymnasium', 'Weights & Biases'],
     text: 'Trained and compared five reinforcement-learning algorithms on LunarLanderContinuous in PyTorch, with a hyperparameter sweep, a TD3 actor-critic architecture experiment, and Weights & Biases run tracking.' },
   { id: 'overcooked-ppo', priority: 2, tags: ['ml', 'rl'], skills: ['PPO', 'Multi-agent RL'],
@@ -244,14 +271,12 @@ export const fragments: Fragment[] = [
     text: 'Implemented classical AI from first principles: bidirectional and tridirectional A* over the Atlanta road network, alpha-beta search, Bayesian networks with Gibbs sampling, EM image segmentation, and HMM sign recognition.' },
   { id: 'chain-registry', priority: 2, tags: ['blockchain', 'web'], skills: ['Solidity', 'Hardhat', 'IPFS', 'React', 'MetaMask'],
     text: 'Built a federated-learning model registry on Ethereum: Solidity contracts deployed with Hardhat record each model’s IPFS content ID, with a React frontend wired to MetaMask and an automated Hardhat test suite.' },
-  { id: 'care-map', priority: 2, tags: ['web'], skills: ['React', 'Leaflet', 'Node.js', 'Express'],
-    text: 'Built a live map of food, shelter, clothing, and medical resources searchable by address or ZIP, with radius results, color-coded markers, and posting limited to verified organizations.' },
+  { id: 'care-map', priority: 4, tags: ['web'], skills: ['React', 'Leaflet', 'Node.js', 'Express'],
+    text: 'Built and deployed a live map of food, shelter, clothing, and medical resources from local organizations, searchable by address or ZIP within a radius; only verified organizations post, signing in with a one-time email code.' },
+  { id: 'unbound-portal', priority: 2, tags: ['web', 'security'], skills: ['ASP.NET Razor', 'Azure'],
+    text: 'Led the security and permissions logic for a sponsor-family letter portal (ASP.NET Razor on Azure) serving thousands of families, keeping private messages, many from children, between their intended readers on slow connections.' },
   { id: 'ray-tracer', priority: 1, tags: ['graphics'], skills: ['Java'],
     text: 'Built a recursive ray tracer in Java: ray-sphere, ray-triangle, and box intersection, Phong shading with shadow rays, recursive reflection, instancing, and a bounding-volume hierarchy.' },
-  { id: 'racket-parser', priority: 1, tags: ['compilers'], skills: ['Racket'],
-    text: 'Wrote a Racket parser for a small FORTRAN-like language that checks source files against a defined grammar and reports the exact line of an invalid construct.' },
-  { id: 'phonebook', priority: 1, tags: ['web', 'data'], skills: ['Java', 'SQL'],
-    text: 'Built a Java phonebook application with a SQL backend: hashed-password registration, contact CRUD, search, and CSV export.' },
 ];
 
 /**
@@ -269,7 +294,7 @@ export const DOMAINS: Record<string, string[]> = {
   vision: ['vision', 'computer vision', 'image', 'imaging', 'cnn', 'perception', 'detection', 'classification'],
   rl: ['reinforcement', 'rl', 'policy', 'reward', 'robotics', 'autonomous', 'control', 'agents', 'simulation'],
   speech: ['speech', 'audio', 'asr', 'voice', 'transcription'],
-  security: ['security', 'cybersecurity', 'cyber', 'ransomware', 'malware', 'threat', 'adversarial', 'infrastructure'],
+  security: ['security', 'cybersecurity', 'cyber', 'ransomware', 'malware', 'threat', 'adversarial', 'infrastructure', 'privacy', 'private', 'offline', 'local-first'],
   defense: ['defense', 'defence', 'dod', 'federal', 'government', 'military', 'clearance', 'air force', 'national lab'],
   research: ['research', 'researcher', 'scientist', 'phd', 'paper', 'publication', 'publications', 'lab', 'academic'],
   infra: ['cloud', 'aws', 'gcp', 'hpc', 'cluster', 'distributed', 'parallel', 'mlops', 'infrastructure', 'deploy', 'deployment'],
@@ -279,5 +304,5 @@ export const DOMAINS: Record<string, string[]> = {
   blockchain: ['blockchain', 'web3', 'ethereum', 'solidity', 'crypto', 'smart contract'],
   xr: ['vr', 'ar', 'xr', 'virtual reality', 'augmented reality', 'headset'],
   graphics: ['graphics', 'rendering', 'ray tracing', 'game', 'games', '3d'],
-  compilers: ['compiler', 'compilers', 'parser', 'parsing', 'language design'],
+  hci: ['hci', 'ux', 'user experience', 'usability', 'human-computer', 'interaction design', 'cognitive', 'conversational design'],
 };
