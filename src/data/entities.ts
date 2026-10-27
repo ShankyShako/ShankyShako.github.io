@@ -15,7 +15,7 @@ export type Entity = { aliases: string[]; href: string; label: string };
  * entirely: a link to the wrong role is worse than no link.
  */
 const EXTRA: Record<string, string[]> = {
-  'geometry-health-wellness': ['Geometry Health', 'Geometry'],
+  'geometry-neuroscience': ['Geometry Health and Wellness', 'Geometry Health', 'Geometry'],
   'afrl-sensors-directorate': [
     'AFRL',
     'Air Force Research Laboratory',

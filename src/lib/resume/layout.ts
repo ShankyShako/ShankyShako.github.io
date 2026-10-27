@@ -202,6 +202,15 @@ function layout(page: PageSection[], fonts: Fonts, scale: number): Plan {
     commands.push(cmd);
     return cmd;
   };
+  /* Points `cmd` at `href`: a link box over `label` (the PDF's annotation) and
+     a hairline under it, the same marks the contact line gets. */
+  const link = (cmd: TextCmd, label: string, href?: string) => {
+    if (!href) return;
+    const w = W(cmd.font, label, cmd.size);
+    cmd.href = href;
+    cmd.linkBox = { x: cmd.x, y: cmd.y - cmd.size * 0.8, w, h: cmd.size * 1.05 };
+    commands.push({ kind: 'rule', x1: cmd.x, x2: cmd.x + w, y: cmd.y + 1.5 * scale, thickness: 0.4 * scale });
+  };
 
   // ---- header: name and contact on the left, QR code top right
   const bw = BADGE.sizeIn * 72 * scale;
@@ -279,7 +288,8 @@ function layout(page: PageSection[], fonts: Fonts, scale: number): Plan {
         // Project row: \small \textbf{Title} | \emph{tags}
         let x = ex;
         for (const [str, font] of [[`${e.title} `, 'bold'], ['| ', 'regular'], [e.tags, 'italic']] as const) {
-          text(str, font, base, x, bodyBox);
+          const cmd = text(str, font, base, x, bodyBox);
+          if (font === 'bold') link(cmd, e.title ?? '', e.titleHref);
           x += W(font, str, base);
         }
         y += bodyBox;
@@ -300,7 +310,7 @@ function layout(page: PageSection[], fonts: Fonts, scale: number): Plan {
           const subRW = subR ? W('italic', subR, base) : 0;
           const lines = wrap(e.sub ?? '', fonts.italic, base, rowW - subRW - (subR ? datesGap : 0));
           (lines.length ? lines : ['']).forEach((line, n) => {
-            if (line) text(n === 0 && subR ? `${line} ` : line, 'italic', base, ex, bodyBox);
+            if (line) link(text(n === 0 && subR ? `${line} ` : line, 'italic', base, ex, bodyBox), line, e.subHref);
             if (n === 0 && subR) text(subR, 'italic', base, ex + rowW - subRW, bodyBox);
             y += bodyBox;
           });

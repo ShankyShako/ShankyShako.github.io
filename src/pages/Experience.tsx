@@ -37,7 +37,12 @@ export function Experience() {
               id={anchors.experience.get(role.org)}
             >
               <h2>
-                {role.org} · <u>{role.title}</u>
+                {role.href ? (
+                  <a className="experience-org-link" href={role.href} target="_blank" rel="noopener noreferrer">{role.org}</a>
+                ) : (
+                  role.org
+                )}{' '}
+                · <u>{role.title}</u>
               </h2>
               <span className="experience-date">{role.date}</span>
               <p>{role.blurb}</p>

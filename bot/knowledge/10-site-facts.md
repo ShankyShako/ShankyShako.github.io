@@ -21,7 +21,7 @@ script to recite.
 - **Cybersecurity** — ransomware detection for Industrial Control Systems,
   presented at IEEE Big Data 2024; the NSF REU was AI-Empowered Cybersecurity.
 - **Aerospace** — NASA Missouri Space Grant Consortium.
-- **Healthcare** — Geometry Health and Wellness.
+- **Healthcare** — Geometry NeuroScience.
 
 A posting asking for security or defense domain experience is asking for
 something he has, not something he lacks.
@@ -58,7 +58,7 @@ Undergraduate coursework:
 
 ## Experience
 
-### Founding AI/ML Product Engineer — Geometry Health and Wellness
+### Founding AI/ML Product Engineer — Geometry NeuroScience
 *September 2025 – Present*
 
 Founding engineer on a clinical mobility platform, from MVP to production. I ported clinically validated mobility assessments out of research prototypes and into a production iOS app, matching the clinical reference to within a fraction of a percent. I wrote the on-device biomarker signal-processing pipeline in Swift, along with the in-house data-collection app that produces the labeled datasets those models are validated against. I also built an end-to-end LLM workflow for a context-aware clinical assistant, covering data preparation, patient context retrieval, and lookup of peer-reviewed evidence, running on a self-hosted deployment that streams responses in under a second. I own the architecture and the sprint cycle. The methodology itself is proprietary, so the details stay off this page.
@@ -126,10 +126,10 @@ Repo: https://github.com/ShankyShako/LegacyScribe — Swift, SwiftUI, Speech Rec
 
 A macOS dictation app I use all day: hold a key, talk, and the text is pasted into whatever app has focus. Speech recognition runs on-device, with a choice of engines; Cohere Transcribe on MLX gets 5.3% word error rate on my voice against 8.8% for the default Parakeet, and transcribes 10 seconds of audio in about a third of a second. An optional LLM pass cleans up the transcript or reshapes a long spoken ramble into a structured prompt for a coding agent, and it can merge new dictation into a draft already sitting in the text box. If every model endpoint fails, the raw transcript is pasted anyway, so a bad network never costs a dictation. It also reads back what I actually sent after editing, which feeds vocabulary suggestions, and has a read-aloud practice mode built from 280 sentences covering all 39 English sounds and 881 sound pairs. Written in SwiftUI with The Composable Architecture, as a fork of Kit Langton's open-source Hex.
 
-### Care Beyond: Homelessness Resource Map (2025)
+### CheckpointKC: Homelessness Resource Map (2025)
 Repo: https://www.checkpointkc.com/ — React, Leaflet, Node.js, Express, Geospatial
 
-A live map of food, shelter, clothing, and medical resources from local organizations, so someone with nowhere to sleep tonight can find the nearest shelter from a library computer. Search by street address or ZIP, filter by distance, and read the color-coded markers by resource type. Anyone can read the community feed. Only verified organizations can post, and they sign in with a one-time email code instead of a password.
+A live map of food, shelter, clothing, and medical resources from local organizations, so someone with nowhere to sleep tonight can find the nearest shelter from a library computer. Care Beyond is one of the organizations that posts on it. Search by street address or ZIP, filter by distance, and read the color-coded markers by resource type. Anyone can read the community feed. Only verified organizations can post, and they sign in with a one-time email code instead of a password.
 
 ### AWS DeepRacer: Reward Shaping (2026)
 Tags: Reinforcement Learning, TD3, Reward Shaping, Docker, Simulation
@@ -227,13 +227,13 @@ Any other value is discarded, so inventing one just loses you the button.
 - `email` — Email Genova
 - `ransomware-detection` — Ransomware Detection for Critical Infrastructures (repo)
 - `legacyscribe-on` — LegacyScribe: On-Device Dictation for macOS (repo)
-- `care-beyond` — Care Beyond: Homelessness Resource Map (repo)
+- `checkpointkc-homelessness` — CheckpointKC: Homelessness Resource Map (repo)
 - `federated-blockchain` — Federated Blockchain: Model Registry (repo)
 - `racket-parser` — Racket Parser (repo)
 - `phonebook-management` — Phonebook Management System (repo)
 - `sos-game` — SOS Game Implementation (repo)
 - `securing-virtual` — Securing Virtual Reality Experiences: Unveiling and Tackling Cybersickness Attacks With Explainable AI (paper, DOI)
-- `/experience#geometry-health-wellness` — Geometry Health and Wellness
+- `/experience#geometry-neuroscience` — Geometry NeuroScience
 - `/experience#afrl-sensors-directorate` — AFRL Sensors Directorate Internship Program
 - `/experience#nsf-reu-ai` — NSF REU AI-Empowered Cybersecurity
 - `/experience#nsf-reu-consumer` — NSF REU in Consumer Networking
@@ -245,7 +245,7 @@ Any other value is discarded, so inventing one just loses you the button.
 - `/research#dysarthria-speech-understanding` — Dysarthria Speech Understanding: Heterogeneous Multi-Task Learning
 - `/research#cognitive-load-aware` — Cognitive-Load-Aware Conversational Design
 - `/projects#legacyscribe-device-dictation` — LegacyScribe: On-Device Dictation for macOS
-- `/projects#care-beyond-homelessness` — Care Beyond: Homelessness Resource Map
+- `/projects#checkpointkc-homelessness-resource` — CheckpointKC: Homelessness Resource Map
 - `/projects#aws-deepracer-reward` — AWS DeepRacer: Reward Shaping
 - `/projects#lunarlander-continuous-control` — LunarLander: Continuous Control Study
 - `/projects#overcooked-cooperative-multi` — Overcooked: Cooperative Multi-Agent RL

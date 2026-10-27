@@ -35,6 +35,9 @@ export type Entry = {
   subRight?: string;
   /** Project row: "Title | tags", the tags in italic, on one line. */
   tags?: string;
+  /** Links the title / the sub line, underlined like the contact links. */
+  titleHref?: string;
+  subHref?: string;
   /** Printed whatever the query. */
   always?: boolean;
   /** When the entry is on the page, at least this many of its bullets are. */
@@ -107,7 +110,7 @@ export const entries: Entry[] = [
   {
     id: 'exp-ghw', section: 'experience', always: true, min: 2,
     title: 'Founding AI/ML Product Engineer', right: 'September 2025 -- Present',
-    sub: 'Geometry Health and Wellness', subRight: 'Kansas City, MO',
+    sub: 'Geometry NeuroScience', subHref: 'https://ghw.care', subRight: 'Kansas City, MO',
     bullets: ['ghw-port', 'ghw-dsp', 'ghw-speech', 'ghw-llm', 'ghw-collect', 'ghw-lead', 'ghw-stack'],
   },
   {
@@ -143,7 +146,7 @@ export const entries: Entry[] = [
     bullets: ['spcn-site'],
   },
   { id: 'pubs', section: 'publications', headingless: true, bullets: ['pub-bigdata', 'pub-tdsc'] },
-  { id: 'prj-legacyscribe', section: 'projects', title: 'LegacyScribe', tags: 'Swift, SwiftUI, MLX, Speech Recognition, LLMs',
+  { id: 'prj-legacyscribe', section: 'projects', title: 'LegacyScribe', titleHref: `${site.url}/LegacyScribe`, tags: 'Swift, SwiftUI, MLX, Speech Recognition, LLMs',
     bullets: ['scribe-asr', 'scribe-llm', 'scribe-ondevice', 'scribe-private', 'scribe-practice'] },
   /* This site: the tailoring you are using and the chat assistant. */
   { id: 'prj-site', section: 'projects', title: 'gmango.dev', tags: 'React, TypeScript, LLMs',
@@ -164,7 +167,7 @@ export const entries: Entry[] = [
     bullets: ['classical-suite'] },
   { id: 'prj-blockchain', section: 'projects', title: 'Federated Blockchain Model Registry',
     tags: 'Solidity, React, IPFS', bullets: ['chain-registry'] },
-  { id: 'prj-carebeyond', section: 'projects', title: 'Care Beyond (checkpointkc.com)', tags: 'React, Leaflet, Node.js, Express',
+  { id: 'prj-carebeyond', section: 'projects', title: 'CheckpointKC', titleHref: 'https://www.checkpointkc.com', tags: 'React, Leaflet, Node.js, Express',
     bullets: ['care-map'] },
   { id: 'prj-unbound', section: 'projects', title: 'Unbound Family Portal', tags: 'ASP.NET Razor, C#, Azure',
     bullets: ['unbound-portal'] },
@@ -186,7 +189,7 @@ export const defaultBullets = [
 ];
 
 export const fragments: Fragment[] = [
-  // Geometry Health and Wellness
+  // Geometry NeuroScience
   { id: 'ghw-port', priority: 5, tags: ['health', 'mobile', 'signal'], skills: ['MATLAB', 'iOS'],
     text: 'Ported clinically validated mobility assessments from MATLAB prototypes to a production iOS app, within 0.56% of the clinical reference on a 15-biomarker postural-sway test and exact on 10-meter-walk gait speed.' },
   { id: 'ghw-dsp', priority: 5, tags: ['health', 'mobile', 'signal'], skills: ['Swift', 'CoreMotion', 'Butterworth filtering', 'PCA'],
@@ -272,7 +275,7 @@ export const fragments: Fragment[] = [
   { id: 'chain-registry', priority: 2, tags: ['blockchain', 'web'], skills: ['Solidity', 'Hardhat', 'IPFS', 'React', 'MetaMask'],
     text: 'Built a federated-learning model registry on Ethereum: Solidity contracts deployed with Hardhat record each model’s IPFS content ID, with a React frontend wired to MetaMask and an automated Hardhat test suite.' },
   { id: 'care-map', priority: 4, tags: ['web'], skills: ['React', 'Leaflet', 'Node.js', 'Express'],
-    text: 'Built and deployed a live map of food, shelter, clothing, and medical resources from local organizations, searchable by address or ZIP within a radius; only verified organizations post, signing in with a one-time email code.' },
+    text: 'Built and deployed a live map of food, shelter, clothing, and medical resources from local organizations like Care Beyond, searchable by address or ZIP within a radius; only verified organizations post, via one-time email code.' },
   { id: 'unbound-portal', priority: 2, tags: ['web', 'security'], skills: ['ASP.NET Razor', 'Azure'],
     text: 'Led the security and permissions logic for a sponsor-family letter portal (ASP.NET Razor on Azure) serving thousands of families, keeping private messages, many from children, between their intended readers on slow connections.' },
   { id: 'ray-tracer', priority: 1, tags: ['graphics'], skills: ['Java'],

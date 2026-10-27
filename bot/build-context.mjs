@@ -68,7 +68,7 @@ w('- **Defense / DoD** — AFRL Sensors Directorate, on AFRL/DoD priorities.');
 w('- **Cybersecurity** — ransomware detection for Industrial Control Systems,');
 w('  presented at IEEE Big Data 2024; the NSF REU was AI-Empowered Cybersecurity.');
 w('- **Aerospace** — NASA Missouri Space Grant Consortium.');
-w('- **Healthcare** — Geometry Health and Wellness.');
+w('- **Healthcare** — Geometry NeuroScience.');
 w();
 w('A posting asking for security or defense domain experience is asking for');
 w('something he has, not something he lacks.');

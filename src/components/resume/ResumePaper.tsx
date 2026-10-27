@@ -127,7 +127,6 @@ export function ResumePaper({
   };
   const lineNo = new Map<string, number>();
   const seen = new Map<string, number>();
-  let rules = 0;
   const qr = plan.commands.find((c) => c.kind === 'badge');
 
   return (
@@ -157,7 +156,12 @@ export function ResumePaper({
       <g transform={`translate(0 ${plan.top})`}>
         {plan.commands.map((c) => {
           if (c.kind === 'rule') {
-            const key = `rule:${rules++}`;
+            /* Keyed by extent, so a link's underline keeps its element when
+               entries come and go, and section rules count among themselves. */
+            const ext = `${c.x1.toFixed(1)}:${c.x2.toFixed(1)}`;
+            const n = seen.get(`rule:${ext}`) ?? 0;
+            seen.set(`rule:${ext}`, n + 1);
+            const key = `rule:${ext}:${n}`;
             return (
               <line key={key} className="paper-move" x1={c.x1} x2={c.x2} y1={0} y2={0}
                 style={{ transform: `translateY(${c.y}px)` }} stroke="#000" strokeWidth={c.thickness} />

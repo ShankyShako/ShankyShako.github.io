@@ -14,7 +14,7 @@ export type NavItem = { path: string; label: string; title: string; description:
 
 export const nav: NavItem[] = [
   { path: '/', label: 'Home', title: 'Genova Mongalo | ML Engineer & Founding Engineer',
-    description: 'I build machine learning into products people use. Founding engineer at Geometry Health, maker of LegacyScribe, M.S. at Georgia Tech.' },
+    description: 'I build machine learning into products people use. Founding engineer at Geometry NeuroScience, maker of LegacyScribe, M.S. at Georgia Tech.' },
   { path: '/resume', label: 'Resume', title: 'Resume | Genova Mongalo',
     description: 'Resume of Genova Mongalo, ML and founding engineer.' },
   { path: '/education', label: 'Education', title: 'Education | Genova Mongalo',
@@ -26,7 +26,7 @@ export const nav: NavItem[] = [
   { path: '/research', label: 'Research', title: 'Research | Genova Mongalo',
     description: 'Ransomware detection for industrial control systems, dysarthric speech recognition, and a paper on attacks against VR cybersickness detection.' },
   { path: '/experience', label: 'Experience', title: 'Experience | Genova Mongalo',
-    description: 'Geometry Health and Wellness, the AFRL Sensors Directorate, two NSF REUs, and the NASA Missouri Space Grant Consortium.' },
+    description: 'Geometry NeuroScience, the AFRL Sensors Directorate, two NSF REUs, and the NASA Missouri Space Grant Consortium.' },
   { path: '/shop', label: 'Shop', title: 'Shop | Genova Mongalo',
     description: 'Hand-made originals. Limited runs. One of one. All sold out.' },
   { path: '/contact', label: 'Contact', title: 'Contact | Genova Mongalo',

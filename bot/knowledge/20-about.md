@@ -5,7 +5,7 @@ the *why*.
 
 ## What he wants right now
 
-He is **founding AI/ML product engineer at Geometry Health and Wellness**, and
+He is **founding AI/ML product engineer at Geometry NeuroScience**, and
 **open to new roles** — contract or full-time. Applied ML, or platform and
 infrastructure work, with enough research in it to stay interesting; not a
 research-only post.
@@ -182,7 +182,7 @@ theirs — he came back with contacts, a reading list, and repos to pull apart.
 He had gone in fairly certain he was done with school. He started applying to
 master's programmes almost immediately after.
 
-## Geometry Health — the current role
+## Geometry NeuroScience — the current role
 
 His most substantial engineering work, and the one closest to what he wants
 next: applied ML sitting on real infrastructure, in production, owned end to

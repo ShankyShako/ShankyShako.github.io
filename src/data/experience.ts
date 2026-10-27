@@ -27,23 +27,26 @@ export type Role = {
   bullets?: string[];
   /** Institution then programme. One is fine; the lockup centres either way. */
   logos?: Logo[];
+  /** The organisation's own site. The org name links to it. */
+  href?: string;
 };
 
 export const experience: Role[] = [
   {
-    org: 'Geometry Health and Wellness',
+    org: 'Geometry NeuroScience',
+    href: 'https://ghw.care',
     title: 'Founding AI/ML Product Engineer',
     date: 'September 2025 – Present',
     blurb:
       'Founding engineer on a clinical mobility platform, from MVP to production. I ported clinically validated mobility assessments out of research prototypes and into a production iOS app, matching the clinical reference to within a fraction of a percent. I wrote the on-device biomarker signal-processing pipeline in Swift, along with the in-house data-collection app that produces the labeled datasets those models are validated against. I also built an end-to-end LLM workflow for a context-aware clinical assistant, covering data preparation, patient context retrieval, and lookup of peer-reviewed evidence, running on a self-hosted deployment that streams responses in under a second. I own the architecture and the sprint cycle. The methodology itself is proprietary, so the details stay off this page.',
-    short: 'Geometry Health and Wellness',
+    short: 'Geometry NeuroScience',
     tagline: 'A clinical mobility platform, MVP to production.',
     bullets: [
       'Ported clinically validated mobility assessments to a production iOS app, matching the clinical reference to within a fraction of a percent.',
       'Built the on-device biomarker signal-processing pipeline in Swift, plus the data-collection app behind the labeled validation sets.',
       'Shipped a self-hosted clinical LLM assistant that streams in under a second. I own the architecture and the sprint cycle.',
     ],
-    logos: [{ src: '/image/experience/geometry.png', alt: 'Geometry Health and Wellness' }],
+    logos: [{ src: '/image/experience/geometry.png', alt: 'Geometry NeuroScience' }],
 
   },
   {

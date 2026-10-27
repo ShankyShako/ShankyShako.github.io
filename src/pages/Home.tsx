@@ -26,7 +26,7 @@ export function Home() {
           I build machine learning <span className="hero-statement-accent">into products people use.</span>
         </p>
         <p className="hero-line">
-          Founding engineer at Geometry Health. Maker of LegacyScribe. M.S. at Georgia Tech.
+          Founding engineer at Geometry NeuroScience. Maker of LegacyScribe. M.S. at Georgia Tech.
         </p>
 
         <div className="hero-actions">

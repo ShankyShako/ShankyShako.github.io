@@ -91,10 +91,10 @@
       "label": "LegacyScribe: On-Device Dictation for macOS (repo)"
     },
     {
-      "key": "care-beyond",
+      "key": "checkpointkc-homelessness",
       "kind": "external",
       "href": "https://www.checkpointkc.com/",
-      "label": "Care Beyond: Homelessness Resource Map (repo)"
+      "label": "CheckpointKC: Homelessness Resource Map (repo)"
     },
     {
       "key": "federated-blockchain",
@@ -127,10 +127,10 @@
       "label": "Securing Virtual Reality Experiences: Unveiling and Tackling Cybersickness Attacks With Explainable AI (paper, DOI)"
     },
     {
-      "key": "/experience#geometry-health-wellness",
+      "key": "/experience#geometry-neuroscience",
       "kind": "route",
-      "href": "/experience#geometry-health-wellness",
-      "label": "Geometry Health and Wellness"
+      "href": "/experience#geometry-neuroscience",
+      "label": "Geometry NeuroScience"
     },
     {
       "key": "/experience#afrl-sensors-directorate",
@@ -199,10 +199,10 @@
       "label": "LegacyScribe: On-Device Dictation for macOS"
     },
     {
-      "key": "/projects#care-beyond-homelessness",
+      "key": "/projects#checkpointkc-homelessness-resource",
       "kind": "route",
-      "href": "/projects#care-beyond-homelessness",
-      "label": "Care Beyond: Homelessness Resource Map"
+      "href": "/projects#checkpointkc-homelessness-resource",
+      "label": "CheckpointKC: Homelessness Resource Map"
     },
     {
       "key": "/projects#aws-deepracer-reward",
