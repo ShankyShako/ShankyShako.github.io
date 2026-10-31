@@ -9,6 +9,8 @@ export type Project = {
   page?: string;
   /** Given room at the top of the Projects page; everything else is an index row. */
   featured?: true;
+  /** Folder under public/ holding this project's turntable video and 3D model; shown when its row opens. */
+  media?: { folder: string; label: string };
 };
 
 export const projects: Project[] = [
@@ -66,6 +68,14 @@ export const projects: Project[] = [
     tags: ['Java', 'Computer Graphics', 'Rendering'],
     blurb:
       'A ray tracer built up from the intersection math: ray-sphere, ray-triangle, and axis-aligned box tests, Phong shading with shadow rays, recursive reflection, instanced and moving surfaces, and a bounding-volume hierarchy so scenes render in something short of forever. Written in Java against a renderer interface, with a test suite per part. Graduate computer-graphics coursework. The repository is private under the university\'s academic-honesty policy.',
+  },
+  {
+    title: 'Implicit Surface Hand',
+    years: '2026',
+    tags: ['Computer Graphics', 'Rendering'],
+    media: { folder: '/files/implicit-hand/', label: 'a raised hand with a spring of rings at its fingertip' },
+    blurb:
+      "A raised index finger with a spring of rings spinning off its tip, modeled entirely as an implicit surface for Georgia Tech's computer graphics course. Each part of the hand is a sphere, capsule or ellipsoid field with a smooth fall-off, summed so the parts blend into one connected skin; twist and taper deformations shape the finger and the coil, and Marching Cubes turns the field into a triangle mesh. Vertex colors are blended from each part's field contribution, so skin, nails and the blue gradient of the rings mix where they meet.",
   },
   {
     title: 'Federated Blockchain: Model Registry',

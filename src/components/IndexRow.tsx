@@ -10,7 +10,9 @@ export function IndexList({ children }: { children: ReactNode }) {
    button inside the heading (the accordion pattern: a heading may hold a
    button, a button may not hold a heading), stretched over the whole row so
    anywhere on it toggles; the full write-up opens in place. A chat-bot deep
-   link (`#id`) opens its row on arrival and when the hash changes. Without
+   link (`#id`) opens its row on arrival and when the hash changes. Children
+   may be a function of `open`, for content that should exist only while the
+   row is open (media that would otherwise load behind `hidden`). Without
    children the row is static: there is nothing more to show. */
 export function IndexRow({
   id,
@@ -23,7 +25,7 @@ export function IndexRow({
   title: ReactNode;
   meta?: ReactNode;
   summary: ReactNode;
-  children?: ReactNode;
+  children?: ReactNode | ((open: boolean) => ReactNode);
 }) {
   const { hash } = useLocation();
   const targeted = !!id && hash === `#${id}`;
@@ -59,7 +61,7 @@ export function IndexRow({
       </div>
       {expandable && (
         <div id={panelId} className="idx-panel" hidden={!open}>
-          {children}
+          {typeof children === 'function' ? children(open) : children}
         </div>
       )}
     </li>

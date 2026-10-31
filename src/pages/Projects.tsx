@@ -8,6 +8,7 @@ import { firstSentence, leadSentences } from '../lib/firstSentence';
 import { Reveal } from '../components/Reveal';
 import { Featured } from '../components/Featured';
 import { IndexList, IndexRow } from '../components/IndexRow';
+import { ModelMedia } from '../components/ModelMedia';
 import type { Project } from '../data/projects';
 import type { Publication } from '../data/publications';
 
@@ -92,9 +93,14 @@ function ProjectRow({ project, anchor }: { project: Project; anchor?: string }) 
       meta={project.years}
       summary={firstSentence(project.blurb)}
     >
-      <p className="idx-blurb">{project.blurb}</p>
-      <ProjectLinks project={project} />
-      <Tags tags={project.tags} />
+      {(open) => (
+        <>
+          <p className="idx-blurb">{project.blurb}</p>
+          {open && project.media && <ModelMedia {...project.media} />}
+          <ProjectLinks project={project} />
+          <Tags tags={project.tags} />
+        </>
+      )}
     </IndexRow>
   );
 }

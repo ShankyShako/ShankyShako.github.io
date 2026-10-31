@@ -943,6 +943,44 @@
   line-height: 22px;
 }
 
+/* Turntable video and 3D viewer: two square tiles side by side, stacked on phones. */
+.model-media {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+  max-width: 720px;
+  margin-top: var(--sp-4);
+}
+
+.model-tile {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.model-tile > video,
+.model-tile > img,
+.model-tile > model-viewer {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.model-tile > video,
+.model-tile > img { object-fit: cover; }
+
+.model-tile > model-viewer {
+  --poster-color: transparent;
+  background: transparent;
+}
+
+@media (max-width: 620px) {
+  .model-media { grid-template-columns: minmax(0, 1fr); }
+}
+
 .idx-panel ul.bullet-list { margin: 0; }
 .idx-panel ul.bullet-list > li { font-size: 0.875rem; line-height: 22px; }
 
