@@ -13,6 +13,7 @@ import { useImageGuard } from './hooks/useImageGuard';
 import { useDevtoolsTrap } from './hooks/useDevtoolsTrap';
 import { useHashHighlight } from './hooks/useHashHighlight';
 import { nav, extraRoutes, site } from './data/site';
+import { gameBySlug } from './data/games';
 
 import { Home } from './pages/Home';
 import { Resume } from './pages/Resume';
@@ -21,6 +22,8 @@ import { Skills } from './pages/Skills';
 import { Projects, Research } from './pages/Projects';
 import { Experience } from './pages/Experience';
 import { Shop } from './pages/Shop';
+import { Games } from './pages/Games';
+import { GamePlayer } from './pages/GamePlayer';
 import { Contact } from './pages/Contact';
 import { NotFound } from './pages/NotFound';
 import { LegacyScribe } from './pages/legacyscribe/LegacyScribe';
@@ -42,12 +45,14 @@ function Shell() {
   const route = [...nav, ...extraRoutes].find((n) =>
     product ? n.path === '/LegacyScribe' : n.path === pathname,
   );
-  const meta = route ?? NOT_FOUND;
+  /* A game's page takes its title and pitch from src/data/games.ts. */
+  const game = gameBySlug(/^\/games\/([^/]+)\/?$/.exec(pathname)?.[1]);
+  const meta = route ?? (game ? { title: `${game.title} | Genova Mongalo`, description: game.pitch } : NOT_FOUND);
 
   useSeo(
     meta.title,
     meta.description,
-    route ? route.path : pathname,
+    route ? route.path : game ? `/games/${game.slug}` : pathname,
     product ? site.url + '/image/legacyscribe-og.png' : undefined,
   );
   useImageGuard(!product);
@@ -99,6 +104,8 @@ function Shell() {
             <Route path="/research" element={<Research />} />
             <Route path="/experience" element={<Experience />} />
             <Route path="/shop" element={<Shop />} />
+            <Route path="/games" element={<Games />} />
+            <Route path="/games/:slug" element={<GamePlayer />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

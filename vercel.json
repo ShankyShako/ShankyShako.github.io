@@ -22,9 +22,30 @@
     }
   ],
   "rewrites": [
-    { "source": "/((?![Ll]egacy[Ss]cribe/install|api/|bot/|assets/|image/|audio/|files/|fonts/|plane-send\\.js).*)", "destination": "/index.html" }
+    { "source": "/((?![Ll]egacy[Ss]cribe/install|api/|bot/|assets/|image/|audio/|files/|fonts/|game-builds/|plane-send\\.js).*)", "destination": "/index.html" }
   ],
   "headers": [
+    {
+      "source": "/game-builds/(.*)\\.js\\.br",
+      "headers": [
+        { "key": "Content-Encoding", "value": "br" },
+        { "key": "Content-Type", "value": "application/javascript" }
+      ]
+    },
+    {
+      "source": "/game-builds/(.*)\\.wasm\\.br",
+      "headers": [
+        { "key": "Content-Encoding", "value": "br" },
+        { "key": "Content-Type", "value": "application/wasm" }
+      ]
+    },
+    {
+      "source": "/game-builds/(.*)\\.data\\.br",
+      "headers": [
+        { "key": "Content-Encoding", "value": "br" },
+        { "key": "Content-Type", "value": "application/octet-stream" }
+      ]
+    },
     {
       "source": "/assets/(.*)",
       "headers": [

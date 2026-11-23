@@ -139,6 +139,16 @@ Measured: lowest contrast 5.54:1 (normal theme) and 4.73:1 (Elmo), no horizontal
 
 **Gyro, original (2026-11-23).** At the owner's request, `gyro.jpg` is now the owner's original 2021 flat art (`assets-src/art/gyro-original.png`), built by `assets-src/art/tools/gyro_original.py`. The traced linework, finger lines and hand contours from 2026-11-08 are gone from the card (the SVGs stay in `assets-src/art/` but are not used). The stock photo, plank and jar are painted out with the background red, and the crop matches the old card. Don't bring back the finger lines or the stock photo.
 
+## Games (2026-11-23)
+
+**Decision.** A Games tab after Shop: `/games` is a 2-up card grid (1-up under 560px), and `/games/:slug` is a player page. Games are entries in `src/data/games.ts`, so adding one means adding one entry. React games register a lazy component in `src/games/registry.ts`. Unity WebGL builds are static files in `public/game-builds/<slug>/`. They are not in `public/games/`, because `/games/*` is a React route and the Vercel rewrite has to leave the builds alone.
+- **Cards are links, not buttons.** The whole card goes to the player page. There's no Play button on the card, so the grid has no second click target and no "Play" that does nothing while a game is still being revived.
+- **Paper frame.** The art sits on a `--light-cream` paper backdrop. The recovered 2021 sprites have transparent backgrounds and dark outlines that would disappear on the site's dark ground. A game with no art yet shows its title, set in Playfair on the same paper.
+- **Play gate.** The player page loads nothing heavy until the visitor presses Play. A WebGL build then loads in an iframe with a Full screen button, and a React game mounts its lazy chunk. A game that isn't playable shows its art and a "being revived" note. A `desktopOnly` game on a touch-only device shows a note instead of a Play button.
+- **Site music.** When a game starts, the site's easter-egg music is muted once, and it's restored when the visitor leaves the page if it's still muted then. If the visitor turns it back on during play, the page leaves it on.
+
+Rejected: a Play button on each card (two targets per card, and a dead button while a game is being revived) and putting builds under `public/games/` (it collides with the route).
+
 ## Contact (2026-10-25)
 
 **Decision.** Option A of three, email first.

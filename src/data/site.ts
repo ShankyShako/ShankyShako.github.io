@@ -29,6 +29,8 @@ export const nav: NavItem[] = [
     description: 'Geometry NeuroScience, the AFRL Sensors Directorate, two NSF REUs, and the NASA Missouri Space Grant Consortium.' },
   { path: '/shop', label: 'Shop', title: 'Shop | Genova Mongalo',
     description: 'Hand-made originals. Limited runs. One of one. All sold out.' },
+  { path: '/games', label: 'Games', title: 'Games | Genova Mongalo',
+    description: 'Games Genova Mongalo made in Unity in 2021, rebuilt to play in the browser.' },
   { path: '/contact', label: 'Contact', title: 'Contact | Genova Mongalo',
     description: 'Get in touch with Genova Mongalo.' },
 ];
