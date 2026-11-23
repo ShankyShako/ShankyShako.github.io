@@ -17,7 +17,8 @@ type Stamp = { id: number; rot: number; x: number; y: number };
 const between = (lo: number, hi: number) => lo + Math.random() * (hi - lo);
 
 const featured = products.find((p) => p.featured);
-const singles = products.filter((p) => !p.featured);
+const closing = products.find((p) => p.closing);
+const singles = products.filter((p) => !p.featured && !p.closing);
 
 /* The art is the content, so nothing sits on it until it is clicked: "Sold
    out" lives on the price line, and the stamp is the payoff. Titles are spans,
@@ -127,6 +128,14 @@ export function Shop() {
           </Reveal>
         ))}
       </div>
+
+      {closing && (
+        <div className="shop-closing">
+          <Reveal>
+            <ProductCard product={closing} stamps={stamps[closing.short]} onOpen={open} large />
+          </Reveal>
+        </div>
+      )}
 
       {modal && <SoldOutModal item={modal.item} gif={modal.gif} onClose={() => setModal(null)} />}
     </>

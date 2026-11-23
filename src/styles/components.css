@@ -1284,12 +1284,14 @@
 
 .shop-grid {
   display: grid;
-  /* Four across: eight single pieces make a full 4 × 2, no orphan row
-     (and 2 × 4 on a phone). */
+  /* Four across: sixteen single pieces make a full 4 × 4, no orphan row
+     (and 2 × 8 on a phone). Add or drop singles four at a time. */
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--sp-5);
   margin: var(--sp-5) 0 0;
 }
+
+.shop-closing { margin-top: var(--sp-5); }
 
 /* Rows line up: a two-line title makes its whole row taller, not one card. */
 .shop-grid > * { display: flex; }
