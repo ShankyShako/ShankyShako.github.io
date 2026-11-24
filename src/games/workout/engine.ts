@@ -235,6 +235,169 @@ const round25 = (x: number) => Math.round(x / 2.5) * 2.5;
 export const maxLb = (s: State) =>
   round5(95 + 10 * s.equip + 5 * s.medals + 15 * Math.log10(1 + s.runGains));
 
+/* ---------- Skill tree: equipment and technique on one hex map ----------
+   Same upgrades, costs and effects as the old Equipment and Technique
+   shops; the tree only adds prerequisites. Gear is still a count
+   (`s.equip`), so gear nodes go in order; technique is still `s.tech`.
+   Hex coordinates are axial (q, r) for flat-top hexes, the lifter at 0,0:
+   the gear ring winds clockwise around the lifter from the top, technique
+   hangs off it on the outer ring. */
+
+export type NodeId = 'lifter' | 'chalk' | 'wraps' | 'belt' | 'sleeves' | 'shirt' | 'gold' | 'plates' | TechId;
+export type NodeKind = 'root' | 'gear' | 'tech' | 'repeat';
+export type TreeNode = {
+  id: NodeId;
+  kind: NodeKind;
+  q: number;
+  r: number;
+  requires: NodeId[];
+  /** Gear: its index on the equipment ladder. */
+  gear?: number;
+  /** Also needs at least one robot owned. */
+  robot?: boolean;
+};
+
+export const TREE: TreeNode[] = [
+  { id: 'lifter', kind: 'root', q: 0, r: 0, requires: [] },
+  { id: 'chalk', kind: 'gear', gear: 0, q: 0, r: -1, requires: ['lifter'] },
+  { id: 'wraps', kind: 'gear', gear: 1, q: 1, r: -1, requires: ['chalk'] },
+  { id: 'belt', kind: 'gear', gear: 2, q: 1, r: 0, requires: ['wraps'] },
+  { id: 'sleeves', kind: 'gear', gear: 3, q: 0, r: 1, requires: ['belt'] },
+  { id: 'shirt', kind: 'gear', gear: 4, q: -1, r: 1, requires: ['sleeves'] },
+  { id: 'gold', kind: 'gear', gear: GOLD_INDEX, q: -1, r: 0, requires: ['shirt'] },
+  { id: 'plates', kind: 'repeat', q: -2, r: 1, requires: ['gold'] },
+  { id: 'window', kind: 'tech', q: 1, r: -2, requires: ['chalk'] },
+  { id: 'power', kind: 'tech', q: 2, r: -2, requires: ['window', 'wraps'] },
+  { id: 'mirror', kind: 'tech', q: 2, r: -1, requires: ['belt'], robot: true },
+  { id: 'cap', kind: 'tech', q: -1, r: 2, requires: ['sleeves'] },
+];
+
+export type NodeState = 'owned' | 'available' | 'locked' | 'hidden';
+
+export const treeNode = (id: NodeId) => TREE.find((n) => n.id === id) as TreeNode;
+const techOf = (id: NodeId) => TECH.find((t) => t.id === id);
+/** Extra plates bought past Gold Plates. */
+export const plateLevel = (s: State) => Math.max(0, s.equip - GOLD_INDEX - 1);
+
+function isOwned(s: State, n: TreeNode) {
+  if (n.kind === 'root') return true;
+  if (n.kind === 'gear') return s.equip > (n.gear as number);
+  if (n.kind === 'repeat') return plateLevel(s) > 0;
+  return s.tech.includes(n.id as TechId);
+}
+
+/** Technique keeps the old shop's rule: it shows once this run has earned
+    TECH_REVEAL of its cost. */
+const revealed = (s: State, n: TreeNode) => n.kind !== 'tech' || s.runGains >= (techOf(n.id)?.cost ?? 0) * TECH_REVEAL;
+const reqsOwned = (s: State, n: TreeNode) => n.requires.every((r) => isOwned(s, treeNode(r)));
+const reqsMet = (s: State, n: TreeNode) => reqsOwned(s, n) && (!n.robot || robotCount(s) > 0);
+
+/** owned: lit. available: buyable now (cost permitting). locked: a fog hex
+    one step past what is available (or waiting on Gains or a robot).
+    hidden: further out. The repeatable Plates node stays available. */
+export function nodeState(s: State, id: NodeId): NodeState {
+  const n = treeNode(id);
+  if (n.kind === 'repeat') {
+    if (reqsMet(s, n)) return 'available';
+  } else if (isOwned(s, n)) return 'owned';
+  if (reqsMet(s, n) && revealed(s, n)) return 'available';
+  const near = n.requires.every((r) => {
+    const st = nodeState(s, r);
+    return st === 'owned' || st === 'available';
+  });
+  return near ? 'locked' : 'hidden';
+}
+
+export function nodeCost(s: State, id: NodeId) {
+  const n = treeNode(id);
+  if (n.kind === 'gear') return equipCost(n.gear as number);
+  if (n.kind === 'repeat') return equipCost(Math.max(s.equip, GOLD_INDEX + 1));
+  return techOf(id)?.cost ?? 0;
+}
+
+export const canBuy = (s: State, id: NodeId) => nodeState(s, id) === 'available' && s.gains >= nodeCost(s, id);
+
+export function buyNode(s: State, id: NodeId): State | null {
+  if (!canBuy(s, id)) return null;
+  const n = treeNode(id);
+  if (n.kind === 'gear' || n.kind === 'repeat') return buyEquip(s);
+  return buyTech(s, id as TechId);
+}
+
+/** Nodes affordable right now: the shop tile's "3 ready". */
+export const treeReady = (s: State) => TREE.filter((n) => canBuy(s, n.id)).length;
+
+export function nodeName(s: State, id: NodeId) {
+  const n = treeNode(id);
+  if (n.kind === 'root') return 'Lifter';
+  if (n.kind === 'gear') return equipName(n.gear as number);
+  if (n.kind === 'repeat') return plateLevel(s) > 0 ? `Plates +${plateLevel(s)}` : 'Plates';
+  return techOf(id)?.name ?? id;
+}
+
+export type NodeInfo = {
+  id: NodeId;
+  kind: NodeKind;
+  name: string;
+  state: NodeState;
+  cost: number;
+  /** What it does, in numbers for the current state. */
+  lines: string[];
+  /** Why it can't be bought yet, if locked. */
+  need: string | null;
+};
+
+/** A Perfect rep's Gains at the current streak (the streak it would reach). */
+const perfectRep = (s: State) =>
+  Math.max(1, Math.round(repBase(s) * perfectMult(s) * (1 + streakBonus(s, s.streak + 1)) * medalMult(s)));
+
+export function nodeInfo(s: State, id: NodeId): NodeInfo {
+  const n = treeNode(id);
+  const state = nodeState(s, id);
+  const lines: string[] = [];
+  const pct = (x: number) => `+${Math.round(x * 100)}%`;
+  if (n.kind === 'root') {
+    lines.push(`Rep base ${fmt(repBase(s))} before multipliers`);
+    lines.push(`Perfect ×${perfectMult(s)} · Good ×${GOOD_MULT} · off-beat ×${OFF_MULT}`);
+    lines.push(`Streak cap ${streakCap(s)} (up to ${pct(streakCap(s) * STREAK_STEP)}) · 1RM ${maxLb(s)} lb`);
+  } else if (n.kind === 'gear' || n.kind === 'repeat') {
+    const i = n.kind === 'gear' ? (n.gear as number) : Math.max(s.equip, GOLD_INDEX + 1);
+    const b = equipBonus(i);
+    if (state === 'owned') lines.push(`+${b} to every rep (owned)`);
+    else if (i === s.equip) {
+      lines.push(`Rep base ${fmt(repBase(s))} → ${fmt(repBase(s) + b)}`);
+      lines.push(`1RM ${maxLb(s)} → ${maxLb({ ...s, equip: s.equip + 1 })} lb`);
+    } else lines.push(`+${b} to every rep`);
+    if (n.kind === 'repeat') lines.unshift(`Plates +${plateLevel(s)} → +${plateLevel(s) + 1}, buy again and again`);
+    if (i === GOLD_INDEX) lines.push('Gold plates on the bar');
+  } else if (id === 'window') {
+    lines.push(`Perfect window ±${PERFECT_MS} → ±${PERFECT_MS_DRILLED} ms`);
+    lines.push(`Good window stays ±${GOOD_MS} ms`);
+  } else if (id === 'cap') {
+    lines.push('Streak cap 10 → 15');
+    lines.push(`Top streak bonus ${pct(10 * STREAK_STEP)} → ${pct(15 * STREAK_STEP)}`);
+  } else if (id === 'power') {
+    const has = s.tech.includes('power');
+    const without = { ...s, tech: s.tech.filter((t) => t !== 'power') };
+    lines.push('Perfect ×5 → ×7');
+    lines.push(`A Perfect rep now: ${fmt(perfectRep(without))} → ${fmt(perfectRep({ ...without, tech: [...without.tech, 'power'] }))}${has ? ' (owned)' : ''}`);
+  } else if (id === 'mirror') {
+    lines.push(`Robots copy 25% of your streak bonus`);
+    if (robotCount(s) > 0) {
+      const full = { ...s, streak: streakCap(s), tech: s.tech.filter((t) => t !== 'mirror') };
+      lines.push(`At a full streak: ${fmt(robotPayout(full))} → ${fmt(robotPayout({ ...full, tech: [...full.tech, 'mirror'] }))} every ${ROBOT_CYCLE_S} s`);
+    }
+  }
+  let need: string | null = null;
+  if (state === 'locked' || state === 'hidden') {
+    const missing = n.requires.filter((r) => !isOwned(s, treeNode(r))).map((r) => nodeName(s, r));
+    if (n.robot && robotCount(s) === 0) missing.push('a robot');
+    if (missing.length) need = `Needs ${missing.join(' and ')}`;
+    else if (!revealed(s, n)) need = `Opens after ${fmt(Math.ceil(nodeCost(s, id) * TECH_REVEAL))} Gains this run`;
+  }
+  return { id, kind: n.kind, name: nodeName(s, id), state, cost: nodeCost(s, id), lines, need };
+}
+
 /* ---------- Gym TV tapes: the owner's Flipnotes, one more per meet ---------- */
 
 export const TAPES = [

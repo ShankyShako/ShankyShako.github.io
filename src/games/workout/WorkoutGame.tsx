@@ -1,21 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, PointerEvent, ReactNode } from 'react';
-import type { Judge, MeetResult, State, TechId } from './engine';
+import type { Judge, MeetResult, NodeId, State } from './engine';
 import {
   BEAT_MS,
   bodyStage,
-  buyEquip,
+  buyNode,
   buyRobot,
-  buyTech,
   equipBonus,
-  equipCost,
-  equipName,
   fmt,
   fmtRate,
   fmtTime,
   FORFEIT,
   fresh,
-  GOLD_INDEX,
   hasGold,
   judgeTap,
   maxLb,
@@ -27,6 +23,8 @@ import {
   newRun,
   offline,
   offlineCapS,
+  nodeCost,
+  nodeName,
   PERKS,
   REP_MS,
   repBase,
@@ -42,14 +40,16 @@ import {
   SAVE_KEY,
   streakBonus,
   streakCap,
-  TECH,
-  TECH_REVEAL,
   tapesUnlocked,
+  TREE,
+  treeNode,
+  treeReady,
 } from './engine';
 import { music, sfx, shutdown, wake } from './audio';
 import { Meet } from './Meet';
 import { GymBackdrop } from './GymBackdrop';
 import { GymTV } from './GymTV';
+import { SkillTree } from './SkillTree';
 import './workout.css';
 
 /* The owner's 2021 drawings, cropped and shrunk by
@@ -85,7 +85,7 @@ function persist(s: State) {
 const reduced = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 type Floater = { id: number; text: string; kind: 'perfect' | 'good' | 'off' | 'robot'; x: number };
-type Tab = 'equip' | 'robots' | 'tech' | 'meet';
+type Tab = 'robots' | 'tree' | 'meet';
 
 export default function WorkoutGame() {
   const [s, setS] = useState<State>(load);
@@ -318,6 +318,21 @@ export default function WorkoutGame() {
     announce(msg);
   };
 
+  const buyTreeNode = (id: NodeId) => {
+    const cur = sRef.current;
+    const n = treeNode(id);
+    const gear = n.kind === 'gear' || n.kind === 'repeat';
+    const msg = gear
+      ? `Bought ${nodeName(cur, id)}. Reps now worth ${fmt(repBase(cur) + equipBonus(cur.equip))} base.`
+      : `Learned ${nodeName(cur, id)}.`;
+    buy(buyNode(cur, id), msg);
+  };
+
+  const closeTree = () => {
+    setPanel(null);
+    window.setTimeout(() => gym.current?.focus({ preventScroll: true }), 0);
+  };
+
   const buyFirstRobot = () => buy(buyRobot(sRef.current, 0), 'Bought a Robo-Helper. You have 1.');
 
   const collect = () => {
@@ -392,7 +407,11 @@ export default function WorkoutGame() {
   useEffect(() => {
     if (!panel) return;
     const esc = (e: globalThis.KeyboardEvent) => {
-      if (e.key === 'Escape') setPanel(null);
+      if (e.key !== 'Escape') return;
+      setPanel(null);
+      /* Focus was inside the closed panel: hand it back to the lifter. */
+      if (!document.activeElement || document.activeElement === document.body || root.current?.querySelector('.wk-tree, .wk-flyout')?.contains(document.activeElement))
+        window.setTimeout(() => gym.current?.focus({ preventScroll: true }), 0);
     };
     window.addEventListener('keydown', esc);
     return () => window.removeEventListener('keydown', esc);
@@ -411,10 +430,9 @@ export default function WorkoutGame() {
   const capBonus = streakCap(s) * 0.1;
   const robotsShown = Math.min(8, robotCount(s));
 
-  const canEquip = s.gains >= equipCost(s.equip);
+  const ready = treeReady(s);
+  const nextCost = TREE.filter((n) => n.kind !== 'root' && nodeCost(s, n.id) > s.gains).reduce((m, n) => Math.min(m, nodeCost(s, n.id)), Infinity);
   const canRobot = ROBOTS.some((_, t) => robotVisible(s, t) && s.gains >= robotCost(t, s.robots[t]));
-  const shownTech = TECH.filter((t) => s.tech.includes(t.id) || s.runGains >= t.cost * TECH_REVEAL);
-  const canTech = shownTech.some((t) => !s.tech.includes(t.id) && s.gains >= t.cost);
 
   const tiles: { id: Tab; label: string; sub: string; dot: boolean; icon: ReactNode }[] = [
     {
@@ -425,18 +443,17 @@ export default function WorkoutGame() {
       icon: <img src={sprite(s.robots[0] >= MODEL_S_AT ? 'srobot-1' : 'robot-1')} alt="" draggable={false} />,
     },
     {
-      id: 'equip',
-      label: 'Equipment',
-      sub: `${equipName(s.equip)} · ${fmt(equipCost(s.equip))}`,
-      dot: canEquip,
-      icon: <span className={`wk-plate${s.equip >= GOLD_INDEX ? ' is-gold' : ''}`}>{s.equip}</span>,
-    },
-    {
-      id: 'tech',
-      label: 'Technique',
-      sub: `${s.tech.length} of ${TECH.length} learned`,
-      dot: canTech,
-      icon: <span className="wk-drill">✦</span>,
+      id: 'tree',
+      label: 'Skill Tree',
+      sub: ready > 0 ? `${ready} ready` : Number.isFinite(nextCost) ? `Next at ${fmt(nextCost)}` : 'All learned',
+      dot: ready > 0,
+      icon: (
+        <svg className="wk-tree-icon" viewBox="-12 -12 24 24" width="40" height="40">
+          <polygon points="5,0 2.5,4.33 -2.5,4.33 -5,0 -2.5,-4.33 2.5,-4.33" transform="translate(0 -4.4)" />
+          <polygon points="5,0 2.5,4.33 -2.5,4.33 -5,0 -2.5,-4.33 2.5,-4.33" transform="translate(-7.5 4.4)" />
+          <polygon points="5,0 2.5,4.33 -2.5,4.33 -5,0 -2.5,-4.33 2.5,-4.33" transform="translate(7.5 4.4)" />
+        </svg>
+      ),
     },
     {
       id: 'meet',
@@ -446,7 +463,7 @@ export default function WorkoutGame() {
       icon: <span className="wk-medal">{s.medals}</span>,
     },
   ];
-  const TITLES: Record<Tab, string> = { robots: 'Robots', equip: 'Equipment', tech: 'Technique', meet: meetName(s.meet) };
+  const TITLES: Record<Tab, string> = { robots: 'Robots', tree: 'Skill Tree', meet: meetName(s.meet) };
 
   const onRootKey = (e: KeyboardEvent) => {
     const t = e.target as HTMLElement;
@@ -573,7 +590,7 @@ export default function WorkoutGame() {
             type="button"
             className={`wk-tile${panel === t.id ? ' is-open' : ''}${t.dot ? ' is-ready' : ''}`}
             aria-expanded={panel === t.id}
-            aria-controls="wk-flyout"
+            aria-controls={t.id === 'tree' ? 'wk-tree' : 'wk-flyout'}
             onClick={() => setPanel((p) => (p === t.id ? null : t.id))}
           >
             <span className="wk-tile-icon" aria-hidden="true">
@@ -588,7 +605,7 @@ export default function WorkoutGame() {
         ))}
       </nav>
 
-      {panel && (
+      {panel && panel !== 'tree' && (
         <section className="wk-flyout" id="wk-flyout" aria-label={TITLES[panel]}>
           <header className="wk-flyout-head">
             <h2>{TITLES[panel]}</h2>
@@ -600,32 +617,6 @@ export default function WorkoutGame() {
           </header>
           <div className="wk-panel">
             {meet && <p className="wk-panel-lead wk-closed">The shop is closed during the meet. Everything here resets after it, except medals and perks.</p>}
-            {!meet && panel === 'equip' && (
-              <>
-                <p className="wk-panel-lead">
-                  Each piece adds to every rep. A rep is worth <strong>{fmt(repBase(s))}</strong> before multipliers.
-                </p>
-                <Card
-                  icon={<span className={`wk-plate${s.equip >= GOLD_INDEX ? ' is-gold' : ''}`}>{s.equip + 1}</span>}
-                  name={equipName(s.equip)}
-                  effect={`+${equipBonus(s.equip)} per rep${s.equip === GOLD_INDEX ? ' · gold plates on the bar' : ''}`}
-                  cost={equipCost(s.equip)}
-                  gains={s.gains}
-                  onBuy={() => buy(buyEquip(sRef.current), `Bought ${equipName(sRef.current.equip)}. Reps now worth ${fmt(repBase(sRef.current) + equipBonus(sRef.current.equip))} base.`)}
-                />
-                <p className="wk-next">
-                  Then: {equipName(s.equip + 1)}, +{equipBonus(s.equip + 1)} for {fmt(equipCost(s.equip + 1))}
-                </p>
-                {s.equip > 0 && (
-                  <ul className="wk-owned">
-                    {Array.from({ length: s.equip }, (_, i) => (
-                      <li key={i}>{equipName(i)}</li>
-                    ))}
-                  </ul>
-                )}
-              </>
-            )}
-
             {!meet && panel === 'robots' && (
               <>
                 <p className="wk-panel-lead">
@@ -645,37 +636,6 @@ export default function WorkoutGame() {
                     />
                   ) : null,
                 )}
-              </>
-            )}
-
-            {!meet && panel === 'tech' && (
-              <>
-                <p className="wk-panel-lead">One-time drills for this run. More show up as you earn.</p>
-                {shownTech.map((t) =>
-                  s.tech.includes(t.id) ? (
-                    <div key={t.id} className="wk-card is-learned">
-                      <span className="wk-card-icon" aria-hidden="true">
-                        <span className="wk-drill is-done">✓</span>
-                      </span>
-                      <span className="wk-card-body">
-                        <span className="wk-card-name">{t.name}</span>
-                        <span className="wk-card-effect">{t.effect}</span>
-                      </span>
-                      <span className="wk-card-cost">Learned</span>
-                    </div>
-                  ) : (
-                    <Card
-                      key={t.id}
-                      icon={<span className="wk-drill">{TECH.findIndex((x) => x.id === t.id) + 1}</span>}
-                      name={t.name}
-                      effect={t.effect}
-                      cost={t.cost}
-                      gains={s.gains}
-                      onBuy={() => buy(buyTech(sRef.current, t.id as TechId), `Learned ${t.name}.`)}
-                    />
-                  ),
-                )}
-                {shownTech.length < TECH.length && <p className="wk-next">{TECH.length - shownTech.length} more to find this run.</p>}
               </>
             )}
 
@@ -737,6 +697,8 @@ export default function WorkoutGame() {
           </div>
         </section>
       )}
+
+      {panel === 'tree' && !meet && <SkillTree s={s} lifter={lifterSrc(s, 1)} onBuy={buyTreeNode} onClose={closeTree} />}
 
       {/* Sound, bottom right (top right on phones) */}
       <div className="wk-controls">

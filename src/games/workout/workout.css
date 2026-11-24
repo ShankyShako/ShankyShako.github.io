@@ -236,89 +236,133 @@
 }
 .wk-float.is-robot { left: 50%; top: -10px; font-size: 1.05rem; }
 
-/* ---------- The gym TV, top right (GymTV.tsx) ---------- */
-.wk-tv {
-  --tv-w: 144px;
-  --tv-h: 108px;
+/* ---------- The ceiling and the far-right corner (GymBackdrop.tsx) ---------- */
+.wk-ceiling {
   position: absolute;
-  top: var(--wk-pad);
-  right: var(--wk-pad);
+  top: 0;
+  left: 0;
+  right: 0;
+  height: clamp(7px, 1.3cqh, 12px);
+  background: #c5bdb0;
+  border-bottom: 2px solid #a9a194;
+  pointer-events: none;
+}
+/* The side wall turning away: a soft shade down the right edge to the floor. */
+.wk-corner {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: clamp(24px, 7cqw, 110px);
+  height: calc(100cqh - 400 * max(100cqw / 1600, 100cqh / 1000));
+  background: linear-gradient(to left, rgba(74, 60, 44, 0.14), rgba(74, 60, 44, 0.05) 45%, transparent);
+  pointer-events: none;
+}
+
+/* ---------- The gym TV, hung in the top-right corner (GymTV.tsx) ----------
+   It hangs from the ceiling on a short pole and turns toward the room
+   (rotateY about its wall side), so it reads as the gym's TV. */
+.wk-tv {
+  --tv-w: 168px;
+  --drop: 18px;
+  position: absolute;
+  top: 0;
+  right: calc(var(--wk-pad) + 6px);
   width: var(--tv-w);
+  perspective: 600px;
   cursor: default;
   z-index: 1;
 }
-.wk-tv-link { display: block; color: inherit; text-decoration: none; border-radius: 14px; }
-.wk-tv-link:focus-visible,
-.wk-tv-strip:focus-visible { outline: 3px solid var(--wk-gold-deep); outline-offset: 2px; }
+.wk-tv-mount {
+  position: relative;
+  display: block;
+  height: var(--drop);
+}
+/* Ceiling plate and pole, off-centre toward the wall like a corner arm. */
+.wk-tv-mount::before,
+.wk-tv-mount::after { content: ''; position: absolute; left: 58%; translate: -50% 0; background: #5d544c; }
+.wk-tv-mount::before { top: 0; width: 26px; height: 4px; border-radius: 0 0 3px 3px; }
+.wk-tv-mount::after { top: 0; bottom: -2px; width: 5px; background: linear-gradient(90deg, #4a423b, #6d645b); }
+.wk-tv-set {
+  position: relative;
+  transform: rotateY(-20deg) rotateX(5deg);
+  transform-origin: 100% 0;
+}
 .wk-tv-bezel {
-  padding: 8px;
-  border-radius: 14px 14px 0 0;
-  background: var(--wk-ink);
-  box-shadow: 0 10px 18px rgba(30, 50, 20, 0.28);
+  padding: 3px;
+  border-radius: 4px;
+  background: #1f1a17;
+  box-shadow: 0 1px 0 #3a332e inset, 6px 10px 14px rgba(40, 34, 24, 0.24);
 }
 .wk-tv-screen {
   position: relative;
-  height: var(--tv-h);
+  aspect-ratio: 16 / 9;
   overflow: hidden;
-  border-radius: 7px;
-  background: #3a3532;
+  border-radius: 2px;
+  background: #2e2a28;
 }
 .wk-tv-label {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
-  color: rgba(245, 241, 232, 0.55);
-  font-size: 0.6875rem;
+  color: rgba(245, 241, 232, 0.3);
+  font-size: 0.5625rem;
   font-weight: 750;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.2em;
 }
 .wk-tv-thumb,
 .wk-tv-player { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.4s var(--ease); }
 .wk-tv-thumb.is-on,
-.wk-tv-player.is-on { opacity: 1; }
+.wk-tv-player.is-on { opacity: 0.94; }
 .wk-tv-player iframe { width: 100%; height: 100%; border: 0; pointer-events: none; }
-.wk-tv-strip {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 28px;
-  overflow: hidden;
-  border-radius: 0 0 14px 14px;
-  background: #1c1512;
+/* Screen light falling on the wall around the set, only while it shows something. */
+.wk-tv-glow {
+  position: absolute;
+  left: -22%;
+  right: -12%;
+  top: calc(var(--drop) - 18%);
+  aspect-ratio: 16 / 10;
+  background: radial-gradient(closest-side, rgba(176, 206, 244, 0.55), rgba(176, 206, 244, 0.16) 62%, transparent);
+  opacity: 0;
+  transition: opacity 1.2s var(--ease);
+  pointer-events: none;
+}
+.wk-tv.is-on .wk-tv-glow { opacity: 1; }
+/* The whole set is the YouTube link; the chip appears on hover or focus. */
+.wk-tv-link {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: end center;
+  min-height: 44px;
+  padding-bottom: 6px;
+  border-radius: 4px;
   color: var(--wk-paper);
-  font-size: 0.6875rem;
-  font-weight: 600;
   text-decoration: none;
+}
+.wk-tv-link:focus-visible { outline: 3px solid var(--wk-gold-deep); outline-offset: 2px; }
+.wk-tv-chip {
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+  background: rgba(20, 15, 13, 0.82);
+  font-size: 0.6875rem;
+  font-weight: 650;
   white-space: nowrap;
+  opacity: 0;
+  translate: 0 3px;
+  transition: opacity var(--dur) var(--ease), translate var(--dur) var(--ease);
 }
-.wk-tv-arrow { display: none; }
-.wk-tv.is-compact .wk-tv-go { display: none; }
-.wk-tv.is-compact .wk-tv-arrow { display: inline; }
-.wk-tv-strip b { font-weight: 800; letter-spacing: 0.08em; }
-a.wk-tv-strip::after { content: ''; position: absolute; inset: -8px 0; }
-a.wk-tv-strip:hover,
-.wk-tv-link:hover .wk-tv-strip { color: var(--wk-gold); }
-.wk-tv-stand {
-  display: block;
-  width: 36%;
-  height: 8px;
-  margin: 0 auto;
-  border-radius: 0 0 6px 6px;
-  background: var(--wk-ink);
-  opacity: 0.85;
-}
+.wk-tv-link:hover .wk-tv-chip,
+.wk-tv-link:focus-visible .wk-tv-chip { opacity: 1; translate: 0 0; }
 @container (min-width: 1180px) and (min-height: 640px) {
-  .wk-tv.is-live { --tv-w: 256px; --tv-h: 192px; }
-  .wk-tv.is-live .wk-tv-strip { font-size: 0.75rem; }
-  .wk-tv.is-compact { --tv-w: 200px; --tv-h: 150px; }
+  .wk-tv { --tv-w: 212px; --drop: 22px; }
 }
 
 /* ---------- Panels over the scene ---------- */
 .wk-score,
 .wk-tile,
 .wk-flyout,
+.wk-tree,
 .wk-controls {
   background: var(--wk-glass);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
@@ -468,6 +512,153 @@ a.wk-tv-strip:hover,
 }
 .wk-close:hover { background: var(--surface-hover); color: var(--text-light); }
 .wk-panel { display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-2) var(--sp-3) var(--sp-4); overflow-y: auto; overscroll-behavior: contain; }
+
+/* ---------- Skill tree (SkillTree.tsx): a big panel over the scene ----------
+   Gear is gold, technique is cream; both also have their own glyph. */
+.wk-tree {
+  --gear: var(--wk-gold);
+  --tech: var(--wk-paper);
+  --hex-ground: #2a211e;
+  position: absolute;
+  z-index: 3;
+  left: calc(var(--wk-pad) + 232px);
+  top: calc(var(--wk-pad) + var(--score-h, 330px));
+  right: var(--wk-pad);
+  bottom: calc(var(--wk-pad) + 64px);
+  max-width: 940px;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  animation: wk-in 0.22s var(--ease);
+}
+.wk-tree-head { align-items: flex-start; padding-top: var(--sp-3); }
+.wk-tree-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--sp-3); margin: 2px 0 0; color: var(--text-muted); font-size: 0.8125rem; }
+.wk-key { display: inline-flex; align-items: center; gap: 6px; }
+.wk-key::before {
+  content: '';
+  width: 12px;
+  height: 10.4px;
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+  background: var(--gear);
+}
+.wk-key.is-tech::before { background: var(--tech); }
+.wk-tree-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 290px;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4) var(--sp-4);
+}
+.wk-tree-box { display: flex; min-width: 0; min-height: 0; overflow: auto; overscroll-behavior: contain; }
+.wk-tree-map { position: relative; flex: none; margin: auto; }
+.wk-tree-grid { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+.wk-cell { fill: rgba(255, 255, 255, 0.018); stroke: var(--border); stroke-width: 1; }
+.wk-link { --c: var(--gear); stroke-width: 3; stroke-linecap: round; }
+.wk-link.is-tech { --c: var(--tech); }
+.wk-link.is-lit { stroke: var(--c); }
+.wk-link.is-open { stroke: color-mix(in srgb, var(--c) 45%, transparent); }
+.wk-link.is-fog { stroke: var(--border-strong); stroke-width: 2; stroke-dasharray: 2 6; }
+
+/* A hex is a real button; only the drawn hexagon takes the pointer, so
+   neighbours never steal each other's corners. */
+.wk-hex {
+  --c: var(--gear);
+  position: absolute;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--c);
+  font: inherit;
+  cursor: pointer;
+  pointer-events: none;
+}
+.wk-hex.is-tech { --c: var(--tech); }
+.wk-hex.is-root { --c: var(--wk-paper); cursor: default; }
+.wk-hex:focus-visible { outline: none; }
+.wk-hex-shape { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.wk-hex-shape polygon:first-child {
+  fill: var(--hex-ground);
+  stroke: var(--c);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  pointer-events: visiblePainted;
+  transition: fill var(--dur) var(--ease), stroke var(--dur) var(--ease);
+}
+.wk-hex-ring { fill: none; stroke: transparent; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.wk-hex.is-shown .wk-hex-ring { stroke: color-mix(in srgb, var(--text-light) 45%, transparent); }
+.wk-hex:focus-visible .wk-hex-ring { stroke: var(--text-light); stroke-width: 3; }
+.wk-hex.is-owned .wk-hex-shape polygon:first-child { fill: var(--c); }
+.wk-hex.is-owned .wk-hex-ring { stroke: transparent; }
+.wk-hex.is-owned.is-shown .wk-hex-ring { stroke: color-mix(in srgb, var(--wk-ink) 55%, transparent); }
+.wk-hex.is-owned:focus-visible .wk-hex-ring { stroke: var(--wk-ink); stroke-width: 3; }
+.wk-hex.is-available .wk-hex-shape polygon:first-child { stroke-width: 2.5; }
+.wk-hex.is-afford .wk-hex-shape { filter: drop-shadow(0 0 calc(var(--hs) * 0.16) color-mix(in srgb, var(--c) 70%, transparent)); }
+.wk-hex.is-afford .wk-hex-shape polygon:first-child { fill: color-mix(in srgb, var(--c) 16%, var(--hex-ground)); }
+.wk-hex.is-locked { cursor: help; }
+.wk-hex.is-locked .wk-hex-shape polygon:first-child { fill: rgba(255, 255, 255, 0.035); stroke: var(--border-strong); stroke-dasharray: 4 4; stroke-width: 1.5; }
+@media (hover: hover) and (pointer: fine) {
+  .wk-hex.is-available:hover .wk-hex-shape polygon:first-child { fill: color-mix(in srgb, var(--c) 26%, var(--hex-ground)); }
+  .wk-hex.is-locked:hover .wk-hex-shape polygon:first-child { fill: rgba(255, 255, 255, 0.07); }
+}
+
+.wk-hex-in {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  line-height: 1.05;
+  pointer-events: none;
+}
+.wk-hex-in svg { width: calc(var(--hs) * 0.44); height: calc(var(--hs) * 0.44); }
+.wk-hex-name { font-size: clamp(10px, calc(var(--hs) * 0.22), 13px); font-weight: 650; white-space: nowrap; }
+.wk-hex-cost { color: var(--text-muted); font-size: clamp(10px, calc(var(--hs) * 0.21), 12.5px); font-variant-numeric: tabular-nums; font-weight: 700; }
+.wk-hex.is-afford .wk-hex-cost { color: var(--c); }
+.wk-hex.is-owned .wk-hex-in { color: var(--wk-ink); }
+.wk-hex-q { position: relative; color: var(--text-faint); font-size: calc(var(--hs) * 0.5); font-weight: 700; line-height: 1; pointer-events: none; }
+.wk-hex-lifter { position: relative; width: 84%; height: 78%; object-fit: contain; pointer-events: none; }
+
+/* The stat card: what the hovered, focused or selected hex does. */
+.wk-tree-card {
+  --c: var(--gear);
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-solid);
+  box-shadow: inset 3px 0 0 var(--c);
+}
+.wk-tree-card.is-tech { --c: var(--tech); }
+.wk-tree-card.is-root { --c: var(--border-strong); }
+.wk-tree-kind { margin: 0; color: var(--c); font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.wk-tree-card.is-root .wk-tree-kind { color: var(--text-faint); }
+.wk-tree-name { margin: 0; color: var(--text-light); font-family: var(--font-display); font-size: 1.3rem; font-weight: 600; line-height: 1.15; }
+.wk-tree-stats { display: flex; flex-direction: column; gap: 4px; margin: 2px 0 0; padding: 0; list-style: none; }
+.wk-tree-stats li { color: var(--text-light); font-size: 0.875rem; font-variant-numeric: tabular-nums; line-height: 1.35; }
+.wk-tree-stats li + li { color: var(--text-muted); font-size: 0.8125rem; }
+.wk-tree-need { margin: 2px 0 0; color: var(--text-faint); font-size: 0.8125rem; }
+.wk-tree-buy { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-top: var(--sp-2); }
+.wk-tree-cost { color: var(--text-light); font-size: 1.05rem; font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+.wk-tree-gains { color: var(--text-light); font-variant-numeric: tabular-nums; }
+.wk-tree-cost small { color: var(--text-faint); font-size: 0.75rem; font-weight: 550; }
+.wk-buy { min-height: 44px; padding-inline: 1rem; }
+.wk-buy.is-short { border-color: var(--border-strong); background: transparent; box-shadow: none; color: var(--text-muted); cursor: default; }
+.wk-tree-icon polygon { fill: var(--wk-gold); stroke: var(--wk-ink); stroke-width: 0.8; }
+.wk-tree-icon polygon:first-child { fill: var(--wk-paper); }
+
+/* Mid-size stages: the card goes under the map, at a fixed height so the
+   map never resizes (and moves under a finger) when the card changes. */
+@container (max-width: 1099px) {
+  .wk-tree-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 13rem; }
+  .wk-tree-card { align-self: stretch; padding: var(--sp-3); overflow-y: auto; overscroll-behavior: contain; }
+}
 
 /* Sound, bottom right */
 .wk-controls {
@@ -829,11 +1020,14 @@ a.wk-tv-strip:hover,
   }
   .wk-big-num { font-size: 1.9rem; }
 
-  .wk-tv { --tv-w: 104px; --tv-h: 78px; right: calc(var(--wk-pad) + 56px); }
-  .wk-tv-bezel { padding: 5px; border-radius: 10px 10px 0 0; }
-  .wk-tv-screen { border-radius: 5px; }
-  .wk-tv-strip { font-size: 0.625rem; }
-  .wk-tv-n { display: none; }
+  .wk-tv { --tv-w: 92px; --drop: 9px; right: calc(var(--wk-pad) + 62px); perspective: 360px; }
+  .wk-tv-bezel { padding: 2px; border-radius: 3px; }
+  .wk-tv-label { display: none; }
+  .wk-tv-mount::before { width: 16px; height: 3px; }
+  .wk-tv-mount::after { width: 3px; }
+  .wk-tv-link { padding-bottom: 3px; }
+  .wk-tv-chip { padding: 2px 6px; font-size: 0.625rem; }
+  .wk-tv-chip-long { display: none; }
   .wk-controls { top: var(--wk-pad); bottom: auto; flex-direction: column; border-radius: var(--r-lg); }
 
   .wk-tiles {
@@ -882,6 +1076,22 @@ a.wk-tv-strip:hover,
     animation-name: wk-up;
   }
   @keyframes wk-up { from { opacity: 0; transform: translateY(12px); } }
+  .wk-tree {
+    left: 0;
+    right: 0;
+    top: 8px;
+    bottom: 64px;
+    max-width: none;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    border-bottom: 0;
+    animation-name: wk-up;
+  }
+  .wk-tree-head { padding-top: var(--sp-2); }
+  .wk-tree-head h2 { font-size: 1.2rem; }
+  .wk-tree-sub { font-size: 0.75rem; }
+  .wk-tree-body { gap: var(--sp-2); padding: 0 var(--sp-3) var(--sp-3); }
+  .wk-tree-name { font-size: 1.15rem; }
+  .wk-tree-buy { margin-top: 2px; }
   .wk-meet { padding: var(--sp-4) var(--sp-3); }
 }
 

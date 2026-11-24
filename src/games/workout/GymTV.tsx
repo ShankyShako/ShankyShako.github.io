@@ -1,5 +1,5 @@
-/* The gym TV, top-right wall: the owner's Flipnote tapes from YouTube, one
-   more unlocked per meet. Flat UI only. On a big stage it plays the tapes
+/* The gym TV, hung in the top-right corner: the owner's Flipnote tapes
+   from YouTube, one more unlocked per meet. Flat UI only. On a big stage it plays the tapes
    (muted, YouTube IFrame API); anywhere else, or if playback doesn't start,
    it is a thumbnail that links out. Taps on it never count as reps. */
 import { useEffect, useRef, useState } from 'react';
@@ -184,7 +184,9 @@ export function GymTV({ unlocked, interactive, paused }: Props) {
   const id = TAPES[cur];
   const screen = (
     <div className="wk-tv-screen">
-      <span className="wk-tv-label">GYM TV</span>
+      <span className="wk-tv-label" aria-hidden="true">
+        GYM TV
+      </span>
       {live ? (
         <div className={`wk-tv-player${playing ? ' is-on' : ''}`} ref={mount} />
       ) : (
@@ -199,31 +201,28 @@ export function GymTV({ unlocked, interactive, paused }: Props) {
       )}
     </div>
   );
-  const tape = (
-    <>
-      <b>GYM TV</b>
-      <span className="wk-tv-n"> · Tape {cur + 1}/{TAPES.length}</span>
-      <span className="wk-tv-go"> · Watch on YouTube ↗</span>
-      <span className="wk-tv-arrow"> ↗</span>
-    </>
-  );
+  const name = `Gym TV, tape ${cur + 1} of ${TAPES.length}. Watch on YouTube (opens a new tab)`;
 
+  /* Hung from the ceiling in the top-right corner and turned toward the
+     room, so it reads as the gym's TV rather than a panel for the player.
+     The YouTube link covers the set; its chip shows on hover or focus. */
   return (
-    <div ref={wrap} className={`wk-tv ${live ? 'is-live' : 'is-compact'}`} onPointerDown={stop} onKeyDown={stop}>
-      {live ? (
-        <>
-          <div className="wk-tv-bezel">{screen}</div>
-          <a className="wk-tv-strip" href={watchUrl(id)} target="_blank" rel="noopener noreferrer" aria-label={`Gym TV, tape ${cur + 1} of ${TAPES.length}. Watch on YouTube (opens a new tab)`}>
-            {tape}
-          </a>
-        </>
-      ) : (
-        <a className="wk-tv-link" href={watchUrl(id)} target="_blank" rel="noopener noreferrer" aria-label={`Gym TV, tape ${cur + 1} of ${TAPES.length}. Watch on YouTube (opens a new tab)`}>
-          <div className="wk-tv-bezel">{screen}</div>
-          <span className="wk-tv-strip">{tape}</span>
+    <div
+      ref={wrap}
+      className={`wk-tv ${live ? 'is-live' : 'is-compact'}${playing || (!live && thumbOk) ? ' is-on' : ''}`}
+      onPointerDown={stop}
+      onKeyDown={stop}
+    >
+      <span className="wk-tv-mount" aria-hidden="true" />
+      <span className="wk-tv-glow" aria-hidden="true" />
+      <div className="wk-tv-set">
+        <div className="wk-tv-bezel">{screen}</div>
+        <a className="wk-tv-link" href={watchUrl(id)} target="_blank" rel="noopener noreferrer" aria-label={name}>
+          <span className="wk-tv-chip" aria-hidden="true">
+            ▶<span className="wk-tv-chip-long"> Watch on YouTube</span>
+          </span>
         </a>
-      )}
-      <span className="wk-tv-stand" aria-hidden="true" />
+      </div>
     </div>
   );
 }
