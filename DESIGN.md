@@ -149,6 +149,13 @@ Measured: lowest contrast 5.54:1 (normal theme) and 4.73:1 (Elmo), no horizontal
 
 Rejected: a Play button on each card (two targets per card, and a dead button while a game is being revived) and putting builds under `public/games/` (it collides with the route).
 
+**Workout Simulator (phase 2).** A React game in `src/games/workout/`, laid out full-bleed like the 2021 original rather than in a card: the scene fills the page, the lifter is centred, the score panel is top-left, the shop tiles run down the left (a bottom bar on phones), and sound sits bottom-right. The player page switches to this full-bleed path through `.game-stage.is-full`.
+- **Meets are the rebirth.** Each meet resets Gains, equipment, robots and technique. Medals (+10% each) and perks stay. Each meet needs ×3 the Gains of the one before.
+- **Whole-number scoring, no formula readout.** Perfect ×5, Good ×2, off-beat ×1, plus a streak bonus. The playtest rejected showing a per-rep formula.
+- **Gym TV.** It plays the owner's Flipnote videos muted (youtube-nocookie), loads only after the first rep, and never counts as a tap. Three tapes are unlocked at the start and one more after each meet. Wide stages get the live player; everything else gets a thumbnail that links to YouTube.
+- **Robot station is always visible.** Before the first robot is bought, a faded Robo-Helper button buys one or opens the Robots shop. On wide stages the robot row sits bottom-right, clear of the shop flyout.
+- **Art and sound.** Only the owner's drawings plus flat UI. All sound is WebAudio (no audio files), muted by default.
+
 ## Contact (2026-10-25)
 
 **Decision.** Option A of three, email first.

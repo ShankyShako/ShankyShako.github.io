@@ -1607,6 +1607,22 @@
 .game-play:active { transform: translate(-50%, -50%) scale(0.985); }
 .game-fullscreen { margin-top: var(--sp-3); }
 
+/* A React game once started: the full window width under the nav, edge to
+   edge (the same bleed as the nav; --sbw and --nav-h are measured by the
+   player page). The game draws its own scene inside. */
+.game-stage.is-full {
+  width: calc(100vw - var(--sbw, 0px));
+  margin: 0 0 var(--sp-6) calc(50% - (100vw - var(--sbw, 0px)) / 2);
+  height: calc(100dvh - var(--nav-h, 56px));
+  min-height: 560px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  box-shadow: none;
+}
+.game-stage.is-full:fullscreen { height: 100%; min-height: 0; margin: 0; border: 0; }
+.game-stage.is-full > .game-stage-note { position: absolute; inset: auto 0 0; }
+
 .game-about { max-width: var(--measure); margin-top: var(--sp-5); }
 .game-about p { color: var(--text-soft); line-height: 1.65; }
 .game-about p + p { margin-top: var(--sp-3); }
