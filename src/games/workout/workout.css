@@ -184,11 +184,24 @@
 }
 .wk-robot { position: relative; display: block; height: min(15cqh, 120px); aspect-ratio: 253 / 300; margin: 0 -6px; }
 .wk-robot img { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; filter: drop-shadow(0 8px 6px rgba(30, 50, 20, 0.25)); }
-/* Each robot lifts once per 5 s cycle, staggered so they take turns. */
-.wk-robot img:last-child { opacity: 0; animation: wk-robot-lift 5s linear infinite; }
-@keyframes wk-robot-lift {
-  0%, 80% { opacity: 0; }
-  81%, 95% { opacity: 1; }
+
+/* Bought robots stand spread over the turf (placed by field.ts): bigger
+   tiers are bigger, back-row robots smaller. */
+.wk-field { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.wk-bot { position: absolute; display: block; aspect-ratio: 253 / 300; translate: -50% 0; }
+.wk-bot img { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 8px 6px rgba(30, 50, 20, 0.25)); }
+/* Each robot lifts once per 5 s cycle, staggered so they take turns. Only
+   one frame shows at a time: the frames are hard cuts, never both at once. */
+.wk-bot-up { animation: wk-bot-up 5s step-end infinite; animation-delay: var(--delay, 0s); }
+.wk-bot-down { opacity: 0; animation: wk-bot-down 5s step-end infinite; animation-delay: var(--delay, 0s); }
+@keyframes wk-bot-up {
+  0% { opacity: 1; }
+  81% { opacity: 0; }
+  96%, 100% { opacity: 1; }
+}
+@keyframes wk-bot-down {
+  0% { opacity: 0; }
+  81% { opacity: 1; }
   96%, 100% { opacity: 0; }
 }
 .wk-robots.is-ghost { pointer-events: none; }
@@ -207,7 +220,6 @@
   pointer-events: auto;
 }
 .wk-ghost .wk-robot { opacity: 0.4; filter: grayscale(1); transition: opacity var(--dur) var(--ease), filter var(--dur) var(--ease); }
-.wk-ghost .wk-robot img:last-child { opacity: 1; animation: none; }
 .wk-ghost.is-ready .wk-robot,
 .wk-ghost:hover .wk-robot { opacity: 0.85; filter: none; }
 .wk-ghost-pill {
@@ -224,16 +236,6 @@
 }
 .wk-ghost.is-ready .wk-ghost-pill { background: var(--wk-gold); color: var(--wk-ink); }
 .wk-ghost:focus-visible .wk-ghost-pill { outline: 3px solid var(--wk-gold-deep); outline-offset: 2px; }
-.wk-more {
-  align-self: center;
-  margin-left: var(--sp-3);
-  padding: 0.25rem 0.7rem;
-  border-radius: var(--r-pill);
-  background: var(--wk-ink);
-  color: var(--wk-paper);
-  font-size: 0.875rem;
-  font-weight: 650;
-}
 .wk-float.is-robot { left: 50%; top: -10px; font-size: 1.05rem; }
 
 /* ---------- The ceiling and the far-right corner (GymBackdrop.tsx) ---------- */
@@ -315,6 +317,37 @@
 .wk-tv-thumb.is-on,
 .wk-tv-player.is-on { opacity: 0.94; }
 .wk-tv-player iframe { width: 100%; height: 100%; border: 0; pointer-events: none; }
+/* Static while a tape loads or the channel changes. */
+.wk-tv-static {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background-color: #6d6a66;
+  background-size: 96px 54px;
+  opacity: 0;
+  transition: opacity 0.18s linear;
+  animation: wk-static 0.36s steps(6) infinite;
+}
+.wk-tv-static::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 22%;
+  background: linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0));
+  animation: wk-roll 1.1s linear infinite;
+}
+.wk-tv-static.is-on { opacity: 0.92; }
+.wk-tv:not(.is-tuning) .wk-tv-static { animation-play-state: paused; }
+.wk-tv:not(.is-tuning) .wk-tv-static::after { animation-play-state: paused; }
+@keyframes wk-static {
+  from { background-position: 0 0; }
+  to { background-position: 270px 170px; }
+}
+@keyframes wk-roll {
+  from { top: -22%; }
+  to { top: 100%; }
+}
 /* Screen light falling on the wall around the set, only while it shows something. */
 .wk-tv-glow {
   position: absolute;
@@ -327,7 +360,8 @@
   transition: opacity 1.2s var(--ease);
   pointer-events: none;
 }
-.wk-tv.is-on .wk-tv-glow { opacity: 1; }
+.wk-tv.is-on .wk-tv-glow,
+.wk-tv.is-tuning .wk-tv-glow { opacity: 1; }
 /* The whole set is the YouTube link; the chip appears on hover or focus. */
 .wk-tv-link {
   position: absolute;
@@ -687,8 +721,7 @@
 .wk-toggle:focus-visible,
 .wk-tile:focus-visible,
 .wk-close:focus-visible,
-.wk-card:focus-visible,
-.wk-weight:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wk-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .wk-panel { display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-2) var(--sp-3) var(--sp-4); }
 .wk-panel-lead { margin: 0 0 var(--sp-1); color: var(--text-muted); font-size: 0.8125rem; line-height: 1.5; }
@@ -759,32 +792,7 @@
 .wk-card-cost small { display: block; color: var(--text-faint); font-size: 0.6875rem; font-weight: 550; }
 .wk-card.is-ready .wk-card-cost { color: var(--accent-strong); }
 
-/* Equipment has no drawings: a flat plate with its rung number. */
-.wk-plate {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #3b3735;
-  box-shadow: inset 0 0 0 3px #2a2624, inset 0 0 0 9px #4a4542;
-  color: #f5f1e8;
-  font-size: 0.8125rem;
-  font-weight: 700;
-}
-.wk-plate.is-gold { background: var(--wk-gold); box-shadow: inset 0 0 0 3px var(--wk-gold-deep), inset 0 0 0 9px #ffc933; color: var(--wk-ink); }
 .wk-card-robot { width: 40px; height: 44px; object-fit: contain; border-radius: 8px; background: var(--wk-paper); padding: 2px; }
-.wk-drill,
-.wk-check {
-  border-radius: 50%;
-  border: 1.5px solid var(--border-strong);
-  color: var(--text-muted);
-  font-weight: 700;
-  width: 36px;
-  height: 36px;
-  margin: 4px;
-}
-.wk-check { border-color: var(--accent-soft); color: var(--accent); }
 
 .wk-next { margin: var(--sp-1) 0 0; color: var(--text-faint); font-size: 0.8rem; }
 .wk-owned { display: flex; flex-wrap: wrap; gap: 6px; margin: var(--sp-2) 0 0; padding: 0; list-style: none; }
@@ -819,7 +827,6 @@
     linear-gradient(var(--canvas-top), var(--canvas-bottom));
   text-align: center;
 }
-.wk-meet-head { display: flex; flex-direction: column; gap: 2px; }
 .wk-meet-kicker {
   margin: 0;
   color: var(--accent);
@@ -828,8 +835,6 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
-.wk-meet-sub { margin: 0; color: var(--text-muted); font-size: 0.875rem; }
-.wk-meet-q { margin: 0 0 var(--sp-2); color: var(--text-light); font-family: var(--font-display); font-size: 1.35rem; font-weight: 600; }
 .wk-meet-note { margin: 0; max-width: 46ch; color: var(--text-muted); font-size: 0.8125rem; line-height: 1.5; }
 
 .wk-lights { display: flex; gap: var(--sp-4); }
@@ -846,36 +851,6 @@
 .wk-light.is-red { background: var(--wk-red); border-color: var(--wk-red); box-shadow: 0 0 18px rgba(229, 72, 77, 0.6); }
 @keyframes wk-light-on { from { opacity: 0; transform: scale(0.6); } }
 
-.wk-platform {
-  width: min(300px, 70%);
-  padding: var(--sp-2) var(--sp-3) 0;
-  border-radius: var(--r-md) var(--r-md) 4px 4px;
-  background: var(--wk-paper);
-  box-shadow: 0 10px 0 -2px #c9b98f, var(--shadow);
-}
-.wk-platform-lifter { display: block; width: 100%; height: auto; }
-
-.wk-meet-pick { width: 100%; max-width: 520px; }
-.wk-weights { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--sp-2); }
-.wk-weight {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  min-height: 72px;
-  padding: var(--sp-3);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-md);
-  background: var(--surface-solid);
-  color: var(--text-light);
-  font: inherit;
-  cursor: pointer;
-  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), transform 0.16s var(--ease);
-}
-.wk-weight strong { font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; font-variant-numeric: lining-nums tabular-nums; }
-.wk-weight span { color: var(--text-muted); font-size: 0.75rem; }
-.wk-weight:hover { background: var(--surface-hover); border-color: var(--accent-soft); }
-.wk-weight:active { transform: scale(0.98); }
 .wk-back-out { margin-top: var(--sp-3); min-height: 44px; }
 
 .wk-meter-wrap { display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); width: 100%; max-width: 520px; }
@@ -900,10 +875,6 @@
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
 }
 .wk-press { max-width: 320px; font-size: 1.05rem; }
-
-.wk-attempts { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.wk-attempts li { padding: 0.2rem 0.65rem; border-radius: var(--r-pill); border: 1px solid var(--border-strong); font-size: 0.75rem; color: var(--text-muted); }
-.wk-attempts li.is-made { border-color: var(--accent-soft); color: var(--text-light); }
 
 .wk-podium-card { display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); width: 100%; max-width: 420px; margin: auto 0; }
 .wk-place { margin: 0; color: var(--text-light); font-family: var(--font-display); font-size: clamp(2rem, 8cqi, 2.8rem); font-weight: 700; line-height: 1; }
@@ -938,7 +909,342 @@
   font-size: 0.875rem;
   font-weight: 750;
 }
-.wk-drill.is-done { border-color: var(--accent-soft); color: var(--accent); }
+
+/* ---------- Meet: the battle ----------
+   The whole stage: the evil twin top right, CHAD bottom left, cred cards
+   opposite each, and a text box along the bottom that narrates and holds
+   the buttons. The twin is the same drawing, mirrored and filtered. */
+.wk-battle {
+  --bt-evil: hue-rotate(160deg) saturate(1.6) brightness(0.72) contrast(1.25) drop-shadow(0 0 12px rgba(229, 72, 77, 0.75));
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 50% 40% at 72% 30%, rgba(229, 72, 77, 0.22), transparent 70%),
+    radial-gradient(ellipse 55% 45% at 28% 68%, color-mix(in srgb, var(--wk-gold) 22%, transparent), transparent 70%),
+    linear-gradient(var(--canvas-top), var(--canvas-bottom));
+  color: var(--wk-ink);
+}
+.wk-bt-field {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1.15fr);
+  align-items: center;
+  justify-items: center;
+  gap: var(--sp-2);
+  padding: var(--wk-pad) var(--wk-pad) 0;
+}
+.wk-bt-fighter {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+/* The sprite fills what's left of its cell above the lights, keeping its shape. */
+.wk-bt-pad {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.wk-bt-pad::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: min(100%, var(--pad-w, 320px));
+  height: 22%;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--wk-paper) 12%, transparent);
+  box-shadow: inset 0 -6px 0 color-mix(in srgb, var(--wk-ink) 35%, transparent), 0 0 0 2px color-mix(in srgb, var(--wk-paper) 10%, transparent);
+  transform: translateX(-50%);
+}
+.wk-bt-sprite { position: relative; display: block; height: 100%; width: auto; max-width: 100%; object-fit: contain; object-position: bottom; }
+.wk-bt-fighter.is-foe .wk-bt-pad { --pad-w: 300px; }
+.wk-bt-fighter.is-foe .wk-bt-sprite { max-height: 260px; }
+.wk-bt-fighter.is-you .wk-bt-sprite { max-height: 330px; }
+.wk-bt-sprite.is-evil,
+.wk-vs-half img.is-evil { transform: scaleX(-1); filter: var(--bt-evil); }
+.wk-bt-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); }
+.wk-bt-lights { gap: 5px; }
+.wk-bt-lights .wk-light { width: 14px; height: 14px; border-color: color-mix(in srgb, var(--wk-ink) 35%, transparent); background: color-mix(in srgb, var(--wk-ink) 12%, transparent); }
+.wk-bt-lights .wk-light.is-white { border-color: var(--wk-ink); background: #fff; box-shadow: none; }
+.wk-bt-lights .wk-light.is-red { border-color: var(--wk-ink); background: var(--wk-red); box-shadow: none; }
+
+.wk-bt-throw {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  padding: 0.35rem 0.8rem;
+  border: 3px solid var(--wk-ink);
+  border-radius: 12px;
+  background: var(--wk-paper);
+  color: var(--wk-ink);
+  font-family: var(--font-display);
+  font-size: clamp(1.1rem, 3.2cqh, 1.7rem);
+  font-style: italic;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 4px 0 var(--wk-ink);
+  transform: translateX(-50%);
+  animation: wk-bt-pop 0.28s var(--ease) both;
+}
+@keyframes wk-bt-pop { from { opacity: 0; transform: translateX(-50%) scale(0.5); } }
+
+.wk-bt-fighter.is-hit .wk-bt-pad { animation: wk-bt-hit 0.6s steps(1) both, wk-bt-shake 0.4s var(--ease) both; }
+@keyframes wk-bt-hit {
+  0%, 30%, 60% { opacity: 0.15; }
+  15%, 45%, 75%, 100% { opacity: 1; }
+}
+@keyframes wk-bt-shake {
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(7px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(3px); }
+}
+
+.wk-bt-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: min(100%, 280px);
+  padding: 0.6rem 0.85rem 0.55rem;
+  border: 3px solid var(--wk-ink);
+  border-radius: 12px;
+  background: var(--wk-paper);
+  box-shadow: 0 5px 0 var(--wk-ink);
+  transition: box-shadow 0.3s var(--ease);
+}
+.wk-bt-card.is-foe { align-self: start; justify-self: start; }
+.wk-bt-card.is-you { align-self: center; justify-self: end; }
+.wk-bt-card.is-heal { box-shadow: 0 5px 0 var(--wk-ink), 0 0 0 4px var(--wk-green); }
+.wk-bt-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 3cqh, 1.45rem);
+  font-style: italic;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+.wk-bt-card.is-foe .wk-bt-name { color: #8a1d22; }
+.wk-bt-bar { display: flex; align-items: center; gap: 6px; }
+.wk-bt-bar-label { font-size: 0.625rem; font-weight: 800; letter-spacing: 0.08em; color: var(--wk-gold-deep); }
+.wk-bt-track {
+  flex: 1;
+  height: 10px;
+  border: 2px solid var(--wk-ink);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--wk-ink) 70%, transparent);
+  overflow: hidden;
+}
+.wk-bt-fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-pill);
+  transition: width 0.8s var(--ease), background-color 0.3s var(--ease);
+}
+.wk-bt-fill.is-high { background: var(--wk-green); }
+.wk-bt-fill.is-mid { background: var(--wk-gold); }
+.wk-bt-fill.is-low { background: var(--wk-red); }
+.wk-bt-num { margin: 0; align-self: flex-end; font-size: 0.875rem; font-weight: 750; font-variant-numeric: tabular-nums; line-height: 1; }
+.wk-bt-num span { font-weight: 500; opacity: 0.6; }
+
+/* The text box. */
+.wk-bt-box {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-2);
+  margin: var(--sp-2) var(--wk-pad) var(--wk-pad);
+  padding: var(--sp-3) var(--sp-4);
+  border: 4px solid var(--wk-ink);
+  border-radius: 14px;
+  background: var(--wk-paper);
+  box-shadow: inset 0 0 0 3px var(--wk-paper), inset 0 0 0 5px var(--wk-gold);
+  outline: none;
+  /* As tall as its tallest phase (the weight pick), so the fighters above
+     don't resize between phases. */
+  min-height: 16rem;
+}
+.wk-bt-round { margin: 0; color: var(--wk-gold-deep); font-size: 0.6875rem; font-weight: 750; letter-spacing: 0.1em; text-transform: uppercase; }
+.wk-bt-msg { flex: 1; margin: 0; min-height: 2.6em; font-size: clamp(0.95rem, 2.4cqh, 1.15rem); font-weight: 600; line-height: 1.3; }
+.wk-bt-box.is-talk .wk-bt-msg { font-size: clamp(1.1rem, 3cqh, 1.4rem); }
+.wk-bt-stakes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--sp-2);
+  margin: 0;
+  padding-top: var(--sp-2);
+  border-top: 2px dashed color-mix(in srgb, var(--wk-ink) 20%, transparent);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+.wk-bt-stakes strong { font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
+.wk-bt-stakes span { opacity: 0.75; }
+.wk-bt-actions { display: grid; gap: var(--sp-2); }
+.wk-bt-three { grid-template-columns: repeat(3, 1fr); }
+.wk-bt-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-height: 48px;
+  padding: 0.5rem 0.4rem;
+  border: 3px solid var(--wk-ink);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--wk-ink);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 750;
+  box-shadow: 0 4px 0 var(--wk-ink);
+  cursor: pointer;
+  transition: transform 0.1s var(--ease), box-shadow 0.1s var(--ease), background var(--dur) var(--ease);
+}
+.wk-bt-btn:hover { background: color-mix(in srgb, var(--wk-gold) 22%, #fff); }
+.wk-bt-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--wk-ink); }
+.wk-bt-btn:focus-visible { outline: 3px solid var(--wk-gold-deep); outline-offset: 2px; }
+.wk-bt-weight strong { font-size: 1rem; }
+.wk-bt-weight span { font-size: 0.875rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.wk-bt-weight em { font-size: 0.6875rem; font-style: normal; font-weight: 600; opacity: 0.65; }
+.wk-bt-hand { grid-column: 1 / -1; min-height: 44px; background: #3a1418; color: var(--wk-paper); }
+.wk-bt-hand:hover { background: #5a1d22; }
+.wk-bt-rule { margin: 0; font-size: 0.75rem; line-height: 1.4; opacity: 0.75; }
+.wk-bt-box .wk-meter-wrap { max-width: none; justify-items: center; }
+.wk-bt-box .wk-meter { background: color-mix(in srgb, var(--wk-ink) 75%, transparent); border: 2px solid var(--wk-ink); }
+.wk-bt-box .wk-back-out { margin: 0; align-self: center; color: var(--wk-ink); }
+.wk-bt-verdict { color: var(--text-light); font-size: 1rem; font-weight: 600; }
+
+/* The VS screen: two halves on a diagonal, names and VS slam in. */
+.wk-vs {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: var(--wk-ink);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  overflow: hidden;
+  animation: wk-vs-flash 0.5s 0.35s var(--ease) both;
+}
+.wk-vs:focus-visible { outline: 3px solid var(--wk-gold); outline-offset: -6px; }
+@keyframes wk-vs-flash {
+  0% { box-shadow: inset 0 0 0 100vmax rgba(255, 255, 255, 0); }
+  10% { box-shadow: inset 0 0 0 100vmax rgba(255, 255, 255, 0.55); }
+  100% { box-shadow: inset 0 0 0 100vmax rgba(255, 255, 255, 0); }
+}
+.wk-vs-half {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.wk-vs-half.is-you {
+  background: linear-gradient(135deg, var(--wk-gold), var(--wk-gold-deep));
+  clip-path: polygon(0 0, 60% 0, 40% 100%, 0 100%);
+  animation: wk-vs-in-l 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+}
+.wk-vs-half.is-foe {
+  background: linear-gradient(135deg, #5a0f14, #22070a);
+  clip-path: polygon(60% 0, 100% 0, 100% 100%, 40% 100%);
+  animation: wk-vs-in-r 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+}
+@keyframes wk-vs-in-l { from { transform: translateX(-100%); } }
+@keyframes wk-vs-in-r { from { transform: translateX(100%); } }
+.wk-vs-half img { position: absolute; width: min(44cqw, 52cqh * 1.22); height: auto; }
+.wk-vs-half.is-you img { left: 2cqw; bottom: 4cqh; }
+.wk-vs-half.is-foe img { right: 2cqw; top: 6cqh; }
+.wk-vs-half strong {
+  position: absolute;
+  font-family: var(--font-display);
+  font-size: clamp(2.6rem, 12cqmin, 6.5rem);
+  font-style: italic;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  -webkit-text-stroke: 3px var(--wk-ink);
+  paint-order: stroke fill;
+  text-shadow: 0 6px 0 var(--wk-ink);
+  animation: wk-vs-name 0.4s 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+.wk-vs-half.is-you strong { left: 5cqw; top: 10cqh; color: var(--wk-paper); }
+.wk-vs-half.is-foe strong { right: 5cqw; bottom: 12cqh; color: #ff6b70; }
+@keyframes wk-vs-name { from { opacity: 0; transform: scale(2.2); } }
+.wk-vs-mark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  color: var(--wk-paper);
+  font-family: var(--font-display);
+  font-size: clamp(3.5rem, 18cqmin, 9rem);
+  font-style: italic;
+  font-weight: 800;
+  line-height: 1;
+  -webkit-text-stroke: 4px var(--wk-ink);
+  paint-order: stroke fill;
+  text-shadow: 0 8px 0 var(--wk-ink);
+  transform: translate(-50%, -50%) rotate(-8deg);
+  animation: wk-vs-mark 0.45s 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+@keyframes wk-vs-mark { from { opacity: 0; transform: translate(-50%, -50%) rotate(-8deg) scale(3.5); } }
+.wk-vs-meet,
+.wk-vs-skip {
+  position: absolute;
+  left: 50%;
+  padding: 0.3rem 0.8rem;
+  border-radius: var(--r-pill);
+  background: var(--wk-ink);
+  color: var(--wk-paper);
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  animation: wk-fade 0.3s 0.7s var(--ease) both;
+}
+.wk-vs-meet { top: var(--wk-pad); }
+.wk-vs-skip { bottom: var(--wk-pad); opacity: 0.85; }
+
+/* Portrait stages: the diagonal runs across, the twin on top. */
+@container (max-aspect-ratio: 1 / 1) {
+  .wk-vs-half.is-you { clip-path: polygon(0 56%, 100% 44%, 100% 100%, 0 100%); }
+  .wk-vs-half.is-foe { clip-path: polygon(0 0, 100% 0, 100% 44%, 0 56%); }
+  .wk-vs-half img { width: min(64cqw, 30cqh * 1.22); }
+  .wk-vs-half.is-foe img { right: 3cqw; top: 9cqh; }
+  .wk-vs-half.is-you img { left: 3cqw; bottom: 9cqh; }
+  .wk-vs-half.is-foe strong { right: 6cqw; top: 37cqh; bottom: auto; }
+  .wk-vs-half.is-you strong { left: 6cqw; top: 56cqh; }
+}
+
+/* The battle takes the whole stage, not a card. */
+.wk-overlay.is-battle { padding: 0; background: rgba(20, 14, 12, 0.8); }
+.wk-overlay.is-battle .wk-overlay-card { width: 100%; height: 100%; max-height: none; border: 0; border-radius: 0; }
+.wk-overlay.is-battle .wk-meet { height: 100%; justify-content: center; }
+
+@container (max-width: 699px) {
+  .wk-bt-field { gap: 4px; }
+  .wk-bt-card { padding: 0.45rem 0.6rem 0.45rem; }
+  .wk-bt-box { padding: var(--sp-3); margin-top: 4px; min-height: 18.6rem; }
+  .wk-bt-rule { font-size: 0.6875rem; }
+}
 
 /* ---------- Overlays: the meet and "while you were away" ---------- */
 .wk-overlay {
@@ -1112,9 +1418,18 @@
     to { opacity: 0; }
   }
   @keyframes wk-light-on { from { opacity: 0; } }
+  @keyframes wk-bt-pop { from { opacity: 0; } }
+  @keyframes wk-bt-shake { to { transform: none; } }
+  @keyframes wk-vs-in-l { from { opacity: 0; } }
+  @keyframes wk-vs-in-r { from { opacity: 0; } }
+  @keyframes wk-vs-name { from { opacity: 0; } }
+  @keyframes wk-vs-mark { from { opacity: 0; } }
+  @keyframes wk-vs-flash { to { box-shadow: none; } }
+  .wk-bt-btn:active { transform: none; }
   @keyframes wk-in { from { opacity: 0; } }
   @keyframes wk-up { from { opacity: 0; } }
+  .wk-tv-static,
+  .wk-tv-static::after { animation: none; }
   .wk-card.is-ready:active,
-  .wk-tile:active,
-  .wk-weight:active { transform: none; }
+  .wk-tile:active { transform: none; }
 }

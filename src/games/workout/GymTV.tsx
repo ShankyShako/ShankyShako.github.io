@@ -46,6 +46,32 @@ function loadApi(): Promise<YTApi> {
 const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const saveData = () => (navigator as unknown as { connection?: { saveData?: boolean } }).connection?.saveData === true;
 const watchUrl = (id: string) => `https://www.youtube.com/watch?v=${id}`;
+
+/* One small tile of grey snow, drawn once and scrolled in steps by CSS. */
+let snow = '';
+function snowTile(): string {
+  if (snow || typeof document === 'undefined') return snow;
+  try {
+    const c = document.createElement('canvas');
+    c.width = 96;
+    c.height = 54;
+    const g = c.getContext('2d');
+    if (!g) return '';
+    const img = g.createImageData(96, 54);
+    for (let i = 0; i < img.data.length; i += 4) {
+      const v = Math.random() < 0.5 ? 40 + Math.random() * 60 : 150 + Math.random() * 105;
+      img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
+      img.data[i + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+    snow = `url(${c.toDataURL()})`;
+  } catch {
+    snow = '';
+  }
+  return snow;
+}
+/** Shortest burst of static on a channel change, ms. */
+const FLIP_MS = 550;
 const stop = (e: SyntheticEvent) => e.stopPropagation();
 
 type Props = {
@@ -70,12 +96,21 @@ export function GymTV({ unlocked, interactive, paused }: Props) {
   const [playing, setPlaying] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [thumbOk, setThumbOk] = useState(false);
+  const [thumbErr, setThumbErr] = useState(false);
+  const [flip, setFlip] = useState(false);
+  const flipTimer = useRef(0);
 
   const live = big && !failed;
   const go = (n: number) => {
     idxRef.current = n;
     setIdx(n);
+    setThumbErr(false);
+    /* A burst of static, as if the set is changing channel. */
+    setFlip(true);
+    window.clearTimeout(flipTimer.current);
+    flipTimer.current = window.setTimeout(() => setFlip(false), FLIP_MS);
   };
+  useEffect(() => () => window.clearTimeout(flipTimer.current), []);
 
   /* Live mode needs a big stage (the scene's own container). */
   useEffect(() => {
@@ -138,7 +173,10 @@ export function GymTV({ unlocked, interactive, paused }: Props) {
               if (e.data === YT.PlayerState.PLAYING) {
                 window.clearTimeout(timer);
                 setPlaying(true);
-              } else if (e.data === YT.PlayerState.ENDED) next();
+              } else if (e.data === YT.PlayerState.ENDED) {
+                setPlaying(false);
+                next();
+              }
             },
             onError: next,
           },
@@ -181,12 +219,16 @@ export function GymTV({ unlocked, interactive, paused }: Props) {
   }, [live, unlocked, hidden]);
 
   const cur = Math.min(idx, unlocked - 1);
+  /* Static shows while a tape is loading (only once the set is switched on)
+     and for a moment on every channel change. */
+  const tuning = flip || (live ? interactive && !playing : !thumbOk && !thumbErr);
   const id = TAPES[cur];
   const screen = (
     <div className="wk-tv-screen">
       <span className="wk-tv-label" aria-hidden="true">
         GYM TV
       </span>
+      <span className={`wk-tv-static${tuning ? ' is-on' : ''}`} style={{ backgroundImage: snowTile() || undefined }} aria-hidden="true" />
       {live ? (
         <div className={`wk-tv-player${playing ? ' is-on' : ''}`} ref={mount} />
       ) : (
@@ -197,6 +239,7 @@ export function GymTV({ unlocked, interactive, paused }: Props) {
           alt=""
           draggable={false}
           onLoad={() => setThumbOk(true)}
+          onError={() => setThumbErr(true)}
         />
       )}
     </div>
@@ -209,7 +252,7 @@ export function GymTV({ unlocked, interactive, paused }: Props) {
   return (
     <div
       ref={wrap}
-      className={`wk-tv ${live ? 'is-live' : 'is-compact'}${playing || (!live && thumbOk) ? ' is-on' : ''}`}
+      className={`wk-tv ${live ? 'is-live' : 'is-compact'}${playing || (!live && thumbOk) ? ' is-on' : ''}${tuning ? ' is-tuning' : ''}`}
       onPointerDown={stop}
       onKeyDown={stop}
     >

@@ -429,16 +429,8 @@ export function meetReq(i: number) {
 
 export const meetOpen = (s: State) => s.runGains >= meetReq(s.meet);
 
-export type Attempt = { weight: number; whites: number; made: boolean };
-
-/** The three suggested openers: safe, solid, reach. */
+/** The battle's three weights: Light, Heavy, Max (90 / 100 / 105% of max). */
 export const openers = (max: number) => [0.9, 1, 1.05].map((k) => round25(max * k));
-
-/** After a make you may go heavier; after a miss you retry the same weight. */
-export function nextWeights(max: number, last: Attempt): number[] {
-  if (!last.made) return [last.weight];
-  return [0.025, 0.05, 0.1].map((k) => round25(last.weight + max * k));
-}
 
 /** The press meter for a weight: a narrower zone and a faster needle the
     heavier it is against your max, and a bit of both per meet tier. */
@@ -469,14 +461,13 @@ const MEET_PERK: (PerkId | undefined)[] = ['chalk', 'offline', 'crew'];
 
 export type MeetResult = { place: 0 | 1 | 2 | 3; medals: number; perk: PerkId | null; best: number };
 
-export function meetResult(s: State, max: number, attempts: Attempt[]): MeetResult {
-  const made = attempts.filter((a) => a.made);
-  const best = made.reduce((m, a) => Math.max(m, a.weight), 0);
-  const r = best / max;
-  const place = made.length === 0 ? 0 : r >= 1.05 ? 1 : r >= 1 ? 2 : 3;
+/** A battle's result: the cred you kept sets the place; a loss still pays
+    one medal. Made lifts count up to three, as in the old three attempts. */
+export function battleResult(s: State, won: boolean, credLeft: number, made: number[]): MeetResult {
+  const best = made.reduce((m, w) => Math.max(m, w), 0);
+  const place = !won ? 0 : credLeft >= 60 ? 1 : credLeft >= 30 ? 2 : 3;
   const base = [0, 3, 2, 1][place];
-  /* No lift still pays one medal, so a meet is never a dead end. */
-  const medals = place === 0 ? 1 : (base + made.length) * (1 + s.meet);
+  const medals = place === 0 ? 1 : (base + Math.min(3, made.length)) * (1 + s.meet);
   const p = MEET_PERK[s.meet];
   const perk = place > 0 && p && !s.perks.includes(p) ? p : null;
   return { place: place as MeetResult['place'], medals, perk, best };

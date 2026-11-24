@@ -37,17 +37,19 @@ function tone(c: AudioContext, { f, to, t = 0, dur, type = 'sine', gain = 0.18 }
   o.stop(at + dur + 0.02);
 }
 
-/* A major scale from C5, climbing with the streak over two octaves. */
-const MAJOR = [0, 2, 4, 5, 7, 9, 11];
-const degree = (n: number) => 12 * Math.floor(n / 7) + MAJOR[n % 7];
+/* The streak climbs C5 D E F G A, then holds on A5 (880 Hz) however long
+   it runs. Modelled on the site pet's combo chops, which climb six steps
+   from about F5 to A#5 (~950 Hz) and then hold: the top stays under that,
+   where the old two-octave climb ended up at C7 (2093 Hz) and shrill. */
+const CLIMB = [0, 2, 4, 5, 7, 9];
 
 export const sfx = {
   perfect(streak: number) {
     const c = ac();
     if (!c) return;
-    const f = 523.25 * 2 ** (degree(Math.min(Math.max(streak - 1, 0), 14)) / 12);
+    const f = 523.25 * 2 ** (CLIMB[Math.min(Math.max(streak - 1, 0), CLIMB.length - 1)] / 12);
     tone(c, { f, dur: 0.32, type: 'triangle', gain: 0.2 });
-    tone(c, { f: f * 2, dur: 0.18, gain: 0.06 });
+    tone(c, { f: f * 2, dur: 0.16, gain: 0.045 });
   },
   good() {
     const c = ac();
@@ -73,6 +75,35 @@ export const sfx = {
   light(white: boolean, i: number) {
     const c = ac();
     if (c) tone(c, { f: white ? 880 : 220, t: i * 0.16, dur: 0.12, type: white ? 'sine' : 'sawtooth', gain: white ? 0.14 : 0.06 });
+  },
+  /** The VS screen slams in: a falling growl under two hits. */
+  vs() {
+    const c = ac();
+    if (!c) return;
+    tone(c, { f: 180, to: 45, dur: 0.6, type: 'sawtooth', gain: 0.12 });
+    tone(c, { f: 110, to: 40, dur: 0.35, gain: 0.3 });
+    tone(c, { f: 392, t: 0.32, dur: 0.18, type: 'square', gain: 0.06 });
+    tone(c, { f: 587.33, t: 0.44, dur: 0.3, type: 'square', gain: 0.06 });
+  },
+  /** Rock-paper-scissors reveal. */
+  reveal() {
+    const c = ac();
+    if (!c) return;
+    tone(c, { f: 660, dur: 0.06, type: 'square', gain: 0.05 });
+    tone(c, { f: 990, t: 0.07, dur: 0.09, type: 'square', gain: 0.05 });
+  },
+  /** Someone lost cred. */
+  hit() {
+    const c = ac();
+    if (!c) return;
+    tone(c, { f: 160, to: 40, dur: 0.22, gain: 0.32 });
+    tone(c, { f: 90, to: 30, dur: 0.3, type: 'square', gain: 0.05 });
+  },
+  /** Cred won back. */
+  heal() {
+    const c = ac();
+    if (!c) return;
+    [659.25, 830.61, 987.77].forEach((f, i) => tone(c, { f, t: i * 0.06, dur: 0.14, type: 'triangle', gain: 0.1 }));
   },
   podium() {
     const c = ac();

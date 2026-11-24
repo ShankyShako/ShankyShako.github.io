@@ -50,6 +50,8 @@ import { Meet } from './Meet';
 import { GymBackdrop } from './GymBackdrop';
 import { GymTV } from './GymTV';
 import { SkillTree } from './SkillTree';
+import { layoutBots } from './field';
+import type { Stage } from './field';
 import './workout.css';
 
 /* The owner's 2021 drawings, cropped and shrunk by
@@ -57,7 +59,8 @@ import './workout.css';
 const art = import.meta.glob('./art/*.webp', { eager: true, import: 'default' }) as Record<string, string>;
 const sprite = (name: string) => art[`./art/${name}.webp`];
 const lifterSrc = (s: State, frame: 1 | 2) => sprite(`${hasGold(s) ? 's' : ''}${bodyStage(s)}-${frame}`);
-const robotSrc = (s: State, frame: 1 | 2) => sprite(`${s.robots[0] >= MODEL_S_AT ? 's' : ''}robot-${frame}`);
+/* Only Robo-Helpers become the yellow Model S; the bigger tiers stay grey. */
+const robotSrc = (s: State, frame: 1 | 2, tier = 0) => sprite(`${tier === 0 && s.robots[0] >= MODEL_S_AT ? 's' : ''}robot-${frame}`);
 
 function load(): State {
   let s = fresh();
@@ -123,6 +126,8 @@ export default function WorkoutGame() {
   const root = useRef<HTMLDivElement>(null);
   const scoreRef = useRef<HTMLElement>(null);
   const gym = useRef<HTMLDivElement>(null);
+  const scene = useRef<HTMLDivElement>(null);
+  const [stage, setStage] = useState<Stage | null>(null);
   const shake = useRef<HTMLDivElement>(null);
   const ring = useRef<HTMLDivElement>(null);
   const pill = useRef<HTMLSpanElement>(null);
@@ -395,6 +400,41 @@ export default function WorkoutGame() {
     return () => ro.disconnect();
   }, []);
 
+  /* The robots' turf: the stage, the lifter, and panels that sit on the floor. */
+  useEffect(() => {
+    const el = scene.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    let raf = 0;
+    const measure = () => {
+      const sc = el.getBoundingClientRect();
+      const lf = gym.current?.getBoundingClientRect();
+      if (!lf || !sc.width) return;
+      const blocks = [...(root.current?.querySelectorAll<HTMLElement>('.wk-controls, .wk-tiles') ?? [])]
+        .map((b) => b.getBoundingClientRect())
+        .filter((r) => r.width && r.bottom > sc.bottom - 40)
+        .map((r) => ({ l: r.left - sc.left, r: r.right - sc.left, top: r.top - sc.top }));
+      const narrow = sc.width < 700;
+      setStage({
+        w: sc.width,
+        h: sc.height,
+        lifterL: lf.left - sc.left,
+        lifterR: lf.right - sc.left,
+        blocks,
+        rh: narrow ? Math.min(sc.height * 0.11, 84) : Math.min(sc.height * 0.15, 120),
+        pad: Math.min(24, Math.max(12, sc.width * 0.02)),
+      });
+    };
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(measure);
+    });
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
   /* On narrow stages the shop sheet would hide the first robot: close it once. */
   const hadRobots = useRef(robotCount(s) > 0);
   useEffect(() => {
@@ -428,7 +468,8 @@ export default function WorkoutGame() {
   const progress = Math.min(1, s.runGains / req);
   const bonus = streakBonus(s);
   const capBonus = streakCap(s) * 0.1;
-  const robotsShown = Math.min(8, robotCount(s));
+  const bots = stage ? layoutBots(s.robots, stage) : [];
+  const hasRobots = robotCount(s) > 0;
 
   const ready = treeReady(s);
   const nextCost = TREE.filter((n) => n.kind !== 'root' && nodeCost(s, n.id) > s.gains).reduce((m, n) => Math.min(m, nodeCost(s, n.id)), Infinity);
@@ -474,7 +515,7 @@ export default function WorkoutGame() {
   return (
     <div ref={root} className={`wk-root${panel ? ' has-panel' : ''}${fs ? ' is-fs' : ''}`} onKeyDown={onRootKey}>
       {/* The scene: the whole stage is the tap target. UI sits above it. */}
-      <div className="wk-scene" onPointerDown={onPointer}>
+      <div className="wk-scene" ref={scene} onPointerDown={onPointer}>
         <GymBackdrop />
         <GymTV unlocked={tapesUnlocked(s)} interactive={s.reps > 0} paused={meet !== null} />
         <div
@@ -508,8 +549,8 @@ export default function WorkoutGame() {
           </div>
         </div>
 
-        <div className={`wk-robots${robotsShown === 0 ? ' is-ghost' : ''}`} aria-hidden={robotsShown === 0 ? undefined : true}>
-          {robotsShown === 0 ? (
+        {!hasRobots ? (
+          <div className="wk-robots is-ghost">
             <button
               type="button"
               className={`wk-ghost${s.gains >= robotCost(0, 0) ? ' is-ready' : ''}`}
@@ -522,23 +563,29 @@ export default function WorkoutGame() {
               </span>
               <span className="wk-ghost-pill">Robo-Helper · {robotCost(0, 0)} Gains</span>
             </button>
-          ) : (
-            Array.from({ length: robotsShown }, (_, i) => (
-              <span key={i} className="wk-robot">
-                <img src={robotSrc(s, 1)} alt="" draggable={false} />
-                <img src={robotSrc(s, 2)} alt="" draggable={false} style={{ animationDelay: `${-i * 0.62}s` }} />
-              </span>
-            ))
-          )}
-          {robotCount(s) > 8 && <span className="wk-more">+{robotCount(s) - 8}</span>}
-          {floaters
-            .filter((f) => f.kind === 'robot')
-            .map((f) => (
-              <span key={f.id} className="wk-float is-robot">
-                {f.text}
+          </div>
+        ) : (
+          <div className="wk-field" aria-hidden="true">
+            {bots.map((b, i) => (
+              <span
+                key={i}
+                className={`wk-bot is-t${b.tier}`}
+                style={{ left: b.x, bottom: b.bottom, height: b.height, zIndex: b.z, ['--delay' as string]: `${-i * 0.62}s` }}
+              >
+                <img className="wk-bot-up" src={robotSrc(s, 1, b.tier)} alt="" draggable={false} />
+                <img className="wk-bot-down" src={robotSrc(s, 2, b.tier)} alt="" draggable={false} />
+                {i === bots.length - 1 &&
+                  floaters
+                    .filter((f) => f.kind === 'robot')
+                    .map((f) => (
+                      <span key={f.id} className="wk-float is-robot">
+                        {f.text}
+                      </span>
+                    ))}
               </span>
             ))}
-        </div>
+          </div>
+        )}
         {s.reps === 0 && <p className="wk-hint">Tap anywhere when the shrinking ring meets the gold one</p>}
       </div>
 
@@ -719,7 +766,7 @@ export default function WorkoutGame() {
       </div>
 
       {meet && (
-        <div className="wk-overlay">
+        <div className="wk-overlay is-battle">
           <div className="wk-overlay-card" role="dialog" aria-modal="true" aria-label={`${meetName(s.meet)}`}>
             <Meet
               s={s}
